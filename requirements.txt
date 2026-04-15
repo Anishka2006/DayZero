@@ -1,4 +1,3 @@
 google-generativeai
 flask
 mysql-connector-python
-api key AIzaSyCGhSp2IkWzewRI7xtyOC_SZSU4OOtuYQ0
