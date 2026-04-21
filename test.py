@@ -1,11 +1,10 @@
-from orchestrator import run_simulation
+from ai_engine.agents.manager import run_manager
 
-print("STARTING TEST...")  # ✅ debug
+output = run_manager()
 
-user_input = "Build a login system"
+print("\nFINAL OUTPUT:\n")
+print(output)
 
-result = run_simulation(user_input)
+import json
 
-print("RESULT RECEIVED")  # ✅ debug
-
-print(result)
+print(json.dumps(output, indent=4))

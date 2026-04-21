@@ -1,18 +1,11 @@
-from ai_engine.gemini_client import call_gemini
-
-
-def backend_feedback(input_text):
+from ai_engine.llm import ask_ai
+def backend_feedback(prd):
     prompt = f"""
-You are a Backend Lead (Python + MySQL).
+    Review this PRD:
 
-Analyze:
+    {prd}
 
-{input_text}
+    As a Backend Lead, raise scalability and system concerns.
+    """
 
-Give:
-- API design concerns
-- DB schema suggestions
-- Scalability issues
-"""
-
-    return call_gemini(prompt)
+    return ask_ai(prompt)
