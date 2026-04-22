@@ -1,18 +1,11 @@
-from ai_engine.gemini_client import call_gemini
-
-
-def frontend_feedback(input_text):
+from ai_engine.llm import ask_ai
+def frontend_feedback(prd):
     prompt = f"""
-You are a Frontend Lead (React expert).
+    Review this PRD:
 
-Analyze:
+    {prd}
 
-{input_text}
+    As a Frontend Lead, raise UI/implementation concerns.
+    """
 
-Give:
-- UI feasibility
-- Component structure
-- Performance concerns
-"""
-
-    return call_gemini(prompt)
+    return ask_ai(prompt)

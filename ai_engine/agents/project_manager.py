@@ -1,18 +1,11 @@
-from ai_engine.gemini_client import call_gemini
+from ai_engine.llm import ask_ai
+def create_prd():
+    prompt = "Create a short PRD for a SaaS feature."
 
+    prd = ask_ai(prompt)
 
-def pm_feedback(input_text):
-    prompt = f"""
-You are a Project Manager.
-
-Evaluate:
-
-{input_text}
-
-Give:
-- Timeline risks
-- Scope issues
-- Priority suggestions
-"""
-
-    return call_gemini(prompt)
+    return {
+        "day": 1,
+        "role": "PM",
+        "prd": prd
+    }

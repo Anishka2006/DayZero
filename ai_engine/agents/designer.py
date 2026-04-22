@@ -1,17 +1,11 @@
-from ai_engine.gemini_client import call_gemini
-
-
-def designer_feedback(input_text):
+from ai_engine.llm import ask_ai
+def designer_feedback(prd):
     prompt = f"""
-You are a Senior Product Designer.
+    Review this PRD:
 
-Review the following PRD:
+    {prd}
 
-{input_text}
-Give:
-- UX issues
-- Missing flows
-- Suggestions
-"""
+    As a Designer, raise UX concerns.
+    """
 
-    return call_gemini(prompt)
+    return ask_ai(prompt)
