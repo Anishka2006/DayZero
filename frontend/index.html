@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero – AI-Powered Hiring Platform</title>
+  <meta
+    name="description"
+    content="DayZero is an AI-powered hiring platform for skill-based candidate evaluation through real work simulations and verified performance insights."
+  />
+  <link rel="stylesheet" href="main.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <!-- HEADER -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="#product" class="logo">DayZero</a>
+
+      <div class="nav-links">
+        <a href="#product" class="nav-link">Product</a>
+        <a href="#how" class="nav-link">How It Works</a>
+        <a href="#benefits" class="nav-link">Benefits</a>
+        <a href="#recruiters" class="nav-link">Recruiters</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </div>
+
+      <div class="nav-cta">
+        <a href="#login" class="nav-link login-link" style="font-weight: 600; color: #4f46e5;">Log In</a>
+        <a href="#signup" class="btn btn-primary auth-btn">Sign Up</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="product">
+    <div class="container hero-inner">
+      <div class="hero-content reveal">
+        <p class="hero-tag">AI-Powered Hiring Platform</p>
+
+        <h1 class="hero-title">
+          Hire Based on Skills.<br />
+          Not Just Resumes.
+        </h1>
+
+        <p class="hero-sub">
+          DayZero enables companies to assess real candidate potential through
+          AI-powered job simulations and verified performance insights.
+        </p>
+
+        <div class="hero-cta">
+          <a href="#get-started" class="btn btn-primary">Get Started</a>
+          <a href="#demo" class="btn btn-secondary">Request Demo</a>
+        </div>
+
+        <p class="hero-support">
+          Built for modern hiring teams, recruiters, and skill-first organizations.
+        </p>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="hero-glow"></div>
+        <div class="hero-bg-abstract"></div>
+
+        <div class="hero-dashboard">
+          <div class="dashboard-card dashboard-main">
+            <div class="dashboard-header">
+              <div>
+                <p class="dashboard-label">Simulation Progress</p>
+                <h3 class="dashboard-title">Candidate Assessment</h3>
+              </div>
+              <span class="dashboard-percentage">78%</span>
+            </div>
+
+            <div class="hero-progress-bar-bg">
+              <div class="hero-progress-bar"></div>
+            </div>
+          </div>
+
+          <div class="dashboard-card">
+            <p class="dashboard-label">Live Task</p>
+            <h4 class="dashboard-task-title">Build API Endpoint</h4>
+            <p class="dashboard-meta">Time left: <strong id="countdown-timer">18:22</strong></p>
+          </div>
+
+          <div class="dashboard-row">
+            <div class="dashboard-card dashboard-metric">
+              <p class="dashboard-label">AI Evaluation</p>
+              <p class="dashboard-meta">Problem Solving</p>
+              <h4 class="dashboard-highlight">Excellent</h4>
+            </div>
+
+            <div class="dashboard-card dashboard-score-card">
+              <p class="dashboard-label">Score</p>
+              <h3 class="dashboard-score">92</h3>
+            </div>
+          </div>
+
+          <div class="dashboard-card dashboard-team">
+            <div class="team-stat">
+              <span class="team-label">Active Reviewers</span>
+              <span class="team-value">3</span>
+            </div>
+            <div class="team-divider"></div>
+            <div class="team-stat">
+              <span class="team-label">Collaboration</span>
+              <span class="team-value accent">High</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST STRIP -->
+  <section class="trust-section reveal">
+    <div class="container">
+      <div class="trust-strip">
+        <div class="trust-item">
+          <h4>40% Faster Hiring</h4>
+          <p>Accelerate shortlisting with real performance insights.</p>
+        </div>
+        <div class="trust-item">
+          <h4>Better Talent Quality</h4>
+          <p>Evaluate practical skill, not just resume keywords.</p>
+        </div>
+        <div class="trust-item">
+          <h4>Fairer Screening</h4>
+          <p>Reduce bias with structured and simulation-based signals.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="problem-section reveal">
+    <div class="container">
+      <div class="section-heading">
+        <p class="section-tag">The Problem</p>
+        <h2>Why Traditional Hiring Falls Short</h2>
+        <p>
+          Traditional recruitment methods often fail to measure practical ability,
+          adaptability, and collaboration in real work conditions.
+        </p>
+      </div>
+
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="problem-icon">📄</div>
+          <h3>Resumes do not reflect actual performance</h3>
+          <p>Paper credentials rarely show true skills or adaptability in real work.</p>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-icon">⏳</div>
+          <h3>Interviews provide limited assessment time</h3>
+          <p>Short interviews cannot reveal how candidates solve real challenges.</p>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-icon">🔍</div>
+          <h3>Traditional hiring misses capable talent</h3>
+          <p>Many skilled candidates are overlooked due to resume bias or limited signals.</p>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-icon">📊</div>
+          <h3>Companies need stronger hiring signals</h3>
+          <p>Teams need data-driven insights, not guesswork.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="steps-section reveal" id="how">
+    <div class="container">
+      <div class="section-heading">
+        <h2>How DayZero Works</h2>
+      </div>
+
+      <div class="steps-flow">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Select job role</h3>
+          <p>Choose the role relevant to your hiring requirement.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Enter simulation environment</h3>
+          <p>Candidates work inside a realistic, role-based scenario.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Complete real-world tasks</h3>
+          <p>Assess execution, thinking, and adaptability through practical work.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <h3>Receive verified SkillRecord</h3>
+          <p>Get structured performance insights for better hiring decisions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section class="benefits-section reveal" id="benefits">
+    <div class="container">
+      <div class="section-heading">
+        <h2>Key Benefits</h2>
+      </div>
+
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">🎯</div>
+          <h3>Skill-based hiring decisions</h3>
+          <p>Make decisions based on demonstrated ability, not just claims.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">⚡</div>
+          <h3>Faster shortlisting process</h3>
+          <p>Identify top talent quickly with AI-powered evaluation.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🌟</div>
+          <h3>Better quality candidates</h3>
+          <p>Select candidates who perform well in practical tasks.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🛡️</div>
+          <h3>Reduced hiring risk</h3>
+          <p>Minimize poor hiring outcomes through stronger signals.</p>
+        </div>
+
+        <div class="benefit-card">
+          <div class="benefit-icon">🤝</div>
+          <h3>Fair opportunities for all applicants</h3>
+          <p>Create a more objective and inclusive hiring process.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECRUITERS -->
+  <section class="recruiters-section reveal" id="recruiters">
+    <div class="container recruiters-inner">
+      <div class="recruiters-content">
+        <p class="section-tag">For Recruiters</p>
+        <h2>For Recruiters and Hiring Teams</h2>
+        <p>
+          DayZero empowers recruiters to make smarter, faster, and fairer hiring
+          decisions with real performance data.
+        </p>
+
+        <ul class="recruiter-list">
+          <li>Identify job-ready talent</li>
+          <li>Compare candidates using real data</li>
+          <li>Improve hiring efficiency</li>
+          <li>Reduce poor hiring decisions</li>
+        </ul>
+      </div>
+
+      <div class="recruiters-dashboard">
+        <div class="rec-dashboard-row">
+          <div class="rec-dashboard-metric">
+            <p class="dashboard-label">Readiness Score</p>
+            <div class="rec-progress-bar-bg">
+              <div class="rec-progress-bar1"></div>
+            </div>
+            <p class="dashboard-meta">92 / 100</p>
+          </div>
+
+          <div class="rec-dashboard-metric">
+            <p class="dashboard-label accent">Adaptability</p>
+            <div class="rec-progress-bar-bg">
+              <div class="rec-progress-bar2"></div>
+            </div>
+            <p class="dashboard-meta">85 / 100</p>
+          </div>
+        </div>
+
+        <div class="rec-dashboard-row">
+          <div class="rec-dashboard-metric">
+            <p class="dashboard-label">Collaboration</p>
+            <div class="rec-progress-bar-bg">
+              <div class="rec-progress-bar3"></div>
+            </div>
+            <p class="dashboard-meta">74 / 100</p>
+          </div>
+
+          <div class="rec-dashboard-score">
+            <p class="dashboard-label">Shortlist Insights</p>
+            <h3 class="dashboard-score">Top 5%</h3>
+          </div>
+        </div>
+
+        <div class="rec-dashboard-row">
+          <div class="rec-dashboard-metric full-width">
+            <p class="dashboard-label">Evaluation Summary</p>
+            <p class="dashboard-meta">
+              Excellent problem-solving, high adaptability, and strong collaboration.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta-section reveal" id="get-started">
+    <div class="container final-cta-box">
+      <p class="section-tag">Get Started</p>
+      <h2 class="final-cta-title">Upgrade Hiring with Real Performance Data.</h2>
+      <p class="final-cta-sub">
+        Move beyond resumes and evaluate candidates through structured,
+        skill-based simulations.
+      </p>
+
+      <div class="final-cta-btns">
+        <a href="#get-started" class="btn btn-primary">Start Now</a>
+        <a href="#demo" class="btn btn-secondary">Book a Demo</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer" id="contact">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">DayZero</div>
+        <p class="footer-desc">
+          DayZero is an AI-powered hiring platform that helps companies evaluate
+          candidates through real work simulations and verified SkillRecords.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <h4>Quick Links</h4>
+        <a href="#product" class="footer-link">Product</a>
+        <a href="#how" class="footer-link">How It Works</a>
+        <a href="#benefits" class="footer-link">Benefits</a>
+        <a href="#recruiters" class="footer-link">Recruiters</a>
+      </div>
+
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>Email: <a href="mailto:info@dayzero.ai" class="footer-link">info@dayzero.ai</a></p>
+        <p>LinkedIn: <a href="#" class="footer-link">@DayZero</a></p>
+      </div>
+
+      <div class="footer-social">
+        <h4>Follow</h4>
+        <div class="footer-social-row">
+          <a href="#" class="footer-social-icon" title="LinkedIn">👤</a>
+          <a href="#" class="footer-social-icon" title="Twitter">👑</a>
+          <a href="#" class="footer-social-icon" title="Mail">✉️</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-copyright">
+      &copy; 2026 DayZero. All rights reserved.
+    </div>
+  </footer>
+
+  <!-- REGISTRATION MODAL -->
+  <div class="modal-overlay" id="registration-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close-btn">&times;</button>
+      <h3 id="modal-title">Request Demo</h3>
+      <p id="modal-desc">Enter your details and our team will get in touch.</p>
+      <form class="modal-form" id="registration-form">
+        <div class="input-group">
+          <input type="text" id="reg-name" placeholder="Full Name" required />
+        </div>
+        <div class="input-group">
+          <input type="tel" id="reg-phone" placeholder="Phone Number" required />
+        </div>
+        <button type="submit" class="btn btn-primary full-width">Submit Details</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-overlay auth-overlay" id="auth-modal">
+    <div class="auth-content">
+      <button class="modal-close" id="auth-close-btn">&times;</button>
+      
+      <div class="auth-left">
+        <h3 id="auth-side-title">Welcome Back</h3>
+        <p id="auth-side-desc">Sign in to access your dashboard and continue where you left off.</p>
+        <div class="auth-abstract-bg"></div>
+      </div>
+      
+      <div class="auth-right">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login">Log In</button>
+          <button class="auth-tab" id="tab-signup">Sign Up</button>
+        </div>
+        
+        <form class="modal-form auth-form" id="auth-form">
+          <div class="input-group signup-only" id="auth-name-group" style="display: none;">
+            <input type="text" id="auth-name" placeholder="Full Name" />
+          </div>
+          <div class="input-group">
+            <input type="email" id="auth-email" placeholder="Work Email" required />
+          </div>
+          <div class="input-group">
+            <input type="password" id="auth-password" placeholder="Password" required />
+          </div>
+          <button type="submit" class="btn btn-primary full-width" id="auth-submit-btn">Log In</button>
+        </form>
+        
+        <p class="auth-switch-text">
+          <span id="auth-switch-prompt">Don't have an account?</span> 
+          <a href="#" id="auth-switch-link">Sign Up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
