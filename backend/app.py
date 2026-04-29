@@ -1,22 +1,25 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import mysql.connector
+import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import os
 app = Flask(__name__)
 CORS(app)
 
 # =========================
-# 🔗 DATABASE CONNECTION
+# 🔗 DATABASE CONNECTION (SUPABASE)
 # =========================
-db = mysql.connector.connect(
-    host="localhost",
-    user="root",         
-    password="yourpassword",  # 🔴 put your MySQL password
-    database="dayzero"   
+
+
+db = psycopg2.connect(
+    host=os.environ.get("DB_HOST"),
+    database=os.environ.get("DB_NAME"),
+    user=os.environ.get("DB_USER"),
+    password=os.environ.get("DB_PASSWORD")
 )
 
 cursor = db.cursor()
+
 
 # =========================
 # 📝 SIGNUP
@@ -28,12 +31,20 @@ def signup():
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
+
+    if not name or not email or not password:
+        return jsonify({"error": "All fields required"}), 400
+
+    # check existing user
     cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
     existing_user = cursor.fetchone()
 
     if existing_user:
         return jsonify({"error": "User already exists"}), 409
+
+    # hash password
     hashed_password = generate_password_hash(password)
+
     cursor.execute(
         "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
         (name, email, hashed_password)
@@ -41,7 +52,7 @@ def signup():
     db.commit()
 
     return jsonify({
-        "message": "Signup successful 🚀",
+        "message": "Signup successful",
         "user": {
             "name": name,
             "email": email
@@ -71,7 +82,7 @@ def login():
         return jsonify({"error": "Invalid password"}), 401
 
     return jsonify({
-        "message": "Login successful 🚀",
+        "message": "Login successful",
         "user": {
             "id": user[0],
             "name": user[1],
@@ -80,14 +91,18 @@ def login():
     }), 200
 
 
+# =========================
+# 📞 DEMO REQUEST
+# =========================
 @app.route("/request-demo", methods=["POST"])
 def request_demo():
     data = request.get_json()
 
     name = data.get("name")
     phone = data.get("phone")
+
     if not name or not phone:
-        return jsonify({"error": "All fields are required"}), 400
+        return jsonify({"error": "All fields required"}), 400
 
     try:
         cursor.execute(
@@ -96,9 +111,7 @@ def request_demo():
         )
         db.commit()
 
-        return jsonify({
-            "message": "Demo request submitted 🚀"
-        }), 200
+        return jsonify({"message": "Demo request submitted"}), 200
 
     except Exception as e:
         print("Error:", e)
@@ -109,4 +122,4 @@ def request_demo():
 # 🏁 RUN SERVER
 # =========================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
