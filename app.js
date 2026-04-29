@@ -144,25 +144,41 @@ function initButtons() {
 /* =====================================
    6. TOAST MESSAGE
 ===================================== */
-function showToast(message) {
-  let toast = document.createElement("div");
+function showToast(message, type = "success") {
+  const toast = document.createElement("div");
+  toast.className = `toast-message ${type}`;
 
-  toast.className = "toast-message";
-  toast.innerText = message;
+  const icon = type === "success" ? "✅" : "❌";
+
+  toast.innerHTML = `
+    <span class="toast-icon">${icon}</span>
+    <span>${message}</span>
+    <div class="toast-progress"></div>
+  `;
 
   document.body.appendChild(toast);
 
+  // show
   setTimeout(() => {
     toast.classList.add("show");
-  }, 100);
+  }, 50);
 
-  setTimeout(() => {
+  // auto remove
+  let timeout = setTimeout(removeToast, 3000);
+
+  function removeToast() {
     toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }
 
-    setTimeout(() => {
-      toast.remove();
-    }, 300);
-  }, 2500);
+  // pause on hover
+  toast.addEventListener("mouseenter", () => {
+    clearTimeout(timeout);
+  });
+
+  toast.addEventListener("mouseleave", () => {
+    timeout = setTimeout(removeToast, 1500);
+  });
 }
 
 /* =====================================
@@ -210,12 +226,35 @@ function initModal() {
     if (e.target === modal) closeModal();
   });
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    showToast("Registration successful! ✅");
-    form.reset();
-    closeModal();
-  });
+ form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("reg-name").value;
+  const phone = document.getElementById("reg-phone").value;
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/request-demo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name, phone })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast("Demo request sent! ");
+      form.reset();
+      closeModal();
+    } else {
+     showToast(data.error || "Failed ❌", "error");
+    }
+
+  } catch (err) {
+    showToast("Server error ⚠️");
+  }
+});
 
   // Trigger modal on Get Started
   const getStartedBtns = document.querySelectorAll('a[href="#get-started"]');
@@ -315,11 +354,63 @@ function initAuthModal() {
     else setAuthMode("login");
   });
 
-  authForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const action = tabLogin.classList.contains("active") ? "Logged in" : "Account created";
-    showToast(`${action} successfully! 🚀`);
-    authForm.reset();
-    closeAuth();
-  });
+  authForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const isLogin = tabLogin.classList.contains("active");
+
+  const name = document.getElementById("auth-name").value;
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
+
+  const url = isLogin
+    ? "http://127.0.0.1:5000/login"
+    : "http://127.0.0.1:5000/signup";
+
+  const body = isLogin
+    ? { email, password }
+    : { name, email, password };
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+let data;
+
+try {
+  data = await res.json();
+} catch {
+  data = { error: "Invalid server response" };
+}
+
+console.log("STATUS:", res.status);
+console.log("DATA:", data);
+
+if (res.ok) {
+  showToast(data.message || "Success ", "success");
+
+  localStorage.setItem("user", JSON.stringify(data.user));
+
+  authForm.reset();
+  closeAuth();
+
+  setTimeout(() => {
+    window.location.href = "dashboard.html";
+  }, 1000);
+
+} else {
+  showToast(data.error || "Something went wrong ❌", "error");
+}
+
+    
+
+  } catch (err) {
+    showToast("An error occurred. Please try again.", "error");
+  }
+});
 }
