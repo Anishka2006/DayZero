@@ -425,3 +425,9 @@ function selectRole(role) {
     // 3. Send them to the dashboard
     window.location.href = "dashboard.html";
 }
+
+function finishSimulation() {
+    const finalScore = 88; // This would come from your AI evaluation
+    localStorage.setItem('lastScore', finalScore);
+    window.location.href = 'results.html';
+}
