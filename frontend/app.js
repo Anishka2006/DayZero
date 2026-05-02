@@ -317,9 +317,13 @@ function initAuthModal() {
 
   authForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    const action = tabLogin.classList.contains("active") ? "Logged in" : "Account created";
-    showToast(`${action} successfully! 🚀`);
+    const action = tabLogin.classList.contains("active") ? "Logging in" : "Creating account";
+    showToast(`${action}... 🚀`);
     authForm.reset();
-    closeAuth();
+    
+    // Redirect to the new premium Dashboard experience
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 1500);
   });
 }

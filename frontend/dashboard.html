@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero Simulation Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css?v=2" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="light">
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="logo-wrap">
+          <div class="logo-glow"></div>
+          <div class="logo">DZ</div>
+          <div>
+            <h2>DayZero</h2>
+            <p>Simulation OS</p>
+          </div>
+        </div>
+        <button class="collapse-btn" id="collapseBtn">☰</button>
+      </div>
+
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-target="panel-workspace"><i data-lucide="layout-dashboard"></i><span>Workspace</span></a>
+        <a href="#" class="menu-item" data-target="panel-projects"><i data-lucide="target"></i><span>Projects</span></a>
+        <a href="#" class="menu-item" data-target="panel-insights"><i data-lucide="bar-chart-3"></i><span>Insights</span></a>
+        <a href="#" class="menu-item" data-target="panel-teammates"><i data-lucide="users"></i><span>Teammates</span></a>
+        <a href="#" class="menu-item" data-target="panel-calendar"><i data-lucide="calendar-days"></i><span>Calendar</span></a>
+        <a href="#" class="menu-item" data-target="panel-skillrecord"><i data-lucide="badge-check"></i><span>SkillRecord</span></a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-shell">
+      <!-- Top Navbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="mobile-menu" id="mobileMenu">☰</div>
+          <div class="role-badge" id="topbarRoleBadge">Enterprise Simulation</div>
+          <div class="day-badge" id="topbarDayBadge">Phase 1 of 5</div>
+        </div>
+
+        <div class="topbar-center">
+
+
+          <div class="pressure-meter medium" id="pressureMeter" style="cursor: pointer; user-select: none;" title="Click to toggle simulation pressure">
+            <span class="dot"></span>
+            <span id="pressureText">Pressure: Medium</span>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="autosave" id="autoSaveBtn" style="cursor: pointer; user-select: none;" title="Click to manually save">● Auto Saved</div>
+          <button class="crisis-alert-btn hidden" id="crisisAlertBtn" title="New Crisis Event!">
+            <i data-lucide="alert-triangle"></i>
+          </button>
+
+          <button class="exit-btn">Exit Simulation</button>
+          <div class="avatar">R</div>
+        </div>
+      </header>
+
+      <!-- Dashboard Layout -->
+      <main class="dashboard">
+        <!-- Center Content -->
+        <section class="center-panel">
+          <!-- Workspace Panel -->
+          <div id="panel-workspace" class="view-panel active">
+            
+
+
+
+          <!-- High Priority Task card -->
+          <div class="card task-card">
+            <div class="task-top">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                  <div style="width: 28px; height: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=AC&backgroundColor=1e3a8a" alt="Acme Corp Logo" style="width: 20px; height: 20px; border-radius: 4px;">
+                  </div>
+                  <span style="font-size: 14px; font-weight: 700; color: #0f172a;">Acme Corp</span>
+                </div>
+                <p class="mini-label">HIGH PRIORITY</p>
+                <h2>Critical Security Patch & Architecture Audit</h2>
+                <p class="task-desc">
+                  A high-severity vulnerability has been found in the legacy service. We need a rapid pivot. Re-allocate resources immediately to hit the release window.
+                </p>
+              </div>
+              <div class="difficulty">High Pressure</div>
+            </div>
+
+            <div class="task-meta">
+              <div class="meta-box">
+                <span>Estimated Time</span>
+                <strong>10 mins</strong>
+              </div>
+              <div class="meta-box">
+                <span>Deadline</span>
+                <strong>15m left</strong>
+              </div>
+              <div class="meta-box">
+                <span>Priority</span>
+                <strong>P0 Critical</strong>
+              </div>
+            </div>
+
+            <div class="task-actions">
+              <button class="primary-btn" id="authSkillBtn">Authenticate Skill to Proceed</button>
+              <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
+                <option value="" disabled selected>Open with...</option>
+                <option value="vscode">VS Code Remote</option>
+                <option value="codespaces">GitHub Codespaces</option>
+                <option value="jupyter">JupyterLab</option>
+                <option value="tableau">Tableau Server</option>
+                <option value="figma">Figma</option>
+                <option value="jira">Jira / Notion</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Task card -->
+          <div class="card task-card">
+            <div class="task-top">
+              <div>
+                <p class="mini-label">CURRENT TASK</p>
+                <h2>Launch New Feature for Mobile Users</h2>
+                <p class="task-desc">
+                  Build product strategy for growth and retention. Define user pain points,
+                  prioritize top 3 features, and suggest primary growth metrics.
+                </p>
+              </div>
+              <div class="difficulty">Medium</div>
+            </div>
+
+            <div class="task-meta">
+              <div class="meta-box">
+                <span>Estimated Time</span>
+                <strong>30 mins</strong>
+              </div>
+              <div class="meta-box">
+                <span>Deadline</span>
+                <strong>1h 58m left</strong>
+              </div>
+              <div class="meta-box">
+                <span>Priority</span>
+                <strong>High Impact</strong>
+              </div>
+            </div>
+
+            <div class="requirement-list">
+              <div class="req">✓ Define user pain points</div>
+              <div class="req">✓ Prioritize top 3 features</div>
+              <div class="req">✓ Suggest primary growth metrics</div>
+            </div>
+
+            <div class="task-actions">
+              <button class="primary-btn">Start Task</button>
+              <button class="secondary-btn">Continue</button>
+              <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
+                <option value="" disabled selected>Open with...</option>
+                <option value="vscode">VS Code Remote</option>
+                <option value="codespaces">GitHub Codespaces</option>
+                <option value="jupyter">JupyterLab</option>
+                <option value="tableau">Tableau Server</option>
+                <option value="figma">Figma</option>
+                <option value="jira">Jira / Notion</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Low Pressure Task card -->
+          <div class="card task-card">
+            <div class="task-top">
+              <div>
+                <p class="mini-label">BACKLOG TASK</p>
+                <h2>Update Documentation & Code Comments</h2>
+                <p class="task-desc">
+                  Review the recent API changes and ensure the internal developer docs are fully up to date. No rush on this, but it's good housekeeping.
+                </p>
+              </div>
+              <div class="difficulty">Low Pressure</div>
+            </div>
+
+            <div class="task-meta">
+              <div class="meta-box">
+                <span>Estimated Time</span>
+                <strong>45 mins</strong>
+              </div>
+              <div class="meta-box">
+                <span>Deadline</span>
+                <strong>End of Week</strong>
+              </div>
+              <div class="meta-box">
+                <span>Priority</span>
+                <strong>Low</strong>
+              </div>
+            </div>
+
+            <div class="task-actions">
+              <button class="secondary-btn">Start When Ready</button>
+              <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
+                <option value="" disabled selected>Open with...</option>
+                <option value="vscode">VS Code Remote</option>
+                <option value="codespaces">GitHub Codespaces</option>
+                <option value="jupyter">JupyterLab</option>
+                <option value="tableau">Tableau Server</option>
+                <option value="figma">Figma</option>
+                <option value="jira">Jira / Notion</option>
+              </select>
+            </div>
+          </div>
+
+
+          <!-- Teammate Feed (Moved from Right Panel) -->
+          <div class="card teammate-card horizontal-feed" style="margin-top: 24px;">
+            <div class="section-title-row">
+              <h3>Teammate Feed</h3>
+              <span class="live-dot">LIVE</span>
+            </div>
+            <div class="team-feed horizontal">
+              <div class="feed-item">
+                <span><i data-lucide="code" class="icon-sm"></i> Engineer</span>
+                <p>Need final specs.</p>
+              </div>
+              <div class="feed-item">
+                <span><i data-lucide="pen-tool" class="icon-sm"></i> Designer</span>
+                <p>Retention metric missing.</p>
+              </div>
+              <div class="feed-item">
+                <span><i data-lucide="bar-chart" class="icon-sm"></i> Analyst</span>
+                <p>Activation data looks strong.</p>
+              </div>
+              <div class="feed-item">
+                <span><i data-lucide="megaphone" class="icon-sm"></i> Marketing</span>
+                <p>Launch assets ready.</p>
+              </div>
+            </div>
+          </div>
+
+          </div><!-- End panel-workspace -->
+
+          <!-- Dynamic Placeholders for SPA Navigation -->
+          
+          <!-- PROJECTS PANEL -->
+          <div id="panel-projects" class="view-panel hidden">
+            <!-- ACTIVE COLLABORATIVE PROJECTS -->
+            <div class="section-title-row" style="margin-top: 10px;">
+              <h3>Active Collaborative Projects</h3>
+              <span class="section-sub">Live company tasks for cross-functional teams</span>
+            </div>
+
+            <!-- AI Suggestion Section -->
+            <div class="suggestion-card card" style="margin-bottom: 28px;">
+              <div class="sugg-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div class="ai-sparkle" style="color: #8b5cf6; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px;"><i data-lucide="sparkles" class="icon-sm"></i> AI Suggested</div>
+                <h4 style="color: #475569; font-weight: 500; font-size: 14px;">Based on your React & System Design skills</h4>
+              </div>
+              <div class="project-card highlight-project">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" style="height: 26px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Build a Real-time Fraud Detection Dashboard</h3>
+                <p class="proj-desc">Join a cross-functional team to build a high-throughput dashboard for monitoring transaction anomalies.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag fullstack">Fullstack Developer</span>
+                    <span class="role-tag data">Data Analytics</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="users" class="icon-sm"></i> 3/4 Students
+                  </div>
+                </div>
+                <button class="primary-btn full-width">Apply to Join Team</button>
+              </div>
+            </div>
+
+            <div class="section-title-row" style="margin-top: 30px;">
+              <h3>5-Day Real-Time Experience</h3>
+              <span class="section-sub">Immersive 5-day sprints simulating real company environments</span>
+            </div>
+
+            <div class="project-grid" style="margin-bottom: 40px;">
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" style="height: 26px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status" style="color: var(--blue); font-weight: 600;">★ Premium Sprint</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Search Infrastructure Scale-up</h3>
+                <p class="proj-desc">A 5-day immersive project scaling distributed databases to handle a sudden 10x traffic spike.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag backend" style="background: #e0f2fe; color: #0284c7;">Cloud Infrastructure</span>
+                    <span class="role-tag fullstack" style="background: #f1f5f9; color: #475569;">DevOps</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="clock" class="icon-sm"></i> 5 Days
+                  </div>
+                </div>
+                <button class="primary-btn full-width">Start 5-Day Sprint</button>
+              </div>
+
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg" alt="Microsoft" style="height: 24px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status" style="color: var(--blue); font-weight: 600;">★ Premium Sprint</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">AI Copilot Integration</h3>
+                <p class="proj-desc">A 5-day simulation embedding an LLM Copilot into a legacy enterprise application.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag fullstack" style="background: #fef08a; color: #854d0e;">AI Engineering</span>
+                    <span class="role-tag frontend" style="background: #dcfce7; color: #166534;">Frontend</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="clock" class="icon-sm"></i> 5 Days
+                  </div>
+                </div>
+                <button class="primary-btn full-width">Start 5-Day Sprint</button>
+              </div>
+            </div>
+
+            <div class="section-title-row">
+              <h3>Explore Open Projects</h3>
+            </div>
+
+            <div class="project-grid" style="margin-bottom: 40px;">
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg" alt="Airbnb" style="height: 28px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Optimize Search Ranking Algorithm</h3>
+                <p class="proj-desc">Analyze user booking patterns and deploy a new ranking model to improve conversion rates.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag backend">Backend Engineer</span>
+                    <span class="role-tag data">Data Analytics</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="users" class="icon-sm"></i> 1/3 Students
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary-btn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="secondary-btn" style="flex: 1;">View Details</button>
+                </div>
+              </div>
+
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="Uber" style="height: 22px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Surge Pricing API Refactor</h3>
+                <p class="proj-desc">Migrate legacy surge logic to a highly scalable microservice handling 10k requests/sec.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag backend">Backend Engineer</span>
+                    <span class="role-tag fullstack">Fullstack Developer</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="users" class="icon-sm"></i> 2/4 Students
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary-btn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="secondary-btn" style="flex: 1;">View Details</button>
+                </div>
+              </div>
+              
+              <!-- New Tasks Added -->
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" style="height: 20px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Video Encoding Pipeline</h3>
+                <p class="proj-desc">Reduce latency in the encoding pipeline by implementing distributed cloud workers.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag backend">Backend Engineer</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="users" class="icon-sm"></i> 0/2 Students
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary-btn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="secondary-btn" style="flex: 1;">View Details</button>
+                </div>
+              </div>
+
+              <div class="project-card" id="spotifyCard">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg" alt="Spotify" style="height: 24px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">Personalized Playlist Generator</h3>
+                <p class="proj-desc">Train a deep learning model to recommend obscure tracks based on listening history.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag data">Data Analytics</span>
+                    <span class="role-tag backend">Backend</span>
+                  </div>
+                  <div class="collab-status" id="spotifyTeamCount">
+                    <i data-lucide="users" class="icon-sm"></i> 1/4 Students
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary-btn" id="spotifyStartBtn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="secondary-btn" style="flex: 1;">View Details</button>
+                </div>
+              </div>
+
+              <div class="project-card">
+                <div class="proj-header" style="align-items: center;">
+                  <div class="proj-title-wrap" style="flex-direction: row; align-items: center; gap: 12px; width: 100%;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg" alt="Meta" style="height: 18px; object-fit: contain; margin-right: auto;">
+                    <span class="proj-status active">● Active</span>
+                  </div>
+                </div>
+                <h3 class="proj-title">VR Horizon World Integration</h3>
+                <p class="proj-desc">Develop frontend interfaces for the new virtual economy marketplace inside Horizon.</p>
+                <div class="proj-meta">
+                  <div class="role-tags">
+                    <span class="role-tag fullstack">Fullstack Developer</span>
+                  </div>
+                  <div class="collab-status">
+                    <i data-lucide="users" class="icon-sm"></i> 4/5 Students
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="primary-btn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="secondary-btn" style="flex: 1;">View Details</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="panel-messages" class="view-panel hidden">
+            <div class="card">
+              <div class="section-title-row">
+                <h3>Messages</h3>
+              </div>
+              <div class="placeholder-box">Inbox is empty. No new messages.</div>
+            </div>
+          </div>
+
+          <div id="panel-teammates" class="view-panel hidden">
+            <div class="section-title-row">
+              <h3>Team Command Center</h3>
+              <span class="section-sub">Manage collaboration & shared tasks</span>
+            </div>
+            
+            <div class="team-grid">
+              <!-- Left Col: Score & Crisis -->
+              <div class="team-left">
+                <div class="card collab-score-card">
+                  <h4>Collaboration Score</h4>
+                  <div class="score-circle">
+                    <svg viewBox="0 0 36 36" class="circular-chart blue">
+                      <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path class="circle" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="score-text">92%</div>
+                  </div>
+                  <p>High synergy. Team is aligned.</p>
+                </div>
+                
+                <div class="card crisis-banner">
+                  <h4>Active Crisis Events</h4>
+                  <div class="crisis-item">
+                    <span class="indicator red"></span>
+                    <div>
+                      <strong>Engineering Delay</strong>
+                      <p>Mike flagged a 3-week delay.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Col: Kanban -->
+              <div class="card kanban-card">
+                <h4>Shared Task Board</h4>
+                <div class="kanban-board">
+                  <div class="kanban-col">
+                    <div class="col-head">To Do</div>
+                    <div class="k-task">
+                      <p>Finalize growth metrics</p>
+                      <div class="k-meta"><span class="role pm">PM</span></div>
+                    </div>
+                  </div>
+                  <div class="kanban-col">
+                    <div class="col-head">In Progress</div>
+                    <div class="k-task active">
+                      <p>High-fidelity Wires</p>
+                      <div class="k-meta"><span class="role des">Design</span><small>Sarah</small></div>
+                    </div>
+                  </div>
+                  <div class="kanban-col">
+                    <div class="col-head">Done</div>
+                    <div class="k-task completed">
+                      <p>DB Schema Review</p>
+                      <div class="k-meta"><span class="role dev">Dev</span><small>Mike</small></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="coop-room card">
+              <div class="coop-avatars">
+                <div class="coop-user"><div class="avatar pm">Y</div><span>You (PM)</span></div>
+                <div class="coop-user"><div class="avatar des">S</div><span>Sarah (Design)</span><span class="status online"></span></div>
+                <div class="coop-user"><div class="avatar dev">M</div><span>Mike (Dev)</span><span class="status online"></span></div>
+                <div class="coop-user"><div class="avatar ana">A</div><span>Alex (Data)</span><span class="status online"></span></div>
+              </div>
+              <div class="coop-chat">
+                <div class="chat-history" id="teamChatHistory">
+                  <div class="chat-msg"><strong>Sarah:</strong> I've moved the wires to In Progress on the board.</div>
+                  <div class="chat-msg"><strong>Mike:</strong> I added the engineering huddle to the calendar for 2 PM.</div>
+                </div>
+                <div class="chat-input-row">
+                  <input type="text" id="teamChatInput" placeholder="Type to your live team..." class="coop-input" />
+                  <button id="teamChatSend" class="primary-btn small">Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="panel-calendar" class="view-panel hidden">
+            <div class="section-title-row">
+              <h3>Simulation Schedule</h3>
+              <span class="section-sub">Live events based on AI teammate actions</span>
+            </div>
+            <div class="calendar-card card">
+              <div class="cal-header">
+                <button class="icon-btn">◀</button>
+                <h4>Day 2 of Simulation</h4>
+                <button class="icon-btn">▶</button>
+              </div>
+              <div class="cal-timeline">
+                <!-- Event 1 -->
+                <div class="cal-event premium-event">
+                  <div class="event-time-col">
+                    <span class="time">09:00 AM</span>
+                  </div>
+                  <div class="event-details user">
+                    <div class="event-header-row">
+                      <h5>PM Strategy Sync</h5>
+                      <span class="priority-badge high">High</span>
+                    </div>
+                    <div class="event-meta">
+                      <span class="status-indicator online"></span>
+                      <span class="meta-text">You (Available)</span>
+                    </div>
+                    <p>Established the primary product vision and growth metrics.</p>
+                    <div class="progress-wrap">
+                      <div class="progress-bar-track"><div class="progress-bar-fill" style="width: 100%; background: var(--green);"></div></div>
+                      <span class="timeline-progress-text">100%</span>
+                    </div>
+                    <div class="event-expanded-details">
+                      <h6>Meeting Notes</h6>
+                      <ul>
+                        <li>Finalized Q3 OKRs</li>
+                        <li>Aligned with marketing on launch date</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Event 2 -->
+                <div class="cal-event premium-event">
+                  <div class="event-time-col">
+                    <span class="time">10:30 AM</span>
+                  </div>
+                  <div class="event-details ai">
+                    <div class="event-header-row">
+                      <h5>Design Review</h5>
+                      <span class="priority-badge medium">Medium</span>
+                    </div>
+                    <div class="event-meta">
+                      <span class="status-indicator busy"></span>
+                      <span class="meta-text">Sarah (Busy)</span>
+                    </div>
+                    <p>Evaluating wireframes for the new feature dashboard.</p>
+                    <div class="progress-wrap">
+                      <div class="progress-bar-track"><div class="progress-bar-fill" style="width: 85%; background: var(--blue);"></div></div>
+                      <span class="timeline-progress-text">85%</span>
+                    </div>
+                    <div class="event-expanded-details">
+                      <h6>Design Feedback</h6>
+                      <p>Pending final color palette approval from brand team.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Event 3 (Active) -->
+                <div class="cal-event active premium-event">
+                  <div class="event-time-col">
+                    <span class="time">Now</span>
+                  </div>
+                  <div class="event-details">
+                    <div class="event-header-row">
+                      <h5>Execution Block</h5>
+                      <span class="priority-badge high">High</span>
+                    </div>
+                    <div class="event-meta">
+                      <span class="status-indicator online"></span>
+                      <span class="meta-text">You (Available)</span>
+                    </div>
+                    <p>Awaiting final metrics definition to proceed with coding.</p>
+                    <div class="progress-wrap">
+                      <div class="progress-bar-track"><div class="progress-bar-fill pulse" style="width: 30%; background: var(--indigo);"></div></div>
+                      <span class="timeline-progress-text">In Progress</span>
+                    </div>
+                    <div class="event-expanded-details">
+                      <h6>Current Focus</h6>
+                      <ul>
+                        <li>Define core KPIs</li>
+                        <li>Set up tracking database schema</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Event 4 (Future) -->
+                <div class="cal-event future premium-event">
+                  <div class="event-time-col">
+                    <span class="time">02:00 PM</span>
+                  </div>
+                  <div class="event-details ai">
+                    <div class="event-header-row">
+                      <h5>Engineering Huddle</h5>
+                      <span class="priority-badge low">Low</span>
+                    </div>
+                    <div class="event-meta">
+                      <span class="status-indicator offline"></span>
+                      <span class="meta-text">Mike (Offline)</span>
+                    </div>
+                    <p>Technical feasibility check for the new API endpoints.</p>
+                    <div class="progress-wrap">
+                      <div class="progress-bar-track"><div class="progress-bar-fill" style="width: 0%;"></div></div>
+                      <span class="timeline-progress-text">0%</span>
+                    </div>
+                    <div class="event-expanded-details">
+                      <h6>Agenda</h6>
+                      <p>Review rate limits and data payload sizes.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="panel-files" class="view-panel hidden">
+            <div class="card">
+              <div class="section-title-row">
+                <h3>Files</h3>
+              </div>
+              <div class="placeholder-box">Simulation assets and documents.</div>
+            </div>
+          </div>
+
+          <div id="panel-insights" class="view-panel hidden">
+            <div class="section-title-row">
+              <h3>Performance Insights</h3>
+              <span class="section-sub">Detailed breakdown of your performance</span>
+            </div>
+            
+                      <!-- Day tracker -->
+          <div class="card tracker-card">
+            <div class="section-title-row">
+              <h3>Simulation Flow</h3>
+              <span class="section-sub">Live progression</span>
+            </div>
+            <div class="day-tracker">
+              <div class="day-step completed">
+                <span>Day 1</span>
+                <small>Onboard</small>
+              </div>
+              <div class="line completed"></div>
+              <div class="day-step active">
+                <span>Day 2</span>
+                <small>Execute</small>
+              </div>
+              <div class="line"></div>
+              <div class="day-step">
+                <span>Day 3</span>
+                <small>Collaborate</small>
+              </div>
+              <div class="line"></div>
+              <div class="day-step">
+                <span>Day 4</span>
+                <small>Crisis</small>
+              </div>
+              <div class="line"></div>
+              <div class="day-step">
+                <span>Day 5</span>
+                <small>Review</small>
+              </div>
+            </div>
+          </div>
+            
+                      <!-- Smart analytics -->
+          <div class="bottom-analytics">
+            <div class="card timeline-card">
+              <div class="section-title-row">
+                <h3>Decision Timeline</h3>
+                <span class="section-sub">Recent actions</span>
+              </div>
+              <ul class="timeline">
+                <li><span>10:12</span> Prioritized retention</li>
+                <li><span>10:18</span> Reduced scope</li>
+                <li><span>10:25</span> Asked AI hint</li>
+                <li><span>10:32</span> Submitted strategy draft</li>
+              </ul>
+            </div>
+
+            <div class="card heatmap-card">
+              <div class="section-title-row">
+                <h3>Productivity Heatmap</h3>
+                <span class="section-sub">Focus patterns</span>
+              </div>
+              <div class="heatmap-wrapper">
+                <div class="heatmap" id="productivityHeatmap">
+                  <!-- Dynamically populated via JS -->
+                </div>
+              </div>
+            </div>
+
+            <div class="card badges-card">
+              <div class="section-title-row">
+                <h3>Achievements</h3>
+                <span class="section-sub">Unlocked badges</span>
+              </div>
+              <div class="badge-list">
+                <div class="badge-chip"><i data-lucide="timer" class="icon-sm"></i> Fast Thinker</div>
+                <div class="badge-chip"><i data-lucide="list-todo" class="icon-sm"></i> Great Prioritizer</div>
+                <div class="badge-chip"><i data-lucide="message-square" class="icon-sm"></i> Strong Communicator</div>
+                <div class="badge-chip"><i data-lucide="shield-check" class="icon-sm"></i> Crisis Solver</div>
+              </div>
+            </div>
+          </div>
+
+            <div class="collapsible-card">
+              <div class="collapsible-header">
+                <h3>Live Skill Score</h3>
+                <i data-lucide="chevron-down"></i>
+              </div>
+              <div class="collapsible-content">
+                <div class="score-list">
+                  <div class="score-row"><span>Leadership</span><div class="bar"><div id="bar-leadership" style="width:79%"></div></div><strong id="val-leadership">79</strong></div>
+                  <div class="score-row"><span>Problem Solving</span><div class="bar"><div id="bar-problem" style="width:88%"></div></div><strong id="val-problem">88</strong></div>
+                  <div class="score-row"><span>Communication</span><div class="bar"><div id="bar-communication" style="width:84%"></div></div><strong id="val-communication">84</strong></div>
+                  <div class="score-row"><span>Adaptability</span><div class="bar"><div id="bar-adaptability" style="width:91%"></div></div><strong id="val-adaptability">91</strong></div>
+                  <div class="score-row"><span>Execution Speed</span><div class="bar"><div id="bar-execution" style="width:86%"></div></div><strong id="val-execution">86</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="collapsible-card">
+              <div class="collapsible-header">
+                <h3>Behavioral Analytics</h3>
+                <i data-lucide="chevron-down"></i>
+              </div>
+              <div class="collapsible-content">
+                <div class="behavior-grid">
+                  <div class="behavior-box"><span>Thinking Time</span><strong id="statThinking">18m</strong></div>
+                  <div class="behavior-box"><span>Revisions</span><strong id="statRevisions">06</strong></div>
+                  <div class="behavior-box"><span>Confidence</span><strong id="statConfidence">82%</strong></div>
+                  <div class="behavior-box"><span>Prioritization</span><strong id="statPrioritization">Strong</strong></div>
+                  <div class="behavior-box"><span>Collaboration</span><strong id="statCollab">89%</strong></div>
+                  <div class="behavior-box"><span>Consistency</span><strong id="statConsistency">High</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="collapsible-card">
+              <div class="collapsible-header">
+                <h3>Recruiter Preview</h3>
+                <i data-lucide="chevron-down"></i>
+              </div>
+              <div class="collapsible-content">
+                <div class="recruiter-insight">
+                  <h4>Top 7% PM Candidate</h4>
+                  <p>Strong prioritization, high adaptability, and quality decision-making under pressure.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="panel-skillrecord" class="view-panel hidden">
+            <!-- Premium Profile Card Wrapper -->
+            <div class="recruiter-profile-card">
+              
+              <!-- 1. Header / Hero -->
+              <div class="profile-header">
+                <div class="profile-hero-bg"></div>
+                <div class="profile-hero-content">
+                  <div class="profile-avatar-premium">RY</div>
+                  <div class="profile-identity">
+                    <h2>Richa Yadav</h2>
+                    <p class="profile-title">Product Manager Candidate</p>
+                    <p class="profile-location"><i data-lucide="map-pin" class="icon-xs"></i> India &nbsp;|&nbsp; <i data-lucide="graduation-cap" class="icon-xs"></i> Army Institute of Technology, Pune</p>
+                  </div>
+                  <div class="profile-actions">
+                    <button class="primary-btn" id="shareProfileBtn"><i data-lucide="share-2" class="icon-sm"></i> Share Profile</button>
+                    <button class="secondary-btn" id="downloadResumeBtn"><i data-lucide="download" class="icon-sm"></i> Resume</button>
+                    <button class="secondary-btn" id="fullReportBtn"><i data-lucide="file-text" class="icon-sm"></i> Full Report</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. Overall Score & Summary -->
+              <div class="profile-summary-section">
+                <div class="overall-score-box">
+                  <div class="score-ring-container">
+                    <svg class="score-ring" viewBox="0 0 100 100">
+                      <circle class="ring-track" cx="50" cy="50" r="45"></circle>
+                      <circle class="ring-fill" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: 39;"></circle>
+                    </svg>
+                    <div class="score-value">86</div>
+                  </div>
+                  <div class="profile-score-text">
+                    <h4>Overall Skill Score</h4>
+                    <div class="score-tags">
+                      <span class="badge top-tier"><i data-lucide="award" class="icon-xs"></i> Top 7% Candidate</span>
+                      <span class="subtitle">Future Product Leader</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="professional-summary">
+                  <h4>Professional Summary</h4>
+                  <p>Strong in prioritization, structured thinking, leadership, communication, and execution under pressure. Demonstrated ability to navigate ambiguous product requirements and drive engineering alignment.</p>
+                </div>
+              </div>
+
+              <!-- 3. Skill Matrix -->
+              <div class="profile-skills-matrix">
+                <h4>Verified Core Competencies</h4>
+                <div class="skills-grid">
+                  <div class="skill-row"><div class="skill-info"><span>Product Strategy</span><strong>88</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 88%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Leadership</span><strong>91</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 91%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Communication</span><strong>84</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 84%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Execution</span><strong>79</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 79%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Problem Solving</span><strong>85</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 85%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Decision Making</span><strong>82</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 82%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>User Empathy</span><strong>90</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 90%;"></div></div></div>
+                  <div class="skill-row"><div class="skill-info"><span>Prioritization</span><strong>87</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 87%;"></div></div></div>
+                </div>
+              </div>
+
+              <!-- 4. Achievements & Recommendations -->
+              <div class="profile-bottom-section">
+                <div class="achievements-area">
+                  <h4>Milestones & Certifications</h4>
+                  <div class="badges-row">
+                    <div class="ach-badge"><i data-lucide="check-circle" class="icon-sm"></i> Completed PM Simulation</div>
+                    <div class="ach-badge gold"><i data-lucide="star" class="icon-sm"></i> Top 7% Among Candidates</div>
+                    <div class="ach-badge"><i data-lucide="shield-alert" class="icon-sm"></i> Crisis Handling Certified</div>
+                    <div class="ach-badge"><i data-lucide="zap" class="icon-sm"></i> Execution Excellence</div>
+                  </div>
+                </div>
+                <div class="recommendations-area">
+                  <h4>Ideal Role Fit</h4>
+                  <div class="roles-row">
+                    <span class="role-tag">Associate Product Manager</span>
+                    <span class="role-tag">Growth PM Intern</span>
+                    <span class="role-tag">Business Analyst</span>
+                    <span class="role-tag">Founder's Office</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Verification Footer -->
+              <div class="profile-footer">
+                <div class="trust-stamp">
+                  <div class="stamp-icon"><i data-lucide="shield-check"></i></div>
+                  <div class="stamp-details">
+                    <strong>AI Verified Skill Assessment</strong>
+                    <p>Issued by DayZero Simulation OS • Assessment Date: April 2026</p>
+                  </div>
+                </div>
+                <a href="#" class="public-link">dayzero.ai/richa-yadav</a>
+              </div>
+
+            </div>
+          </div>
+
+          <div id="panel-leaderboard" class="view-panel hidden">
+            <div class="section-title-row">
+              <h3>Global Leaderboard</h3>
+              <span class="section-sub">Top 100 PM Candidates</span>
+            </div>
+            <div class="leaderboard-table card">
+              <div class="lb-row header">
+                <span>Rank</span><span>Candidate</span><span>Top Skill</span><span>Percentile</span>
+              </div>
+              <div class="lb-row">
+                <span>#1</span><span>Alex M.</span><span>Strategy</span><span class="lb-green">99.9%</span>
+              </div>
+              <div class="lb-row">
+                <span>#2</span><span>Sarah K.</span><span>Leadership</span><span class="lb-green">99.5%</span>
+              </div>
+              <div class="lb-row highlight">
+                <span>#32</span><span>You</span><span>Adaptability</span><span class="lb-blue">92.0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="panel-achievements" class="view-panel hidden">
+            <div class="card">
+              <div class="section-title-row">
+                <h3>Achievements</h3>
+              </div>
+              <div class="placeholder-box">All your unlocked badges and honors.</div>
+            </div>
+          </div>
+
+          <div id="panel-settings" class="view-panel hidden">
+            <div class="card">
+              <div class="section-title-row">
+                <h3>Settings</h3>
+              </div>
+              <div class="placeholder-box">Simulation and account preferences.</div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+          <div class="nova-card">
+            <!-- Header -->
+            <div class="nova-header">
+              <div class="nova-header-left">
+                <div class="nova-avatar-wrap">
+                  <div class="nova-avatar-glow"></div>
+                  <div class="nova-avatar">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova&backgroundColor=4f46e5" alt="Nova" width="36" height="36" style="border-radius:10px;">
+                  </div>
+                  <div class="nova-status-dot"></div>
+                </div>
+                <div class="nova-title-wrap">
+                  <h3>Nova</h3>
+                  <span class="nova-subtitle">Strategic Advisor</span>
+                </div>
+              </div>
+              <div class="nova-header-right">
+                <select id="managerStyleSelect" class="nova-dropdown">
+                  <option selected>Supportive</option>
+                  <option>Mentor</option>
+                  <option>Founder</option>
+                  <option>Consultant</option>
+                  <option>Aggressive PM</option>
+                </select>
+                <button class="icon-btn muted"><i data-lucide="settings" class="icon-sm"></i></button>
+              </div>
+            </div>
+
+            <!-- Smart Widgets -->
+            <div class="nova-widgets">
+              <div class="n-widget">
+                <i data-lucide="shield-check" class="icon-xs" style="color:#10b981;"></i> Trust Score: <strong>94%</strong>
+              </div>
+              <div class="n-widget">
+                <i data-lucide="zap" class="icon-xs" style="color:#f59e0b;"></i> Confidence: <strong>High</strong>
+              </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="nova-msgs" id="managerMsgs">
+              <div class="nova-msg-card hint">
+                <div class="msg-icon"><i data-lucide="shield-check" class="icon-sm" style="color: var(--green);"></i></div>
+                <div class="msg-content">
+                  <p><strong>System Online:</strong> Tracking live behavioral inputs and identifying skill gaps.</p>
+                </div>
+              </div>
+              <div class="nova-msg-card approval">
+                <div class="msg-icon"><i data-lucide="zap" class="icon-sm" style="color: var(--yellow);"></i></div>
+                <div class="msg-content">
+                  <p>Simulation active. Ready to assist with strategic planning.</p>
+                </div>
+              </div>
+              <div class="nova-typing hidden" id="typingIndicator">
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+                <span class="typing-text">Nova is thinking...</span>
+              </div>
+            </div>
+
+            <!-- Action Chips -->
+            <div class="nova-actions-wrap">
+              <div class="manager-actions nova-actions" id="managerActionsContainer">
+                <button class="nova-chip">Clarify Goal</button>
+                <button class="nova-chip">Build Strategy</button>
+                <button class="nova-chip">Prioritize Tasks</button>
+                <button class="nova-chip">Ask Hint</button>
+                <button class="nova-chip">Reduce Scope</button>
+              </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="nova-input-bar">
+              <button class="icon-btn muted"><i data-lucide="paperclip" class="icon-sm"></i></button>
+              <input type="text" id="aiManagerInput" placeholder="Ask Nova anything..." class="nova-input" />
+              <button class="icon-btn muted"><i data-lucide="mic" class="icon-sm"></i></button>
+              <button id="aiManagerSendBtn" class="nova-send-btn"><i data-lucide="arrow-up" class="icon-sm"></i></button>
+            </div>
+          </div>
+
+        </aside>
+      </main>
+
+      <!-- Submission bar -->
+      <div class="submission-bar">
+        <div class="submission-actions">
+          <button class="secondary-btn icon-text-btn"><i data-lucide="save" class="icon-sm"></i> Save Draft</button>
+          <button class="secondary-btn icon-text-btn" id="requestHintBtn"><i data-lucide="lightbulb" class="icon-sm"></i> Request Hint</button>
+          <button class="secondary-btn icon-text-btn" id="askAiMentorBtn"><i data-lucide="message-square" class="icon-sm"></i> Ask AI Mentor</button>
+          <button class="primary-btn submit-action-btn" id="submitBtn">Submit Work <i data-lucide="arrow-right" class="icon-sm"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome Popup -->
+  <div class="crisis-popup hidden" id="welcomePopup">
+    <div class="crisis-card" style="border: 2px solid var(--blue); max-width: 500px;">
+      <div class="crisis-header" style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+        <span style="color: var(--blue); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="info"></i> WELCOME TO DAYZERO
+        </span>
+        <button id="closeWelcome">✕</button>
+      </div>
+      <h3>Simulation OS Overview</h3>
+      <p style="color: var(--subtext); margin-bottom: 20px; line-height: 1.6;">
+        You are in a <strong>Product Manager Simulation</strong>. This dashboard evaluates your skills in real-time as you handle mock crises, manage team tasks, and interact with your AI Manager (Nova).
+        <br><br>
+        <strong>Your Goal:</strong> Complete tasks, maintain high team collaboration, and make quick decisions under pressure to earn a top Candidate Score.
+      </p>
+      
+      <div style="text-align: right;">
+        <button class="primary-btn" id="startSimBtn" style="width: 100%;">Start Simulation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Crisis Popup -->
+  <div class="crisis-popup hidden" id="crisisPopup">
+    <div class="crisis-card">
+      <div class="crisis-header">
+        <span>🚨 LIVE CRISIS EVENT</span>
+        <button id="closePopup">✕</button>
+      </div>
+      <h3 id="crisisTitle">Engineering delayed release</h3>
+      <p id="crisisDesc">A core dependency is delayed. Choose your response quickly.</p>
+      <div class="crisis-options">
+        <button class="secondary-btn crisis-option">Reduce scope</button>
+        <button class="secondary-btn crisis-option">Delay launch</button>
+        <button class="primary-btn crisis-option">Reprioritize MVP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Interview Overlay -->
+  <div class="crisis-popup hidden" id="interviewPopup">
+    <div class="crisis-card interview-card">
+      <div class="crisis-header">
+        <span>🎙️ LIVE AI INTERVIEW</span>
+        <button id="closeInterview">✕</button>
+      </div>
+      <div class="interview-content">
+        <div class="interviewer-avatar">AI</div>
+        <div class="interview-bubble">
+          <p>Great job on the simulation. I noticed you chose to prioritize retention over acquisition when the budget was cut. <strong>Can you explain your reasoning?</strong></p>
+        </div>
+      </div>
+      <div class="interview-actions" id="interviewActions">
+        <button class="secondary-btn" id="startVoiceBtn">Start Voice Recording</button>
+        <button class="primary-btn">Type Response</button>
+      </div>
+
+      <div class="recording-state hidden" id="recordingState" style="text-align: center; padding: 16px 0;">
+        <div class="waveform-container" style="display: flex; justify-content: center; gap: 4px; height: 30px; margin-bottom: 12px; align-items: center;">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+        <p id="recordingStatus" style="font-weight: 600; color: var(--red); margin-bottom: 12px;">🔴 Recording... <span id="recordTimer">00:00</span></p>
+        <button class="primary-btn pulse-red" id="stopVoiceBtn" style="background: var(--red); border-color: var(--red);">Stop & Submit</button>
+      </div>
+
+      <div class="analysis-state hidden" id="analysisState" style="text-align: center; padding: 20px 0;">
+        <div id="analysisIcon" style="margin-bottom: 12px;">
+          <i data-lucide="cpu" class="icon-lg pulse" style="color: var(--indigo);"></i>
+        </div>
+        <p id="analysisStatus" style="font-weight: 600;">Analyzing voice signature for AI generation...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast hidden" id="toast">Submission successful. Score updated.</div>
+
+  <!-- Skill Authentication Modal -->
+  <div class="crisis-popup hidden" id="authModal">
+    <div class="crisis-card auth-modal" style="border: 2px solid var(--indigo);">
+      <div class="crisis-header" style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
+        <span style="color: var(--indigo); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+          <i data-lucide="shield-check"></i> SKILL AUTHENTICATION
+        </span>
+        <button id="closeAuthModal">✕</button>
+      </div>
+      <h3>Rapid Prioritization Challenge</h3>
+      <p style="color: var(--subtext); margin-bottom: 20px;">To verify your execution speed, select the top 2 items to address before the server freeze in exactly <strong id="authTimer" style="color: var(--red); font-size: 18px;">60s</strong>.</p>
+      
+      <div class="auth-challenge-grid" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+        <label class="auth-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" class="auth-cb"> Patch Auth Token Leak <em style="color: var(--subtext);">(Security)</em>
+        </label>
+        <label class="auth-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" class="auth-cb"> Update Landing Page Copy <em style="color: var(--subtext);">(Marketing)</em>
+        </label>
+        <label class="auth-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" class="auth-cb"> Fix Payment Gateway Timeout <em style="color: var(--subtext);">(Revenue)</em>
+        </label>
+        <label class="auth-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">
+          <input type="checkbox" class="auth-cb"> Change Button Color <em style="color: var(--subtext);">(Design)</em>
+        </label>
+      </div>
+
+      <div style="margin-top: 24px; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+        <span id="authStatus" style="font-size: 13px; font-weight: 600;">Select exactly 2</span>
+        <button class="primary-btn" id="submitAuthBtn" disabled style="opacity: 0.5;">Submit Verification</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
