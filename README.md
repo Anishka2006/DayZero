@@ -127,16 +127,6 @@ python app.py
 Open `index.html` or `roles.html` in browser
 
 ---
-
-## 🔐 Environment Variables
-
-Create a `.env` file:
-
-```env
-GROQ_API_KEY=your_api_key_here
-```
-
----
 ## 🌟 Future Vision
 
 DayZero aims to:
