@@ -52,6 +52,79 @@ def chat():
         return jsonify(response.json())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/submit-task", methods=["POST"])
+def submit_task():
+    data = request.json
+    submission = data.get("submission", "")
+    role = data.get("role", "Frontend")
+
+    system_prompt = f"""
+    You are a senior engineering manager.
+    Evaluate this {role} submission.
+
+    Give:
+    1. Score out of 100
+    2. Short feedback
+    """
+
+    payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": submission}
+        ]
+    }
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=payload
+    )
+
+    result = response.json()["choices"][0]["message"]["content"]
+
+    return jsonify({
+        "score": 90,  # You can improve parsing later
+        "feedback": result
+    })
+
+@app.route("/start-simulation", methods=["POST"])
+def start_simulation():
+    data = request.json
+    role = data.get("role", "Frontend")
+
+    system_prompt = f"""
+    You are an AI Manager in a tech company.
+    Assign a realistic first-day task to a {role} developer.
+    Keep it short and practical.
+    """
+
+    payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Give my first task"}
+        ]
+    }
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=payload
+    )
+
+    task = response.json()["choices"][0]["message"]["content"]
+
+    return jsonify({"task": task})
+
+        
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

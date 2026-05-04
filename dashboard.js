@@ -12,10 +12,41 @@ const crisisPopup = document.getElementById("crisisPopup");
 const closePopup = document.getElementById("closePopup");
 const crisisOptions = document.querySelectorAll(".crisis-option");
 const toast = document.getElementById("toast");
-const submitBtn = document.getElementById("submitBtn");
+if (submitBtn) {
+  submitBtn.addEventListener("click", () => {
+    const role = localStorage.getItem("userRole") || "Frontend";
 
+    // Get submission text (adjust selector if needed)
+    const submissionInput = document.querySelector("textarea");
+    const submission = submissionInput ? submissionInput.value : "No input";
 
+    fetch("http://127.0.0.1:5000/submit-task", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        submission: submission,
+        role: role
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      localStorage.setItem("lastScore", data.score);
+      localStorage.setItem("feedback", data.feedback);
 
+      showToast("AI Evaluation Complete ✅");
+
+      setTimeout(() => {
+        window.location.href = "results.html";
+      }, 1500);
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("Error submitting work ❌");
+    });
+  });
+}
 
 if (collapseBtn) {
   collapseBtn.addEventListener("click", () => {
@@ -578,6 +609,28 @@ if (focusToggle) {
       if (rightPanel) rightPanel.style.display = "";
     }
   });
+
+  // LOAD TASK FROM BACKEND
+document.addEventListener("DOMContentLoaded", () => {
+  const role = localStorage.getItem("userRole");
+
+  if (role) {
+    fetch("http://127.0.0.1:5000/start-simulation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ role: role })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const taskElement = document.querySelector(".task-desc");
+      if (taskElement) {
+        taskElement.innerText = data.task;
+      }
+    });
+  }
+});
 }
 
 // Collapsible Cards Logic

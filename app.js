@@ -416,14 +416,20 @@ if (res.ok) {
 }
 
 function selectRole(role) {
-    // 1. Save the role in the browser's memory
-    localStorage.setItem('userRole', role);
-    
-    // 2. Alert the user (optional)
-    alert("Role selected: " + role + ". Initializing your manager...");
-    
-    // 3. Send them to the dashboard
-    window.location.href = "dashboard.html";
+    localStorage.setItem("userRole", role);
+
+    fetch("http://127.0.0.1:5000/start-simulation", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ role: role })
+    })
+    .then(res => res.json())
+    .then(data => {
+        localStorage.setItem("task", data.task);
+        window.location.href = "dashboard.html";
+    });
 }
 
 function finishSimulation() {
