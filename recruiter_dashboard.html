@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero — Recruiter Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fc;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --border2: #cbd5e1;
+      --text: #0f172a;
+      --subtext: #64748b;
+      --hint: #94a3b8;
+      --blue: #3b82f6;
+      --blue-bg: #eff6ff;
+      --blue-text: #1d4ed8;
+      --indigo: #6366f1;
+      --indigo-bg: #eef2ff;
+      --green: #10b981;
+      --green-bg: #ecfdf5;
+      --green-text: #065f46;
+      --amber: #f59e0b;
+      --amber-bg: #fffbeb;
+      --amber-text: #92400e;
+      --red: #ef4444;
+      --red-bg: #fef2f2;
+      --red-text: #991b1b;
+      --purple: #8b5cf6;
+      --purple-bg: #f5f3ff;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    body {
+      font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── LAYOUT ─── */
+    .app { display: flex; min-height: 100vh; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 14px; letter-spacing: -0.5px;
+    }
+    .logo-text h2 { font-size: 15px; font-weight: 700; color: var(--text); }
+    .logo-text p { font-size: 11px; color: var(--subtext); }
+
+    .sidebar-section { padding: 0 10px; margin-bottom: 6px; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 700; color: var(--hint);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0 8px; margin-bottom: 4px; margin-top: 12px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 8px;
+      color: var(--subtext); font-size: 13.5px; font-weight: 500;
+      text-decoration: none; cursor: pointer; transition: all 0.15s;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--indigo-bg); color: var(--indigo); }
+    .nav-item i { width: 16px; height: 16px; flex-shrink: 0; }
+    .nav-badge {
+      margin-left: auto; background: var(--red); color: white;
+      font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px;
+    }
+    .nav-badge.blue { background: var(--blue); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .recruiter-info { display: flex; align-items: center; gap: 10px; }
+    .rec-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, #1e3a8a, #6366f1);
+      color: white; font-weight: 700; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .rec-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .rec-role { font-size: 11px; color: var(--subtext); }
+
+    /* ─── MAIN ─── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 58px;
+      display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .topbar-sub { font-size: 13px; color: var(--subtext); }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .topbar-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border2); background: var(--surface); color: var(--text);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .topbar-btn:hover { background: var(--surface2); }
+    .topbar-btn.primary { background: var(--indigo); color: white; border-color: var(--indigo); }
+    .topbar-btn.primary:hover { background: #4f46e5; }
+    .project-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 12px; border-radius: 20px;
+      background: var(--indigo-bg); border: 1px solid #c7d2fe;
+    }
+    .project-badge img { height: 18px; object-fit: contain; }
+    .project-badge span { font-size: 12px; font-weight: 700; color: var(--indigo); }
+
+    /* ─── CONTENT ─── */
+    .content { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+    /* ─── STAT CARDS ─── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--subtext); font-weight: 500; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+    .stat-change {
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 3px;
+    }
+    .stat-change.up { color: var(--green); }
+    .stat-change.down { color: var(--red); }
+    .stat-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .stat-icon.blue { background: var(--blue-bg); color: var(--blue); }
+    .stat-icon.green { background: var(--green-bg); color: var(--green); }
+    .stat-icon.amber { background: var(--amber-bg); color: var(--amber); }
+    .stat-icon.purple { background: var(--purple-bg); color: var(--purple); }
+
+    /* ─── GRID LAYOUT ─── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; margin-bottom: 18px; }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .card-sub { font-size: 12px; color: var(--subtext); margin-top: 1px; }
+    .card-body { padding: 16px 20px; }
+    .card-action {
+      font-size: 12px; font-weight: 600; color: var(--indigo);
+      background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ─── CANDIDATE TABLE ─── */
+    .candidates-table { width: 100%; border-collapse: collapse; }
+    .candidates-table th {
+      font-size: 11px; font-weight: 700; color: var(--hint);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 10px 16px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .candidates-table td {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      font-size: 13px; vertical-align: middle;
+    }
+    .candidates-table tr:last-child td { border-bottom: none; }
+    .candidates-table tr:hover td { background: var(--surface2); }
+    .cand-info { display: flex; align-items: center; gap: 10px; }
+    .cand-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .cand-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .cand-college { font-size: 11px; color: var(--subtext); }
+
+    /* Score bar */
+    .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .score-bar-track {
+      flex: 1; height: 5px; background: var(--surface2);
+      border-radius: 10px; overflow: hidden;
+    }
+    .score-bar-fill { height: 100%; border-radius: 10px; transition: width 0.4s; }
+    .score-num { font-size: 12px; font-weight: 700; min-width: 24px; }
+
+    /* Status badge */
+    .badge {
+      font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+      display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    .badge.green { background: var(--green-bg); color: var(--green-text); }
+    .badge.amber { background: var(--amber-bg); color: var(--amber-text); }
+    .badge.red { background: var(--red-bg); color: var(--red-text); }
+    .badge.blue { background: var(--blue-bg); color: var(--blue-text); }
+    .badge.indigo { background: var(--indigo-bg); color: #4338ca; }
+    .dot-badge::before { content: '●'; margin-right: 3px; font-size: 9px; }
+
+    /* Action btn in table */
+    .action-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 11px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border2); background: var(--surface); color: var(--text);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .action-btn:hover { background: var(--surface2); }
+    .action-btn.invite { background: var(--indigo); color: white; border-color: var(--indigo); }
+    .action-btn.invite:hover { background: #4f46e5; }
+    .action-btn-group { display: flex; gap: 6px; }
+
+    /* ─── SKILL HEATMAP ─── */
+    .skill-grid { display: flex; flex-direction: column; gap: 8px; }
+    .skill-row { display: flex; align-items: center; gap: 10px; }
+    .skill-label { font-size: 12px; color: var(--subtext); width: 110px; flex-shrink: 0; }
+    .skill-dots { display: flex; gap: 4px; flex: 1; }
+    .skill-dot {
+      height: 22px; border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+    .skill-avg { font-size: 12px; font-weight: 700; color: var(--text); min-width: 28px; text-align: right; }
+
+    /* ─── ACTIVITY FEED ─── */
+    .feed-list { display: flex; flex-direction: column; gap: 1px; }
+    .feed-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 20px; }
+    .feed-item:hover { background: var(--surface2); }
+    .feed-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .feed-text { flex: 1; }
+    .feed-main { font-size: 13px; color: var(--text); line-height: 1.4; }
+    .feed-main strong { color: var(--indigo); }
+    .feed-time { font-size: 11px; color: var(--hint); margin-top: 2px; }
+
+    /* ─── PERCENTILE WIDGET ─── */
+    .percentile-chart { display: flex; align-items: flex-end; gap: 3px; height: 60px; margin: 12px 0; }
+    .perc-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 4px; transition: opacity 0.2s; }
+    .perc-bar:hover { opacity: 0.7; }
+
+    /* ─── TIMELINE / PHASES ─── */
+    .phase-row { display: flex; align-items: center; gap: 0; margin: 16px 0; }
+    .phase-step {
+      flex: 1; text-align: center; position: relative;
+    }
+    .phase-step::before {
+      content: ''; position: absolute; top: 14px; left: -50%; width: 100%;
+      height: 2px; background: var(--border);
+    }
+    .phase-step:first-child::before { display: none; }
+    .phase-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface2); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 6px; position: relative; z-index: 1; font-size: 11px; font-weight: 700;
+    }
+    .phase-dot.done { background: var(--green); border-color: var(--green); color: white; }
+    .phase-dot.active { background: var(--indigo); border-color: var(--indigo); color: white; }
+    .phase-step::before { background: var(--border); }
+    .phase-step.done::before { background: var(--green); }
+    .phase-label { font-size: 11px; color: var(--subtext); }
+    .phase-label strong { display: block; font-size: 12px; color: var(--text); }
+
+    /* ─── SHORTLIST PANEL ─── */
+    .shortlist-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+      transition: background 0.15s; cursor: pointer;
+    }
+    .shortlist-item:last-child { border-bottom: none; }
+    .shortlist-item:hover { background: var(--surface2); }
+    .sl-rank {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; flex-shrink: 0;
+    }
+    .sl-rank.gold { background: #fef3c7; color: #92400e; }
+    .sl-rank.silver { background: #f1f5f9; color: #475569; }
+    .sl-rank.bronze { background: #fef2f2; color: #991b1b; }
+    .sl-info { flex: 1; }
+    .sl-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .sl-meta { font-size: 11px; color: var(--subtext); }
+    .sl-score { font-size: 16px; font-weight: 800; color: var(--indigo); }
+
+    /* ─── CANDIDATE DETAIL SIDE PANEL ─── */
+    .side-panel {
+      width: 320px; flex-shrink: 0;
+      background: var(--surface); border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: sticky; top: 58px; height: calc(100vh - 58px); overflow-y: auto;
+    }
+    .sp-header {
+      padding: 20px; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface); z-index: 10;
+    }
+    .sp-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    .sp-sub { font-size: 12px; color: var(--subtext); }
+    .sp-body { padding: 16px 20px; flex: 1; }
+    .candidate-card-detail { text-align: center; margin-bottom: 18px; }
+    .sp-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; margin: 0 auto 10px;
+    }
+    .sp-name { font-size: 16px; font-weight: 700; color: var(--text); }
+    .sp-role { font-size: 12px; color: var(--subtext); margin-bottom: 8px; }
+    .sp-badges { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+    .skill-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .sk-row { display: flex; align-items: center; gap: 8px; }
+    .sk-label { font-size: 12px; color: var(--subtext); flex: 1; }
+    .sk-bar-w { flex: 2; height: 5px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+    .sk-bar-f { height: 100%; border-radius: 10px; }
+    .sk-val { font-size: 12px; font-weight: 700; min-width: 24px; text-align: right; }
+
+    .decision-btn-row { display: flex; gap: 8px; }
+    .dec-btn {
+      flex: 1; padding: 9px; border-radius: 8px; font-size: 13px; font-weight: 700;
+      border: 1px solid; cursor: pointer; transition: all 0.15s;
+    }
+    .dec-btn.shortlist { background: var(--green-bg); color: var(--green-text); border-color: #a7f3d0; }
+    .dec-btn.shortlist:hover { background: #d1fae5; }
+    .dec-btn.reject { background: var(--red-bg); color: var(--red-text); border-color: #fecaca; }
+    .dec-btn.reject:hover { background: #fee2e2; }
+    .dec-btn.interview { background: var(--indigo-bg); color: #4338ca; border-color: #c7d2fe; }
+    .dec-btn.interview:hover { background: #e0e7ff; }
+
+    .section-head { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .insight-box {
+      background: var(--surface2); border-radius: var(--radius); padding: 12px;
+      margin-bottom: 10px;
+    }
+    .insight-box p { font-size: 12px; color: var(--subtext); line-height: 1.5; }
+    .insight-box strong { color: var(--text); }
+
+    .milestone-list { display: flex; flex-direction: column; gap: 6px; }
+    .milestone { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .milestone i { color: var(--green); flex-shrink: 0; }
+
+    /* ─── TABS ─── */
+    .tabs { display: flex; gap: 2px; padding: 4px; background: var(--surface2); border-radius: 9px; margin-bottom: 16px; }
+    .tab {
+      flex: 1; text-align: center; padding: 7px; font-size: 12px; font-weight: 600;
+      border-radius: 7px; cursor: pointer; transition: all 0.15s; color: var(--subtext);
+    }
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    /* ─── SEARCH / FILTER ─── */
+    .filter-row {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
+    }
+    .search-wrap {
+      flex: 1; position: relative; display: flex; align-items: center;
+    }
+    .search-wrap i { position: absolute; left: 10px; color: var(--hint); width: 15px; height: 15px; }
+    .search-input {
+      width: 100%; padding: 8px 12px 8px 32px; border: 1px solid var(--border2);
+      border-radius: 8px; font-size: 13px; background: var(--surface2);
+      outline: none; color: var(--text);
+    }
+    .search-input:focus { border-color: var(--indigo); background: var(--surface); }
+    .filter-select {
+      padding: 7px 12px; border: 1px solid var(--border2); border-radius: 8px;
+      font-size: 13px; background: var(--surface); color: var(--text);
+      cursor: pointer; outline: none;
+    }
+
+    /* ─── DONUT MINI ─── */
+    .donut-mini { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .donut-label { position: absolute; font-size: 13px; font-weight: 800; color: var(--text); }
+
+    /* ─── COMPLETION RING ─── */
+    .ring-wrap { display: flex; align-items: center; gap: 16px; padding: 12px 0; }
+    .ring-info { flex: 1; }
+    .ring-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .ring-sub { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+
+    /* selected state */
+    .cand-row.selected td { background: #f0f4ff !important; }
+
+    /* notification dot */
+    .notif { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1100px) {
+      .side-panel { display: none; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">DZ</div>
+      <div class="logo-text">
+        <h2>DayZero</h2>
+        <p>Recruiter OS</p>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <a class="nav-item active">
+        <i data-lucide="layout-dashboard"></i> Dashboard
+      </a>
+      <a class="nav-item">
+        <i data-lucide="users"></i> Candidates
+        <span class="nav-badge blue">14</span>
+      </a>
+      <a class="nav-item">
+        <i data-lucide="target"></i> Projects
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Evaluation</div>
+      <a class="nav-item">
+        <i data-lucide="bar-chart-3"></i> Analytics
+      </a>
+      <a class="nav-item">
+        <i data-lucide="star"></i> Shortlist
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item">
+        <i data-lucide="calendar-days"></i> Interviews
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tools</div>
+      <a class="nav-item">
+        <i data-lucide="message-square"></i> Messages
+      </a>
+      <a class="nav-item">
+        <i data-lucide="bell"></i> Notifications
+        <span class="nav-badge">2</span>
+      </a>
+      <a class="nav-item">
+        <i data-lucide="settings"></i> Settings
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="recruiter-info">
+        <div class="rec-avatar">AK</div>
+        <div>
+          <div class="rec-name">Arjun Kapoor</div>
+          <div class="rec-role">Senior Recruiter · Stripe</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+
+    <!-- ─── TOPBAR ─── -->
+    <header class="topbar">
+      <div>
+        <div class="topbar-title">Recruiter Dashboard</div>
+        <div class="topbar-sub">Build a Real-time Fraud Detection Dashboard</div>
+      </div>
+      <div class="project-badge">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe">
+        <span>Active Sprint</span>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" id="exportBtn">
+          <i data-lucide="download" style="width:14px;height:14px;"></i> Export Report
+        </button>
+        <button class="topbar-btn primary" id="inviteBtn">
+          <i data-lucide="plus" style="width:14px;height:14px;"></i> Invite Candidate
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── CONTENT + SIDE ─── -->
+    <div style="display:flex; flex:1; overflow:hidden;">
+
+      <div class="content" style="flex:1;">
+
+        <!-- STATS ROW -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i data-lucide="users" style="width:18px;height:18px;"></i></div>
+            <div class="stat-label">Total Participants</div>
+            <div class="stat-value">14</div>
+            <div class="stat-change up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +3 this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;"></i></div>
+            <div class="stat-label">Avg. Skill Score</div>
+            <div class="stat-value">81</div>
+            <div class="stat-change up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> +4 pts vs last sprint</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon amber"><i data-lucide="clock" style="width:18px;height:18px;"></i></div>
+            <div class="stat-label">Sprints Active</div>
+            <div class="stat-value">2<span style="font-size:16px;color:var(--subtext)">/5</span></div>
+            <div class="stat-change" style="color:var(--subtext);">Days completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><i data-lucide="star" style="width:18px;height:18px;"></i></div>
+            <div class="stat-label">Shortlisted</div>
+            <div class="stat-value">3</div>
+            <div class="stat-change up"><i data-lucide="trending-up" style="width:12px;height:12px;"></i> 21% conversion</div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs" style="max-width:380px;">
+          <div class="tab active" onclick="setTab(this,'all')">All Candidates</div>
+          <div class="tab" onclick="setTab(this,'shortlist')">Shortlisted</div>
+          <div class="tab" onclick="setTab(this,'review')">Needs Review</div>
+        </div>
+
+        <!-- FILTER ROW -->
+        <div class="filter-row">
+          <div class="search-wrap">
+            <i data-lucide="search" style="width:15px;height:15px;"></i>
+            <input class="search-input" type="text" id="searchInput" placeholder="Search by name, college, or skill…" oninput="filterTable()">
+          </div>
+          <select class="filter-select" id="sortSelect" onchange="filterTable()">
+            <option value="score">Sort: Score</option>
+            <option value="name">Sort: Name</option>
+            <option value="progress">Sort: Progress</option>
+          </select>
+          <select class="filter-select" id="statusFilter" onchange="filterTable()">
+            <option value="">All Status</option>
+            <option value="on-track">On Track</option>
+            <option value="at-risk">At Risk</option>
+            <option value="shortlisted">Shortlisted</option>
+          </select>
+        </div>
+
+        <!-- CANDIDATES TABLE -->
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Candidate Performance</div>
+              <div class="card-sub">Live data · Fraud Detection Dashboard Sprint</div>
+            </div>
+            <button class="card-action">
+              <i data-lucide="sliders" style="width:13px;height:13px;"></i> Filters
+            </button>
+          </div>
+          <table class="candidates-table" id="candTable">
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Overall Score</th>
+                <th>Progress</th>
+                <th>Top Skill</th>
+                <th>Status</th>
+                <th>Last Active</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="candBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- BOTTOM GRID -->
+        <div class="grid-2">
+
+          <!-- Skill Heatmap -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Cohort Skill Heatmap</div>
+                <div class="card-sub">Average scores across all 14 candidates</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="skill-grid" id="skillHeatmap">
+                <!-- populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Sprint Phases + Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Sprint Progress</div>
+              <div class="card-sub" style="font-size:11px;color:var(--subtext)">Day 2 of 5 · Execution Phase</div>
+            </div>
+            <div class="card-body" style="padding-bottom:0;">
+              <div class="phase-row">
+                <div class="phase-step done">
+                  <div class="phase-dot done"><i data-lucide="check" style="width:12px;height:12px;"></i></div>
+                  <div class="phase-label"><strong>Onboard</strong>Day 1</div>
+                </div>
+                <div class="phase-step done">
+                  <div class="phase-dot active">2</div>
+                  <div class="phase-label"><strong>Execute</strong>Day 2</div>
+                </div>
+                <div class="phase-step">
+                  <div class="phase-dot">3</div>
+                  <div class="phase-label"><strong>Collab</strong>Day 3</div>
+                </div>
+                <div class="phase-step">
+                  <div class="phase-dot">4</div>
+                  <div class="phase-label"><strong>Crisis</strong>Day 4</div>
+                </div>
+                <div class="phase-step">
+                  <div class="phase-dot">5</div>
+                  <div class="phase-label"><strong>Review</strong>Day 5</div>
+                </div>
+              </div>
+              <div style="height:1px;background:var(--border);margin:4px -20px 0;"></div>
+            </div>
+            <div class="card-header" style="border-top:none; border-bottom:1px solid var(--border); padding-top:12px;">
+              <div class="card-title" style="font-size:13px;">Live Activity Feed</div>
+              <span class="badge green dot-badge">LIVE</span>
+            </div>
+            <div class="feed-list" id="activityFeed">
+              <!-- populated by JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SCORE DISTRIBUTION -->
+        <div class="card" style="margin-bottom: 18px;">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Score Distribution</div>
+              <div class="card-sub">Overall skill score spread across 14 candidates</div>
+            </div>
+          </div>
+          <div class="card-body" style="display:flex;gap:32px;align-items:flex-end;">
+            <div id="distChart" style="display:flex;align-items:flex-end;gap:5px;height:80px;flex:1;"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span style="color:var(--subtext);">Top performer</span>
+                <strong style="color:var(--green);">95 / Richa Y.</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span style="color:var(--subtext);">Median score</span>
+                <strong>81</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span style="color:var(--subtext);">At-risk threshold</span>
+                <strong style="color:var(--amber);">&lt; 65</strong>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span style="color:var(--subtext);">Completion rate</span>
+                <strong>86%</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end .content -->
+
+      <!-- ═══ RIGHT SIDE PANEL ═══ -->
+      <aside class="side-panel" id="sidePanel">
+        <div class="sp-header">
+          <div class="sp-title">Candidate Detail</div>
+          <div class="sp-sub" id="spSub">Click a row to inspect</div>
+        </div>
+        <div class="sp-body" id="spBody">
+          <div style="text-align:center;padding:40px 0;color:var(--hint);">
+            <i data-lucide="mouse-pointer-click" style="width:32px;height:32px;margin:0 auto 10px;display:block;opacity:0.4;"></i>
+            <p style="font-size:13px;">Select a candidate to view their full profile</p>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div><!-- end .main -->
+</div>
+
+<!-- INVITE MODAL -->
+<div id="inviteModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:380px;border:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-size:16px;font-weight:700;">Invite Candidate</h3>
+      <button onclick="document.getElementById('inviteModal').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--subtext);">✕</button>
+    </div>
+    <input type="text" placeholder="Full name" style="width:100%;margin-bottom:10px;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+    <input type="email" placeholder="Email address" style="width:100%;margin-bottom:10px;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+    <select style="width:100%;margin-bottom:20px;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;">
+      <option>Fullstack Developer role</option>
+      <option>Data Analytics role</option>
+      <option>Backend Engineer role</option>
+    </select>
+    <button style="width:100%;padding:10px;background:var(--indigo);color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;" onclick="showToast('Invite sent!');document.getElementById('inviteModal').style.display='none'">Send Invite</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="display:none;position:fixed;bottom:24px;right:24px;background:#0f172a;color:white;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+</div>
+
+<script>
+  // ─── DATA ───
+  const candidates = [
+    { id:1, name:'Richa Yadav',     initials:'RY', college:'AIT, Pune',         score:95, progress:82, topSkill:'Prioritization', status:'shortlisted', lastActive:'2m ago',  skills:{Leadership:91,Communication:84,Execution:79,ProblemSolving:88,Adaptability:95} },
+    { id:2, name:'Arjun Sharma',    initials:'AS', college:'IIT Delhi',          score:89, progress:71, topSkill:'Execution',       status:'on-track',    lastActive:'8m ago',  skills:{Leadership:78,Communication:80,Execution:91,ProblemSolving:82,Adaptability:85} },
+    { id:3, name:'Priya Mehta',     initials:'PM', college:'BITS Pilani',        score:86, progress:68, topSkill:'Leadership',      status:'shortlisted', lastActive:'15m ago', skills:{Leadership:92,Communication:88,Execution:73,ProblemSolving:79,Adaptability:80} },
+    { id:4, name:'Kiran Patel',     initials:'KP', college:'NIT Trichy',         score:84, progress:60, topSkill:'Communication',   status:'on-track',    lastActive:'22m ago', skills:{Leadership:70,Communication:90,Execution:77,ProblemSolving:81,Adaptability:74} },
+    { id:5, name:'Aditya Rao',      initials:'AR', college:'VIT Vellore',        score:80, progress:55, topSkill:'Problem Solving', status:'on-track',    lastActive:'30m ago', skills:{Leadership:72,Communication:75,Execution:80,ProblemSolving:87,Adaptability:78} },
+    { id:6, name:'Sneha Joshi',     initials:'SJ', college:'DTU Delhi',          score:78, progress:50, topSkill:'Adaptability',    status:'on-track',    lastActive:'1h ago',  skills:{Leadership:68,Communication:76,Execution:74,ProblemSolving:72,Adaptability:85} },
+    { id:7, name:'Rohit Nair',      initials:'RN', college:'NSIT Delhi',         score:74, progress:44, topSkill:'Execution',       status:'at-risk',     lastActive:'2h ago',  skills:{Leadership:60,Communication:68,Execution:80,ProblemSolving:65,Adaptability:70} },
+    { id:8, name:'Meera Iyer',      initials:'MI', college:'SPIT Mumbai',        score:72, progress:40, topSkill:'Communication',   status:'on-track',    lastActive:'2h ago',  skills:{Leadership:65,Communication:79,Execution:68,ProblemSolving:70,Adaptability:74} },
+    { id:9, name:'Vivek Kumar',     initials:'VK', college:'RVCE Bangalore',     score:69, progress:38, topSkill:'Leadership',      status:'at-risk',     lastActive:'3h ago',  skills:{Leadership:74,Communication:60,Execution:65,ProblemSolving:62,Adaptability:69} },
+    { id:10,name:'Pooja Gupta',     initials:'PG', college:'Thapar Patiala',     score:91, progress:74, topSkill:'Strategy',        status:'shortlisted', lastActive:'5m ago',  skills:{Leadership:85,Communication:88,Execution:82,ProblemSolving:90,Adaptability:88} },
+    { id:11,name:'Sameer Khan',     initials:'SK', college:'COEP Pune',          score:76, progress:52, topSkill:'Problem Solving', status:'on-track',    lastActive:'45m ago', skills:{Leadership:71,Communication:73,Execution:74,ProblemSolving:83,Adaptability:75} },
+    { id:12,name:'Ananya Reddy',    initials:'AR', college:'IIIT Hyderabad',     score:83, progress:63, topSkill:'Adaptability',    status:'on-track',    lastActive:'20m ago', skills:{Leadership:76,Communication:80,Execution:79,ProblemSolving:81,Adaptability:86} },
+    { id:13,name:'Dev Malhotra',    initials:'DM', college:'IIT Bombay',         score:66, progress:35, topSkill:'Communication',   status:'at-risk',     lastActive:'4h ago',  skills:{Leadership:58,Communication:72,Execution:60,ProblemSolving:64,Adaptability:62} },
+    { id:14,name:'Tanvi Singh',     initials:'TS', college:'Manipal University', score:79, progress:56, topSkill:'Leadership',      status:'on-track',    lastActive:'1h ago',  skills:{Leadership:80,Communication:74,Execution:75,ProblemSolving:76,Adaptability:77} },
+  ];
+
+  const COLORS = ['#6366f1','#3b82f6','#10b981','#f59e0b','#8b5cf6'];
+  const avatarColors = [
+    {bg:'#eef2ff',color:'#4338ca'},{bg:'#eff6ff',color:'#1d4ed8'},
+    {bg:'#ecfdf5',color:'#065f46'},{bg:'#fffbeb',color:'#92400e'},
+    {bg:'#fdf4ff',color:'#7e22ce'},{bg:'#fef2f2',color:'#991b1b'},
+  ];
+
+  const activityData = [
+    {icon:'zap',color:'#6366f1',bg:'#eef2ff',text:'<strong>Richa Yadav</strong> submitted Crisis Response task',time:'2m ago'},
+    {icon:'trending-up',color:'#10b981',bg:'#ecfdf5',text:'<strong>Pooja Gupta</strong> score jumped to 91 (+7)',time:'5m ago'},
+    {icon:'alert-circle',color:'#f59e0b',bg:'#fffbeb',text:'<strong>Dev Malhotra</strong> flagged as at-risk (66/100)',time:'12m ago'},
+    {icon:'message-square',color:'#3b82f6',bg:'#eff6ff',text:'<strong>Kiran Patel</strong> left a comment in Team Chat',time:'22m ago'},
+    {icon:'star',color:'#8b5cf6',bg:'#fdf4ff',text:'<strong>Arjun Sharma</strong> unlocked Fast Thinker badge',time:'35m ago'},
+    {icon:'check-circle',color:'#10b981',bg:'#ecfdf5',text:'<strong>Priya Mehta</strong> completed Day 2 milestone',time:'41m ago'},
+  ];
+
+  const skills = [
+    {label:'Leadership',avg:74,color:'#6366f1'},
+    {label:'Communication',avg:78,color:'#3b82f6'},
+    {label:'Execution',avg:76,color:'#10b981'},
+    {label:'Problem Solving',avg:79,color:'#f59e0b'},
+    {label:'Adaptability',avg:79,color:'#8b5cf6'},
+    {label:'Prioritization',avg:81,color:'#ef4444'},
+  ];
+
+  let activeTab = 'all';
+  let selectedId = null;
+
+  function statusBadge(s) {
+    if(s==='shortlisted') return '<span class="badge indigo dot-badge">Shortlisted</span>';
+    if(s==='at-risk') return '<span class="badge amber dot-badge">At Risk</span>';
+    return '<span class="badge green dot-badge">On Track</span>';
+  }
+
+  function scoreColor(v) {
+    if(v>=85) return '#10b981';
+    if(v>=70) return '#6366f1';
+    return '#f59e0b';
+  }
+
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const sortBy = document.getElementById('sortSelect').value;
+    const statusF = document.getElementById('statusFilter').value;
+
+    let data = [...candidates];
+    if(activeTab==='shortlist') data = data.filter(c=>c.status==='shortlisted');
+    if(activeTab==='review') data = data.filter(c=>c.status==='at-risk');
+    if(statusF) data = data.filter(c=>c.status===statusF);
+    if(search) data = data.filter(c=>c.name.toLowerCase().includes(search)||c.college.toLowerCase().includes(search)||c.topSkill.toLowerCase().includes(search));
+    if(sortBy==='score') data.sort((a,b)=>b.score-a.score);
+    if(sortBy==='name') data.sort((a,b)=>a.name.localeCompare(b.name));
+    if(sortBy==='progress') data.sort((a,b)=>b.progress-a.progress);
+
+    const body = document.getElementById('candBody');
+    body.innerHTML = data.map((c,i)=>{
+      const ac = avatarColors[i%avatarColors.length];
+      const sc = scoreColor(c.score);
+      const sel = selectedId===c.id ? 'selected' : '';
+      return `<tr class="cand-row ${sel}" onclick="selectCandidate(${c.id})" style="cursor:pointer;">
+        <td>
+          <div class="cand-info">
+            <div class="cand-avatar" style="background:${ac.bg};color:${ac.color};">${c.initials}</div>
+            <div><div class="cand-name">${c.name}</div><div class="cand-college">${c.college}</div></div>
+          </div>
+        </td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${c.score}%;background:${sc};"></div></div>
+            <span class="score-num" style="color:${sc};">${c.score}</span>
+          </div>
+        </td>
+        <td>
+          <div class="score-bar-wrap">
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${c.progress}%;background:#6366f1;"></div></div>
+            <span class="score-num" style="color:var(--subtext);">${c.progress}%</span>
+          </div>
+        </td>
+        <td><span class="badge blue">${c.topSkill}</span></td>
+        <td>${statusBadge(c.status)}</td>
+        <td style="color:var(--subtext);font-size:12px;">${c.lastActive}</td>
+        <td>
+          <div class="action-btn-group">
+            <button class="action-btn invite" onclick="event.stopPropagation();showToast('Interview scheduled for '+${JSON.stringify(c.name)})">
+              <i data-lucide="calendar" style="width:12px;height:12px;"></i> Interview
+            </button>
+            <button class="action-btn" onclick="event.stopPropagation();selectCandidate(${c.id})">
+              <i data-lucide="eye" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function filterTable() { renderTable(); }
+  function setTab(el, tab) {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    activeTab = tab;
+    renderTable();
+  }
+
+  function selectCandidate(id) {
+    selectedId = id;
+    const c = candidates.find(x=>x.id===id);
+    if(!c) return;
+    renderTable();
+
+    const ac = avatarColors[id%avatarColors.length];
+    const milestones = ['Completed Day 1 Onboarding','Submitted Strategy Task','Passed Skill Authentication','Joined Team Collaboration'];
+    const completed = milestones.slice(0, c.progress>70?4:c.progress>50?3:c.progress>35?2:1);
+
+    document.getElementById('spSub').textContent = c.name + ' · ' + c.college;
+    document.getElementById('spBody').innerHTML = `
+      <div class="candidate-card-detail">
+        <div class="sp-avatar" style="background:${ac.bg};color:${ac.color};">${c.initials}</div>
+        <div class="sp-name">${c.name}</div>
+        <div class="sp-role">${c.college}</div>
+        <div class="sp-badges">
+          ${statusBadge(c.status)}
+          <span class="badge blue">${c.topSkill}</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="font-size:22px;font-weight:800;color:${scoreColor(c.score)};">${c.score}</div>
+          <div style="font-size:11px;color:var(--subtext);">Overall Score</div>
+        </div>
+        <div style="flex:1;text-align:center;background:var(--surface2);border-radius:10px;padding:12px;">
+          <div style="font-size:22px;font-weight:800;color:var(--indigo);">${c.progress}%</div>
+          <div style="font-size:11px;color:var(--subtext);">Sprint Progress</div>
+        </div>
+      </div>
+
+      <div class="section-head">Core Skills</div>
+      <div class="skill-list">
+        ${Object.entries(c.skills).map(([sk,val])=>`
+          <div class="sk-row">
+            <div class="sk-label">${sk}</div>
+            <div class="sk-bar-w"><div class="sk-bar-f" style="width:${val}%;background:${scoreColor(val)};"></div></div>
+            <div class="sk-val" style="color:${scoreColor(val)};">${val}</div>
+          </div>`).join('')}
+      </div>
+
+      <div class="section-head" style="margin-top:14px;">AI Insight</div>
+      <div class="insight-box">
+        <p><strong>Strengths:</strong> ${c.topSkill} is a standout competency. Decision-making under pressure ranks above cohort average.</p>
+      </div>
+      <div class="insight-box">
+        <p><strong>Watch:</strong> ${c.score < 75 ? 'Low overall score — may benefit from a quick coaching nudge.' : 'Solid performer. Monitor consistency through Day 3 crisis phase.'}</p>
+      </div>
+
+      <div class="section-head" style="margin-top:14px;">Milestones</div>
+      <div class="milestone-list">
+        ${completed.map(m=>`<div class="milestone"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--green);"></i><span style="font-size:12px;color:var(--text);">${m}</span></div>`).join('')}
+        ${milestones.slice(completed.length).map(m=>`<div class="milestone"><i data-lucide="circle" style="width:14px;height:14px;color:var(--hint);"></i><span style="font-size:12px;color:var(--hint);">${m}</span></div>`).join('')}
+      </div>
+
+      <div class="decision-btn-row" style="margin-top:18px;">
+        <button class="dec-btn shortlist" onclick="showToast('${c.name} shortlisted!')">
+          <i data-lucide="star" style="width:13px;height:13px;display:inline;vertical-align:-2px;margin-right:4px;"></i>Shortlist
+        </button>
+        <button class="dec-btn interview" onclick="showToast('Interview scheduled!')">
+          <i data-lucide="calendar" style="width:13px;height:13px;display:inline;vertical-align:-2px;margin-right:4px;"></i>Interview
+        </button>
+      </div>
+      <button class="dec-btn reject" style="width:100%;margin-top:8px;" onclick="showToast('${c.name} moved to rejected.')">
+        <i data-lucide="x" style="width:13px;height:13px;display:inline;vertical-align:-2px;margin-right:4px;"></i>Pass / Reject
+      </button>
+    `;
+    lucide.createIcons();
+  }
+
+  function renderSkillHeatmap() {
+    const wrap = document.getElementById('skillHeatmap');
+    wrap.innerHTML = skills.map(s=>{
+      const dots = candidates.slice(0,10).map(c=>{
+        const val = c.skills[s.label.replace(' ','')] || (c.score - 5 + Math.floor(Math.random()*15));
+        const op = (val/100).toFixed(2);
+        return `<div class="skill-dot" style="flex:1;background:${s.color};opacity:${op};" title="${val}"></div>`;
+      }).join('');
+      return `<div class="skill-row">
+        <div class="skill-label">${s.label}</div>
+        <div class="skill-dots">${dots}</div>
+        <div class="skill-avg" style="color:${s.color};">${s.avg}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderActivityFeed() {
+    document.getElementById('activityFeed').innerHTML = activityData.map(a=>`
+      <div class="feed-item">
+        <div class="feed-icon" style="background:${a.bg};color:${a.color};">
+          <i data-lucide="${a.icon}" style="width:14px;height:14px;"></i>
+        </div>
+        <div class="feed-text">
+          <div class="feed-main">${a.text}</div>
+          <div class="feed-time">${a.time}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderDistChart() {
+    const bins = [55,60,65,70,75,80,85,90,95];
+    const counts = bins.map(b=>candidates.filter(c=>c.score>=b&&c.score<b+5).length);
+    const max = Math.max(...counts,1);
+    document.getElementById('distChart').innerHTML = bins.map((b,i)=>{
+      const h = Math.max((counts[i]/max)*68,4);
+      const col = b>=85?'#10b981':b>=70?'#6366f1':'#f59e0b';
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">
+        <div style="font-size:10px;color:var(--subtext);">${counts[i]||''}</div>
+        <div style="height:${h}px;width:100%;background:${col};border-radius:4px 4px 0 0;opacity:0.85;" title="${b}-${b+4}: ${counts[i]}"></div>
+        <div style="font-size:10px;color:var(--subtext);">${b}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display='block';
+    setTimeout(()=>t.style.display='none', 2500);
+  }
+
+  // Invite modal
+  document.getElementById('inviteBtn').onclick = ()=>{ document.getElementById('inviteModal').style.display='flex'; };
+  document.getElementById('exportBtn').onclick = ()=>showToast('Report exported as PDF!');
+
+  // Init
+  renderTable();
+  renderSkillHeatmap();
+  renderActivityFeed();
+  renderDistChart();
+  lucide.createIcons();
+
+  // Live activity simulation
+  const liveTexts = [
+    {icon:'zap',color:'#6366f1',bg:'#eef2ff',text:'<strong>Tanvi Singh</strong> completed a strategy task'},
+    {icon:'trending-up',color:'#10b981',bg:'#ecfdf5',text:'<strong>Sameer Khan</strong> score updated to 78 (+2)'},
+    {icon:'message-square',color:'#3b82f6',bg:'#eff6ff',text:'<strong>Ananya Reddy</strong> asked Nova a hint question'},
+  ];
+  let liveIdx=0;
+  setInterval(()=>{
+    const feed = document.getElementById('activityFeed');
+    const item = liveTexts[liveIdx%liveTexts.length];
+    const newEl = document.createElement('div');
+    newEl.className = 'feed-item';
+    newEl.style.background = '#f0f9ff';
+    newEl.innerHTML = `<div class="feed-icon" style="background:${item.bg};color:${item.color};"><i data-lucide="${item.icon}" style="width:14px;height:14px;"></i></div><div class="feed-text"><div class="feed-main">${item.text}</div><div class="feed-time">just now</div></div>`;
+    feed.insertBefore(newEl, feed.firstChild);
+    if(feed.children.length > 7) feed.removeChild(feed.lastChild);
+    setTimeout(()=>newEl.style.background='', 1200);
+    liveIdx++;
+    lucide.createIcons();
+  }, 8000);
+</script>
+</body>
+</html>
