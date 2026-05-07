@@ -1,3 +1,10 @@
+const API_BASE_URL =
+  window.location.protocol === "file:" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:5000"
+    : "https://YOUR-APP-SERVICE.onrender.com";
+
 if (typeof lucide !== 'undefined') {
   lucide.createIcons();
 }
@@ -20,7 +27,7 @@ if (submitBtn) {
     const submissionInput = document.querySelector("textarea");
     const submission = submissionInput ? submissionInput.value : "No input";
 
-    fetch("http://127.0.0.1:5000/submit-task", {
+    fetch(`${API_BASE_URL}/submit-task`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -478,7 +485,7 @@ async function simulateAiResponse(userMessage) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
-    const response = await fetch("http://localhost:5000/api/chat", {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -615,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const role = localStorage.getItem("userRole");
 
   if (role) {
-    fetch("http://127.0.0.1:5000/start-simulation", {
+    fetch(`${API_BASE_URL}/start-simulation`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -1353,7 +1360,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           let starRating = 5;
           
           try {
-            const res = await fetch("http://localhost:5000/api/chat", {
+            const res = await fetch(`${API_BASE_URL}/api/chat`, {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1520,7 +1527,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           try {
               const controller = new AbortController();
               const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s for review
-              const res = await fetch("http://localhost:5000/api/chat", {
+              const res = await fetch(`${API_BASE_URL}/api/chat`, {
                 method: "POST", 
                 headers: { "Content-Type": "application/json" },
                 signal: controller.signal,
@@ -2186,7 +2193,7 @@ async function handleTeamChatSend() {
   teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
 
     try {
-      const response = await fetch("http://localhost:5000/api/chat", {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

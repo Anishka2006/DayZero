@@ -1,127 +1,130 @@
+import os
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import psycopg2
-from werkzeug.security import generate_password_hash, check_password_hash
-import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for frontend interaction
 
-# =========================
-# 🔗 DATABASE CONNECTION (SUPABASE)
-# =========================
-import os
-import psycopg2
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-db = psycopg2.connect(
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),  
-    database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD")
-)
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    if not GROQ_API_KEY:
+        return jsonify({"error": "API Key not configured on server"}), 500
 
-cursor = db.cursor()
-
-
-# =========================
-# 📝 SIGNUP
-# =========================
-@app.route("/signup", methods=["POST"])
-def signup():
-    data = request.get_json()
-
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
-
-    if not name or not email or not password:
-        return jsonify({"error": "All fields required"}), 400
-
-    # check existing user
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    existing_user = cursor.fetchone()
-
-    if existing_user:
-        return jsonify({"error": "User already exists"}), 409
-
-    # hash password
-    hashed_password = generate_password_hash(password)
-
-    cursor.execute(
-        "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-        (name, email, hashed_password)
-    )
-    db.commit()
-
-    return jsonify({
-        "message": "Signup successful",
-        "user": {
-            "name": name,
-            "email": email
+    incoming_data = request.json
+    
+    # Support both "message/system_prompt" format and direct Groq format
+    if "messages" in incoming_data:
+        payload = {
+            "model": incoming_data.get("model", "llama-3.1-8b-instant"),
+            "messages": incoming_data["messages"],
+            "max_tokens": incoming_data.get("max_tokens", 150),
+            "response_format": incoming_data.get("response_format")
         }
-    }), 200
-
-
-# =========================
-# 🔐 LOGIN
-# =========================
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-
-    email = data.get("email")
-    password = data.get("password")
-
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
-
-    if not user:
-        return jsonify({"error": "User not found"}), 401
-
-    stored_password = user[3]
-
-    if not check_password_hash(stored_password, password):
-        return jsonify({"error": "Invalid password"}), 401
-
-    return jsonify({
-        "message": "Login successful",
-        "user": {
-            "id": user[0],
-            "name": user[1],
-            "email": user[2]
+    else:
+        user_message = incoming_data.get("message", "")
+        system_prompt = incoming_data.get("system_prompt", "You are a helpful assistant.")
+        payload = {
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "max_tokens": 150
         }
-    }), 200
-
-
-# =========================
-# 📞 DEMO REQUEST
-# =========================
-@app.route("/request-demo", methods=["POST"])
-def request_demo():
-    data = request.get_json()
-
-    name = data.get("name")
-    phone = data.get("phone")
-
-    if not name or not phone:
-        return jsonify({"error": "All fields required"}), 400
 
     try:
-        cursor.execute(
-            "INSERT INTO demo_requests (name, phone) VALUES (%s, %s)",
-            (name, phone)
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json=payload,
+            timeout=10
         )
-        db.commit()
-
-        return jsonify({"message": "Demo request submitted"}), 200
-
+        return jsonify(response.json())
     except Exception as e:
-        print("Error:", e)
-        return jsonify({"error": "Failed to submit demo"}), 500
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/submit-task", methods=["POST"])
+def submit_task():
+    data = request.json
+    submission = data.get("submission", "")
+    role = data.get("role", "Frontend")
 
+    system_prompt = f"""
+    You are a senior engineering manager.
+    Evaluate this {role} submission.
 
-# =========================
-# 🏁 RUN SERVER
-# =========================
-if __name__ == "__main__":
-    app.run()
+    Give:
+    1. Score out of 100
+    2. Short feedback
+    """
+
+    payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": submission}
+        ]
+    }
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=payload
+    )
+
+    result = response.json()["choices"][0]["message"]["content"]
+
+    return jsonify({
+        "score": 90,  # You can improve parsing later
+        "feedback": result
+    })
+
+@app.route("/start-simulation", methods=["POST"])
+def start_simulation():
+    data = request.json
+    role = data.get("role", "Frontend")
+
+    system_prompt = f"""
+    You are an AI Manager in a tech company.
+    Assign a realistic first-day task to a {role} developer.
+    Keep it short and practical.
+    """
+
+    payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": "Give my first task"}
+        ]
+    }
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json=payload
+    )
+
+    task = response.json()["choices"][0]["message"]["content"]
+
+    return jsonify({"task": task})
+
+        
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)

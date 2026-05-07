@@ -13,6 +13,13 @@ document.addEventListener("DOMContentLoaded", () => {
   initAuthModal();
 });
 
+const AUTH_BASE_URL =
+  window.location.protocol === "file:" ||
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:8001"
+    : "https://YOUR-AUTH-SERVICE.onrender.com";
+
 /* =====================================
    1. NAVBAR SCROLL EFFECT
 ===================================== */
@@ -233,7 +240,7 @@ function initModal() {
   const phone = document.getElementById("reg-phone").value;
 
   try {
-    const res = await fetch("https://dayzero-1.onrender.com/request-demo", {
+    const res = await fetch(`${AUTH_BASE_URL}/request-demo`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -412,8 +419,8 @@ function initAuthModal() {
     const password = document.getElementById("auth-password").value;
 
     const url = isLogin
-      ? "https://dayzero-1.onrender.com/login"
-      : "https://dayzero-1.onrender.com/signup";
+      ? `${AUTH_BASE_URL}/login`
+      : `${AUTH_BASE_URL}/signup`;
 
     const body = isLogin
       ? { email, password, role }
@@ -442,16 +449,16 @@ function initAuthModal() {
         showToast(data.message || "Success 🎉", "success");
 
         localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("role", role);
+        localStorage.setItem("role", data.user?.role || role);
 
         authForm.reset();
         closeAuth();
 
         setTimeout(() => {
           window.location.href =
-            role === "recruiter"
-              ? "recruiter_dashboard.html"
-              : "dashboard.html";
+            (data.user?.role || role) === "recruiter"
+              ? "frontend/recruiter_dashboard.html"
+              : "frontend/dashboard.html";
         }, 1000);
 
       } else {

@@ -1,18 +1,10 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const score = localStorage.getItem('lastScore') || "0";
-    document.getElementById('final-score').innerText = score;
-    
-    const role = localStorage.getItem('userRole') || "Professional";
-    document.getElementById('display-role').innerText = role;
-});
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DayZero | Performance Record</title>
-    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="../main.css">
 </head>
 <body>
     <div class="results-container">
@@ -47,5 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <button onclick="window.print()" class="btn-share">Download Proof of Work (PDF)</button>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const score = localStorage.getItem("lastScore") || "0";
+            const role = localStorage.getItem("userRole") || "Professional";
+
+            document.getElementById("final-score").innerText = score;
+            document.getElementById("display-role").innerText = role;
+        });
+    </script>
 </body>
 </html>

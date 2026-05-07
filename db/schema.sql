@@ -1,16 +1,43 @@
--- Users table for login & register
-CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- USER PROFILES
+create table profiles (
+    id uuid primary key references auth.users(id) on delete cascade,
+
+    full_name text not null,
+
+    email text unique not null,
+
+    role text default 'user'
+    check (role in ('user', 'recruiter')),
+
+    created_at timestamptz default now()
 );
 
---Table for demo requests
-CREATE TABLE demo_requests (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- CANDIDATE SUBMISSIONS
+create table submissions (
+    id bigint generated always as identity primary key,
+
+    user_id uuid references profiles(id) on delete cascade,
+
+    task_id text,
+
+    submission_text text,
+
+    score int,
+
+    feedback text,
+
+    status text default 'on-track',
+
+    created_at timestamptz default now()
+);
+
+-- DEMO REQUESTS
+create table demo_requests (
+    id bigint generated always as identity primary key,
+
+    name text not null,
+
+    phone text not null,
+
+    created_at timestamptz default now()
 );
