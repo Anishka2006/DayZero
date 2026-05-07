@@ -1,139 +1,99 @@
-# 🚀 DayZero
+# DayZero
 
-> **AI-powered work simulation platform** where users experience their *first 90 days of a job* before even getting hired.
+DayZero is an AI-powered work simulation platform built around realistic hiring tasks, role-based dashboards, and AI-driven evaluation.
 
----
+## Current Structure
 
-## 🧠 What is DayZero?
+This repo now follows your hybrid structure:
 
-DayZero is an immersive simulation platform that replaces traditional hiring methods with **real-world task environments**.
+- `index.html`, `main.css`, and `app.js` stay at the root
+- `backend/app.py` and `backend/auth.py` stay where they are
+- the remaining frontend, AI-engine, service, and test files are organized into target-style folders
 
-Instead of solving MCQs or giving interviews, users:
+```text
+DayZero/
+├── frontend/
+│   ├── css/
+│   │   └── dashboard.css
+│   ├── js/
+│   │   ├── dashboard.js
+│   │   └── recruiter_app.js
+│   ├── pages/
+│   │   ├── dashboard.html
+│   │   ├── recruiter_dashboard.html
+│   │   ├── results.html
+│   │   └── roles.html
+│   └── index.html
+├── backend/
+│   ├── services/
+│   │   └── orchestrator.py
+│   ├── app.py
+│   ├── auth.py
+│   └── requirements.txt
+├── ai_engine/
+│   ├── agents/
+│   ├── config/
+│   │   └── config.py
+│   ├── core/
+│   │   ├── gemini_client.py
+│   │   ├── llm.py
+│   │   └── prompts.py
+│   └── __init__.py
+├── db/
+│   └── schema.sql
+├── tests/
+│   └── test.py
+├── .gitignore
+├── README.md
+├── app.js
+├── index.html
+├── main.css
+└── requirements.txt
+```
+## Entry Points
 
-* Work inside a simulated company 🏢
-* Interact with AI teammates 🤖
-* Solve real tasks under pressure ⏱️
-* Get evaluated like actual employees 📊
+- Landing page: `index.html`
+- Candidate role selection: `frontend/pages/roles.html`
+- Candidate dashboard: `frontend/pages/dashboard.html`
+- Recruiter dashboard: `frontend/pages/recruiter_dashboard.html`
+- Results page: `frontend/pages/results.html`
 
----
+## Backend
 
-## ✨ Key Features
+- `backend/app.py`: main Flask API
+- `backend/auth.py`: authentication/profile service
+- `backend/services/orchestrator.py`: prototype orchestration flow
 
-### 🎭 Multi-Agent AI System
+## Setup
 
-Simulates a real team environment:
-
-* 🎨 Designer AI → UX feedback
-* 💻 Frontend AI → UI/code evaluation
-* ⚙️ Backend AI → system & logic review
-* 📊 Product Manager AI → strategy & prioritization
-
----
-
-### 🤖 AI Manager (In Progress)
-
-* Acts like a real team lead
-* Assigns tasks dynamically
-* Gives feedback & hints
-* Adapts difficulty based on performance
-
----
-
-### 📊 Skill Scoring Engine
-
-* Real-time performance tracking
-* Evaluates:
-
-  * Problem solving
-  * Communication
-  * Execution speed
-  * Decision making
-
----
-
-### 🧪 Real-World Task Simulation
-
-* Industry-style problems
-* Deadlines & pressure system
-* Team collaboration scenarios
-* Crisis-based decision making
-
----
-
-## 🛠️ Tech Stack
-
-| Layer      | Technology Used                         |
-| ---------- | --------------------------------------- |
-| Frontend   | HTML, CSS, JavaScript *(React planned)* |
-| Backend    | Python (Flask)                          |
-| AI Engine  | Gemini API / Groq API                   |
-| Database   | MySQL *(planned)*                       |
-| Deployment | (Upcoming)                              |
-
----
-
-## ⚙️ How It Works
-
-1. User selects a role (Frontend / Backend / PM)
-2. AI assigns a real-world task
-3. User works inside a simulation dashboard
-4. AI evaluates performance
-5. Results & skill scores are generated
-
----
-
-## 🚧 Current Status
-
-### ✅ Completed
-
-* UI Dashboard (Simulation environment)
-* Role selection system
-* AI chat integration
-* Basic backend setup
-
-### 🔄 In Progress
-
-* AI Manager logic
-* Task → Submission → Evaluation flow
-* API integration improvements
-
-### ❌ Upcoming
-
-* Authentication system
-* Database integration
-* Deployment
-* Advanced simulation engine
-
----
-
-## 🚀 Getting Started
-
-### 1️⃣ Clone the repo
+Install backend dependencies:
 
 ```bash
-git clone https://github.com/your-username/DayZero.git
-cd DayZero
+pip install -r backend/requirements.txt
 ```
 
-### 2️⃣ Setup backend
+Install root dependencies for the AI prototype scripts if needed:
 
 ```bash
 pip install -r requirements.txt
-python app.py
 ```
 
-### 3️⃣ Run frontend
+## Run Locally
 
-Open `index.html` or `roles.html` in browser
+Backend API:
 
----
-## 🌟 Future Vision
+```bash
+python backend/app.py
+```
 
-DayZero aims to:
+Auth service:
 
-* Replace resumes with **real performance data**
-* Help students gain **job-ready experience**
-* Enable companies to **hire based on skills, not claims**
+```bash
+python backend/auth.py
+```
 
+Frontend:
 
-
+- `index.html`
+- `frontend/pages/roles.html`
+- `frontend/pages/recruiter_dashboard.html`

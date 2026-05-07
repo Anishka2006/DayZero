@@ -988,4 +988,3 @@
     }
   
   })();
-  <script src="recruiter_app.js"></script>

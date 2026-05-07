@@ -452,8 +452,8 @@ function initAuthModal() {
         setTimeout(() => {
           window.location.href =
             (data.user?.role || role) === "recruiter"
-              ? "frontend/recruiter_dashboard.html"
-              : "frontend/dashboard.html";
+              ? "frontend/pages/recruiter_dashboard.html"
+              : "frontend/pages/dashboard.html";
         }, 1000);
 
       } else {
