@@ -50,13 +50,14 @@ DayZero/
 ├── main.css
 └── requirements.txt
 ```
+
 ## Entry Points
 
 - Landing page: `index.html`
 - Candidate role selection: `frontend/pages/roles.html`
 - Candidate dashboard: `frontend/pages/dashboard.html`
 - Recruiter dashboard: `frontend/pages/recruiter_dashboard.html`
-- Results page: `frontend/pages/results.html`
+- Results page: `frontend/pages/results.html `
 
 ## Backend
 
