@@ -13,12 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAuthModal();
 });
 
-const AUTH_BASE_URL =
-  window.location.protocol === "file:" ||
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "localhost"
-    ? "http://127.0.0.1:8001"
-    : "https://dayzeroauth.onrender.com";
+const AUTH_BASE_URL = "https://dayzeroauth.onrender.com";
 
 /* =====================================
    1. NAVBAR SCROLL EFFECT
