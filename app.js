@@ -18,7 +18,7 @@ const AUTH_BASE_URL =
   window.location.hostname === "127.0.0.1" ||
   window.location.hostname === "localhost"
     ? "http://127.0.0.1:8001"
-    : "https://YOUR-AUTH-SERVICE.onrender.com";
+    : "https://dayzeroauth.onrender.com";
 
 /* =====================================
    1. NAVBAR SCROLL EFFECT
