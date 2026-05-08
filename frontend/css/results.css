@@ -1,0 +1,241 @@
+:root {
+  --page-bg: #f6f3ea;
+  --surface: rgba(255, 255, 255, 0.9);
+  --text: #172033;
+  --muted: #5a6472;
+  --line: rgba(148, 163, 184, 0.28);
+  --brand: #0f766e;
+  --brand-dark: #134e4a;
+  --accent: #f59e0b;
+  --shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.16), transparent 24%),
+    linear-gradient(180deg, #faf7f0, #efe8db);
+}
+
+.results-shell {
+  width: min(1240px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+.results-hero,
+.results-card,
+.score-card,
+.rubric-card,
+.note-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.results-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) 260px;
+  gap: 18px;
+  padding: 28px;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-dark);
+}
+
+.results-hero h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(2rem, 3vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.hero-copy,
+.signal-list li,
+.note-risk,
+.next-steps li {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.score-card {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(255, 255, 255, 0.96));
+}
+
+.score-card strong {
+  font-size: clamp(3.2rem, 6vw, 4.8rem);
+  line-height: 1;
+  margin: 10px 0 8px;
+}
+
+.score-card span,
+.score-card small {
+  color: var(--muted);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.results-card {
+  padding: 24px;
+}
+
+.results-card.wide {
+  grid-column: 1 / -1;
+}
+
+.section-head h2 {
+  margin: 6px 0 0;
+}
+
+.rubric-grid,
+.team-notes,
+.timeline-feed {
+  display: grid;
+  gap: 14px;
+}
+
+.rubric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-top: 16px;
+}
+
+.rubric-card {
+  padding: 18px;
+}
+
+.rubric-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 2rem;
+}
+
+.rubric-card span {
+  color: var(--muted);
+}
+
+.signal-list,
+.next-steps {
+  margin: 18px 0 0;
+  padding-left: 20px;
+}
+
+.timeline-feed {
+  margin-top: 16px;
+}
+
+.note-card {
+  padding: 18px;
+}
+
+.note-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.note-meta strong {
+  display: block;
+}
+
+.note-meta span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.note-score {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--brand-dark);
+  font-weight: 700;
+}
+
+.note-strength {
+  margin: 0 0 8px;
+}
+
+.note-risk {
+  margin: 0;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.primary-btn,
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 12px 18px;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.primary-btn {
+  border: none;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+  color: white;
+  font-weight: 700;
+}
+
+.ghost-btn {
+  color: var(--text);
+  border: 1px solid rgba(148, 163, 184, 0.38);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 900px) {
+  .results-hero,
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .results-shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .footer-actions {
+    display: none;
+  }
+}

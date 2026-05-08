@@ -1,130 +1,235 @@
-import os
-import requests
-from flask import Flask, request, jsonify
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Load environment variables
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from ai_engine.core.llm import chat_completion, extract_text, has_openrouter_config
+from backend.services.orchestrator import evaluate_work, get_session, handle_agent_event, start_simulation
+
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend interaction
+CORS(app)
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    if not GROQ_API_KEY:
-        return jsonify({"error": "API Key not configured on server"}), 500
+@app.route("/health", methods=["GET"])
+def health() -> tuple:
+    return jsonify({"ok": True, "openrouter_configured": has_openrouter_config()}), 200
 
-    incoming_data = request.json
-    
-    # Support both "message/system_prompt" format and direct Groq format
-    if "messages" in incoming_data:
-        payload = {
-            "model": incoming_data.get("model", "llama-3.1-8b-instant"),
-            "messages": incoming_data["messages"],
-            "max_tokens": incoming_data.get("max_tokens", 150),
-            "response_format": incoming_data.get("response_format")
-        }
+
+@app.route("/api/chat", methods=["POST"])
+def chat() -> tuple:
+    incoming = request.get_json(silent=True) or {}
+
+    if "messages" in incoming:
+        messages = incoming.get("messages") or []
+        model = incoming.get("model")
+        max_tokens = int(incoming.get("max_tokens") or 180)
+        temperature = float(incoming.get("temperature") or 0.7)
+        response_format = incoming.get("response_format")
     else:
-        user_message = incoming_data.get("message", "")
-        system_prompt = incoming_data.get("system_prompt", "You are a helpful assistant.")
-        payload = {
-            "model": "llama-3.1-8b-instant",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
-            "max_tokens": 150
-        }
-
-    try:
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json=payload,
-            timeout=10
-        )
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    
-@app.route("/submit-task", methods=["POST"])
-def submit_task():
-    data = request.json
-    submission = data.get("submission", "")
-    role = data.get("role", "Frontend")
-
-    system_prompt = f"""
-    You are a senior engineering manager.
-    Evaluate this {role} submission.
-
-    Give:
-    1. Score out of 100
-    2. Short feedback
-    """
-
-    payload = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [
+        user_message = str(incoming.get("message") or "")
+        system_prompt = str(incoming.get("system_prompt") or "You are a helpful assistant.")
+        messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": submission}
+            {"role": "user", "content": user_message},
         ]
-    }
+        model = incoming.get("model")
+        max_tokens = int(incoming.get("max_tokens") or 180)
+        temperature = float(incoming.get("temperature") or 0.7)
+        response_format = incoming.get("response_format")
 
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json=payload
+    response = chat_completion(
+        messages=messages,
+        model=model,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        response_format=response_format,
     )
+    if not response:
+        return jsonify({"error": "OpenRouter request failed or API key is missing."}), 503
 
-    result = response.json()["choices"][0]["message"]["content"]
+    return jsonify(response), 200
 
-    return jsonify({
-        "score": 90,  # You can improve parsing later
-        "feedback": result
-    })
+
+@app.route("/api/simulation/start", methods=["GET", "POST"])
+def api_start_simulation() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    role = request.args.get("role") or payload.get("role")
+    task_id = request.args.get("task_id") or payload.get("task_id")
+    participant_name = request.args.get("participant_name") or payload.get("participant_name")
+    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    return jsonify(data), 200
+
 
 @app.route("/start-simulation", methods=["POST"])
-def start_simulation():
-    data = request.json
-    role = data.get("role", "Frontend")
-
-    system_prompt = f"""
-    You are an AI Manager in a tech company.
-    Assign a realistic first-day task to a {role} developer.
-    Keep it short and practical.
-    """
-
-    payload = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "Give my first task"}
-        ]
-    }
-
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json=payload
+def legacy_start_simulation() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    role = payload.get("role")
+    task_id = payload.get("task_id")
+    participant_name = payload.get("participant_name")
+    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    return (
+        jsonify(
+            {
+                "task": data["task_text"],
+                "session_id": data["session_id"],
+                "task_id": data["task"]["id"],
+                "task_data": data["task"],
+                "initial_messages": data["initial_messages"],
+                "memory": data["memory"],
+                "scores": data["scores"],
+                "phase": data["phase"],
+            }
+        ),
+        200,
     )
 
-    task = response.json()["choices"][0]["message"]["content"]
 
-    return jsonify({"task": task})
+@app.route("/api/sessions", methods=["POST"])
+def api_create_session() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = start_simulation(
+        task_id=payload.get("task_id"),
+        role=payload.get("role"),
+        participant_name=payload.get("participant_name"),
+    )
+    return jsonify(data), 200
 
-        
 
-if __name__ == '__main__':
+@app.route("/api/sessions/<session_id>", methods=["GET"])
+def api_get_session(session_id: str) -> tuple:
+    session = get_session(session_id)
+    if not session:
+        return jsonify({"error": "Session not found."}), 404
+    return jsonify(session), 200
+
+
+@app.route("/api/sessions/<session_id>/chat", methods=["POST"])
+def api_session_chat(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "candidate_message",
+            "candidate_message": payload.get("message"),
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": payload.get("code"),
+        }
+    )
+    return jsonify(data), 200
+
+
+@app.route("/api/sessions/<session_id>/tests", methods=["POST"])
+def api_session_tests(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "run_tests",
+            "candidate_message": payload.get("message") or "I ran the latest checks.",
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": payload.get("code"),
+            "test_results": payload.get("test_results") or {},
+        }
+    )
+    return jsonify(data), 200
+
+
+@app.route("/api/sessions/<session_id>/submit", methods=["POST"])
+def api_session_submit(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or payload.get("code") or "")
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "submit_solution",
+            "candidate_message": submission[:700],
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": submission,
+        }
+    )
+    return jsonify(data.get("report") or data), 200
+
+
+@app.route("/api/agent/event", methods=["POST"])
+def api_agent_event() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(payload)
+    return jsonify(data), 200
+
+
+@app.route("/submit-task", methods=["POST"])
+def submit_task() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or "")
+    role = str(payload.get("role") or "Frontend")
+    session_id = payload.get("session_id")
+
+    if session_id:
+        result = handle_agent_event(
+            {
+                "session_id": session_id,
+                "event_type": "submit_solution",
+                "candidate_message": submission[:700],
+                "code": submission,
+                "phase": "submission",
+            }
+        )
+        report = result.get("report") or {}
+        return (
+            jsonify(
+                {
+                    "score": report.get("overall_score", 0),
+                    "feedback": report.get("summary") or result.get("message") or "",
+                    "report": report,
+                }
+            ),
+            200,
+        )
+
+    evaluation = evaluate_work(submission=submission, role=role)
+    return jsonify(evaluation), 200
+
+
+@app.route("/api/evaluate", methods=["POST"])
+def api_evaluate() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or payload.get("code") or "")
+    role = str(payload.get("role") or "Frontend")
+    evaluation = evaluate_work(submission=submission, role=role)
+    return jsonify(evaluation), 200
+
+
+@app.route("/api/ping-llm", methods=["GET"])
+def ping_llm() -> tuple:
+    if not has_openrouter_config():
+        return jsonify({"ok": False, "message": "OPENROUTER_API_KEY is missing."}), 200
+
+    response = chat_completion(
+        messages=[{"role": "user", "content": "Reply with the single word ready."}],
+        max_tokens=10,
+        temperature=0,
+    )
+    if not response:
+        return jsonify({"ok": False, "message": "OpenRouter request failed."}), 200
+
+    return jsonify({"ok": True, "reply": extract_text(response) or "ready"}), 200
+
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

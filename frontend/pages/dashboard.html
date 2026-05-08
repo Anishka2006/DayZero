@@ -108,7 +108,9 @@
             </div>
 
             <div class="task-actions">
-              <button class="primary-btn" id="authSkillBtn">Authenticate Skill to Proceed</button>
+              <button class="primary-btn start-sim" data-task-id="security-patch">
+  Start Security Simulation
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -157,8 +159,12 @@
             </div>
 
             <div class="task-actions">
-              <button class="primary-btn">Start Task</button>
-              <button class="secondary-btn">Continue</button>
+              <button class="primary-btn start-sim" data-task-id="mobile-growth">
+  Start Simulation
+</button>
+<button class="secondary-btn start-sim" data-task-id="mobile-growth">
+  Continue
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -200,7 +206,9 @@
             </div>
 
             <div class="task-actions">
-              <button class="secondary-btn">Start When Ready</button>
+             <button class="secondary-btn start-sim" data-task-id="docs-update">
+  Start When Ready
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -1159,7 +1167,20 @@
       </div>
     </div>
   </div>
+<script src="../js/dashboard.js"></script>
 
-  <script src="../js/dashboard.js"></script>
+<script>
+  document.querySelectorAll(".start-sim").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const taskId = btn.dataset.taskId;
+      localStorage.setItem("dayzero_task_id", taskId);
+      window.location.href = "simulation.html";
+    });
+  });
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+</script>
 </body>
 </html>

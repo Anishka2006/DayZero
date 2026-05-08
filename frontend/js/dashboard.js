@@ -1,4 +1,5 @@
-const API_BASE_URL = "https://dayzeroapp.onrender.com";
+const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
+const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 
 if (typeof lucide !== 'undefined') {
   lucide.createIcons();
@@ -14,9 +15,11 @@ const crisisPopup = document.getElementById("crisisPopup");
 const closePopup = document.getElementById("closePopup");
 const crisisOptions = document.querySelectorAll(".crisis-option");
 const toast = document.getElementById("toast");
+const submitBtn = document.getElementById("submitBtn");
 if (submitBtn) {
   submitBtn.addEventListener("click", () => {
     const role = localStorage.getItem("userRole") || "Frontend";
+    const orchestratorState = loadOrchestratorState();
 
     // Get submission text (adjust selector if needed)
     const submissionInput = document.querySelector("textarea");
@@ -29,13 +32,17 @@ if (submitBtn) {
       },
       body: JSON.stringify({
         submission: submission,
-        role: role
+        role: role,
+        session_id: orchestratorState.session_id || null
       })
     })
     .then(res => res.json())
     .then(data => {
       localStorage.setItem("lastScore", data.score);
       localStorage.setItem("feedback", data.feedback);
+      if (data.report) {
+        localStorage.setItem("lastEvaluationReport", JSON.stringify(data.report));
+      }
 
       showToast("AI Evaluation Complete ✅");
 
@@ -158,9 +165,50 @@ if (closePopup) {
 }
 
 crisisOptions.forEach(option => {
-  option.addEventListener("click", () => {
+  option.addEventListener("click", async () => {
     if (crisisPopup) crisisPopup.classList.add("hidden");
-    showToast("Response recorded. Adaptability score updated.");
+
+    try {
+      let orchestratorState = loadOrchestratorState();
+      if (!orchestratorState.session_id) {
+        orchestratorState = await initializeLiveSimulation(true);
+      }
+
+      const candidateResponse = option.textContent.trim();
+      if (teamChatHistory && candidateResponse) {
+        appendTeamChatMessage("You", "Candidate", candidateResponse, "user");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/agent/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: orchestratorState.session_id,
+          event_type: "crisis_triggered",
+          candidate_message: candidateResponse,
+          memory: orchestratorState.memory || {},
+          scores: orchestratorState.scores || {},
+          phase: orchestratorState.phase || "intro"
+        })
+      });
+      const data = await response.json();
+      saveOrchestratorState({
+        session_id: data.session_id,
+        task: data.task || orchestratorState.task || null,
+        memory: data.memory || {},
+        scores: data.scores || {},
+        phase: data.phase || "crisis"
+      });
+      appendTeamChatMessage(
+        data.agent && data.agent.name ? data.agent.name : "Asha",
+        data.agent && data.agent.role ? data.agent.role : "Product Manager",
+        data.message || "We need a tighter scope right now."
+      );
+      showToast("Crisis recorded. The team is reacting live.");
+    } catch (error) {
+      console.error("Crisis routing error:", error);
+      showToast("Crisis recorded, but the live PM response failed.");
+    }
   });
 });
 
@@ -612,27 +660,7 @@ if (focusToggle) {
     }
   });
 
-  // LOAD TASK FROM BACKEND
-document.addEventListener("DOMContentLoaded", () => {
-  const role = localStorage.getItem("userRole");
-
-  if (role) {
-    fetch(`${API_BASE_URL}/start-simulation`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ role: role })
-    })
-    .then(res => res.json())
-    .then(data => {
-      const taskElement = document.querySelector(".task-desc");
-      if (taskElement) {
-        taskElement.innerText = data.task;
-      }
-    });
-  }
-});
+  // Simulation boot is handled later by initializeLiveSimulation().
 }
 
 // Collapsible Cards Logic
@@ -2133,12 +2161,146 @@ const teamChatInput = document.getElementById("teamChatInput");
 const teamChatSend = document.getElementById("teamChatSend");
 const teamChatHistory = document.getElementById("teamChatHistory");
 
-const simulatedTeamReplies = [
-  { name: "Sarah", text: "Got it, thanks!" },
-  { name: "Mike", text: "I'll update the ticket." },
-  { name: "Alex", text: "Makes sense to me." },
-  { name: "Sarah", text: "Should I change the design specs for this?" }
-];
+function loadOrchestratorState() {
+  try {
+    return JSON.parse(localStorage.getItem(ORCHESTRATOR_STATE_KEY) || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveOrchestratorState(nextState) {
+  const merged = {
+    ...loadOrchestratorState(),
+    ...nextState
+  };
+  localStorage.setItem(ORCHESTRATOR_STATE_KEY, JSON.stringify(merged));
+  return merged;
+}
+
+function escapeChatHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function appendTeamChatMessage(name, role, message, type = "agent") {
+  if (!teamChatHistory) return;
+  const msg = document.createElement("div");
+  msg.className = `chat-msg ${type}`;
+  msg.innerHTML = `<strong>${escapeChatHtml(name)}${role ? ` (${escapeChatHtml(role)})` : ""}:</strong> ${escapeChatHtml(message)}`;
+  teamChatHistory.appendChild(msg);
+  teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
+}
+
+function updateTaskFromSimulation(task) {
+  if (!task) return;
+  const taskTitleEl = document.querySelector(".task-card h2");
+  const taskDescEl = document.querySelector(".task-card .task-desc");
+  const metaStrongEls = document.querySelectorAll(".task-card .task-meta strong");
+  const reqEls = document.querySelectorAll(".requirement-list .req");
+
+  if (taskTitleEl && task.title) {
+    taskTitleEl.innerText = task.title;
+  }
+  if (taskDescEl && task.summary) {
+    taskDescEl.innerText = task.summary;
+  }
+  if (metaStrongEls[0] && task.deadline_minutes) {
+    metaStrongEls[0].innerText = `${task.deadline_minutes} mins`;
+  }
+  if (metaStrongEls[1] && task.deadline_minutes) {
+    metaStrongEls[1].innerText = `${task.deadline_minutes}m left`;
+  }
+  if (metaStrongEls[2] && task.priority) {
+    metaStrongEls[2].innerText = task.priority;
+  }
+  if (reqEls.length && Array.isArray(task.requirements)) {
+    reqEls.forEach((node, index) => {
+      node.innerText = task.requirements[index] ? `✓ ${task.requirements[index]}` : "";
+    });
+  }
+}
+
+function hydrateCoopRoster() {
+  const labels = document.querySelectorAll(".coop-user span:first-of-type");
+  const roster = [
+    "You (Candidate)",
+    "Asha (PM)",
+    "Rohan (Backend)",
+    "Mira (Design)",
+    "Dev (QA)"
+  ];
+  labels.forEach((node, index) => {
+    if (roster[index]) {
+      node.innerText = roster[index];
+    }
+  });
+}
+
+function predictTypingName(userText, phase) {
+  const lowered = String(userText || "").toLowerCase();
+  if (lowered.includes("api") || lowered.includes("backend") || lowered.includes("retry") || lowered.includes("payload") || lowered.includes("token") || lowered.includes("error")) {
+    return "Rohan";
+  }
+  if (lowered.includes("mobile") || lowered.includes("design") || lowered.includes("ui") || lowered.includes("ux") || lowered.includes("loading") || lowered.includes("spacing") || lowered.includes("copy")) {
+    return "Mira";
+  }
+  if (lowered.includes("test") || lowered.includes("bug") || lowered.includes("edge case") || lowered.includes("validate")) {
+    return "Dev";
+  }
+  if (phase === "validation") {
+    return "Dev";
+  }
+  return "Asha";
+}
+
+async function initializeLiveSimulation(forceRefresh = false) {
+  if (!teamChatHistory) return loadOrchestratorState();
+
+  const cached = loadOrchestratorState();
+  if (cached.session_id && !forceRefresh) {
+    if (cached.task) {
+      updateTaskFromSimulation(cached.task);
+    }
+    if (Array.isArray(cached.initial_messages) && cached.initial_messages.length) {
+      teamChatHistory.innerHTML = "";
+      cached.initial_messages.forEach((entry) => {
+        appendTeamChatMessage(entry.speaker_name || entry.name, entry.speaker_title || entry.role, entry.message || entry.content || "");
+      });
+    }
+    return cached;
+  }
+
+  const role = localStorage.getItem("userRole") || "Frontend";
+  const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role })
+  });
+  const data = await response.json();
+
+  const nextState = saveOrchestratorState({
+    session_id: data.session_id,
+    task: data.task || null,
+    memory: data.memory || {},
+    scores: data.scores || {},
+    phase: data.phase || "intro",
+    initial_messages: data.initial_messages || []
+  });
+
+  updateTaskFromSimulation(data.task);
+  hydrateCoopRoster();
+  teamChatHistory.innerHTML = "";
+  (data.initial_messages || []).forEach((entry) => {
+    appendTeamChatMessage(entry.speaker_name, entry.speaker_title, entry.message);
+  });
+
+  return nextState;
+}
 
 async function handleTeamChatSend() {
   if (!teamChatInput || !teamChatInput.value.trim() || !teamChatHistory) return;
@@ -2154,130 +2316,56 @@ async function handleTeamChatSend() {
   
   const userText = teamChatInput.value.trim();
   
-  // Add user message
-  const userMsg = document.createElement("div");
-  userMsg.className = "chat-msg";
-  userMsg.innerHTML = `<strong>You:</strong> ${userText}`;
-  teamChatHistory.appendChild(userMsg);
+  appendTeamChatMessage("You", "Candidate", userText, "user");
   
   teamChatInput.value = "";
-  teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
-  
-  // Build Kanban Context
-  let kanbanContext = "Current Team Status:\\n";
-  const kanbanCols = document.querySelectorAll(".kanban-col");
-  if (kanbanCols.length > 0) {
-    kanbanCols.forEach(col => {
-      const colName = col.querySelector(".col-head") ? col.querySelector(".col-head").innerText : "";
-      const tasks = col.querySelectorAll(".k-item");
-      tasks.forEach(task => {
-        const taskName = task.querySelector(".k-title") ? task.querySelector(".k-title").innerText : "";
-        const owner = task.querySelector(".k-owner") ? task.querySelector(".k-owner").innerText : "";
-        if (owner && taskName) {
-          kanbanContext += `- ${owner} is in '${colName}' working on '${taskName}'\\n`;
-        }
-      });
-    });
+  let orchestratorState = loadOrchestratorState();
+  if (!orchestratorState.session_id) {
+    orchestratorState = await initializeLiveSimulation(true);
   }
 
   // Show Typing Indicator
   const typingMsg = document.createElement("div");
   typingMsg.className = "chat-msg typing-indicator";
-  typingMsg.innerHTML = `<em>Team is typing...</em>`;
+  typingMsg.innerHTML = `<em>${escapeChatHtml(predictTypingName(userText, orchestratorState.phase))} is typing...</em>`;
   teamChatHistory.appendChild(typingMsg);
   teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+  try {
+      const response = await fetch(`${API_BASE_URL}/api/agent/event`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [
-            {
-              role: "system",
-              content: `You are playing the role of the user's teammates: Sarah (Design), Mike (Dev), or Alex (Data). 
-  Based on the user's message, pick ONE teammate to reply. Keep the reply short (1-2 sentences). 
-  If the user asks what someone is doing, reference this context:\\n${kanbanContext}\\n
-  IMPORTANT: Your response MUST be in the format "TeammateName: Message". For example: "Sarah: I'm currently designing the wires."
-  ALSO IMPORTANT: If your message implies completing a task or starting a new one from the context, you MUST append a tag exactly like this to the end of your message: [MOVE_TASK: "Task Name" -> "Column Name"] where Column Name is "To Do", "In Progress", or "Done". 
-  If the user tells you to fix the active crisis, append: [CRISIS_RESOLVED]`
-            },
-            { role: "user", content: userText }
-          ],
-          max_tokens: 150
+          session_id: orchestratorState.session_id,
+          event_type: "candidate_message",
+          candidate_message: userText,
+          memory: orchestratorState.memory || {},
+          scores: orchestratorState.scores || {},
+          phase: orchestratorState.phase || "intro",
+          role: localStorage.getItem("userRole") || "Frontend"
         })
       });
 
       const data = await response.json();
-      let replyText = data.choices[0].message.content.trim();
-      
       typingMsg.remove();
-
-
-    // Parse Actions
-    const moveTaskMatch = replyText.match(/\[MOVE_TASK:\s*"([^"]+)"\s*->\s*"([^"]+)"\]/);
-    if (moveTaskMatch) {
-      const taskName = moveTaskMatch[1];
-      const targetColName = moveTaskMatch[2].toLowerCase();
-      
-      const kanbanCols = document.querySelectorAll(".kanban-col");
-      let targetColNode = null;
-      kanbanCols.forEach(col => {
-        if (col.querySelector(".col-head") && col.querySelector(".col-head").innerText.toLowerCase().includes(targetColName)) {
-          targetColNode = col;
-        }
+      saveOrchestratorState({
+        session_id: data.session_id,
+        task: data.task || orchestratorState.task || null,
+        memory: data.memory || {},
+        scores: data.scores || {},
+        phase: data.phase || "intro"
       });
-
-      if (targetColNode) {
-        const tasks = document.querySelectorAll(".k-task, .k-item");
-        tasks.forEach(task => {
-          const tName = task.querySelector("span, .k-title") ? task.querySelector("span, .k-title").innerText : "";
-          if (tName.includes(taskName) || taskName.includes(tName)) {
-            targetColNode.appendChild(task);
-            task.style.background = "var(--green-light, #ecfdf5)";
-            setTimeout(() => task.style.background = "", 2000);
-          }
-        });
-      }
-      replyText = replyText.replace(moveTaskMatch[0], "");
-    }
-
-    if (replyText.includes("[CRISIS_RESOLVED]")) {
-      const crisisBanner = document.getElementById("crisisBannerBox");
-      if (crisisBanner) {
-        crisisBanner.style.opacity = "0.5";
-        crisisBanner.innerHTML = "<h4>Crisis Resolved</h4><p>The team successfully mitigated the issue.</p>";
-      }
-      replyText = replyText.replace("[CRISIS_RESOLVED]", "");
-    }
-
-    let name = "Team";
-    let msg = replyText;
-    if (replyText.includes(":")) {
-      const split = replyText.split(":");
-      name = split[0].trim().replace(/\\*/g, ""); // Remove bold markdown if present
-      msg = split.slice(1).join(":").trim();
-      
-      if (!["Sarah", "Mike", "Alex", "Team"].includes(name)) {
-         name = "Sarah"; 
-      }
-    }
-
-    const replyMsg = document.createElement("div");
-    replyMsg.className = "chat-msg";
-    replyMsg.innerHTML = `<strong>${name}:</strong> ${msg}`;
-    teamChatHistory.appendChild(replyMsg);
-    teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
+      updateTaskFromSimulation(data.task);
+      appendTeamChatMessage(
+        data.agent && data.agent.name ? data.agent.name : "AI teammate",
+        data.agent && data.agent.role ? data.agent.role : "",
+        data.message || "I'm here."
+      );
 
   } catch (error) {
     console.error("Team Chat Error:", error);
     typingMsg.remove();
-    const fallbackMsg = document.createElement("div");
-    fallbackMsg.className = "chat-msg";
-    fallbackMsg.innerHTML = `<strong>Mike:</strong> Sorry, we are having some connection issues right now.`;
-    teamChatHistory.appendChild(fallbackMsg);
-    teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
+    appendTeamChatMessage("System", "", "The live team connection dropped for a moment. Try again.");
   }
 }
 
@@ -2292,6 +2380,12 @@ if (teamChatInput) {
     }
   });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeLiveSimulation().catch((error) => {
+    console.error("Simulation init error:", error);
+  });
+});
 
 // ==========================================
 // GLOBAL BEHAVIORAL ANALYTICS TRACKING
