@@ -181,16 +181,25 @@ function showToast(message, type = "success") {
 
 /* =====================================
    7. TIMER FUNCTION
+   FIX: Persists countdown in localStorage
+   so it does not reset on every page refresh
 ===================================== */
 function initTimer() {
   const timerElement = document.getElementById("countdown-timer");
   if (!timerElement) return;
 
-  let totalSeconds = 18 * 60 + 22; // 18:22
+  // Use saved time if available, otherwise start fresh at 18:22
+  let totalSeconds = parseInt(localStorage.getItem("timerSeconds")) || (18 * 60 + 22);
 
   setInterval(() => {
-    if (totalSeconds <= 0) return;
+    if (totalSeconds <= 0) {
+      timerElement.innerText = "0:00";
+      localStorage.removeItem("timerSeconds");
+      return;
+    }
+
     totalSeconds--;
+    localStorage.setItem("timerSeconds", totalSeconds);
 
     let m = Math.floor(totalSeconds / 60);
     let s = totalSeconds % 60;
@@ -224,7 +233,7 @@ function initModal() {
     if (e.target === modal) closeModal();
   });
 
-  // FIXED: Sets required localStorage keys before redirecting to roles page
+  // Sets required localStorage keys before redirecting to roles page
   form.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -384,6 +393,9 @@ function initAuthModal() {
 
   /* =============================
      FORM SUBMIT
+     FIX: Disable button during API call
+     to prevent duplicate submissions and
+     show loading feedback to the user
   ============================= */
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -402,6 +414,10 @@ function initAuthModal() {
     const body = isLogin
       ? { email, password, role }
       : { name, email, password, role };
+
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Please wait...";
 
     try {
       const res = await fetch(url, {
@@ -440,10 +456,18 @@ function initAuthModal() {
 
       } else {
         showToast(data.error || "Something went wrong ❌", "error");
+
+        // Re-enable button on failure so user can try again
+        submitBtn.disabled = false;
+        submitBtn.innerText = isLogin ? "Log In" : "Create Account";
       }
 
     } catch (err) {
       showToast("Network error. Please try again.", "error");
+
+      // Re-enable button on network error
+      submitBtn.disabled = false;
+      submitBtn.innerText = isLogin ? "Log In" : "Create Account";
     }
   });
 }
