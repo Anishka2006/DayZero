@@ -146,27 +146,17 @@ function initButtons() {
 /* =====================================
    6. TOAST MESSAGE
 ===================================== */
-function showToast(message, type = "success") {
-  const toast = document.createElement("div");
-  toast.className = `toast-message ${type}`;
 
-  const icon = type === "success" ? "✅" : "❌";
+form.addEventListener("submit", (e) => {
+    e.preventDefault(); 
+    
+    // 1. Get the name entered 
+    const name = document.getElementById("reg-name").value;
+    localStorage.setItem("userName", name);
 
-  toast.innerHTML = `
-    <span class="toast-icon">${icon}</span>
-    <span>${message}</span>
-    <div class="toast-progress"></div>
-  `;
-
-  document.body.appendChild(toast);
-
-  // show
-  setTimeout(() => {
-    toast.classList.add("show");
-  }, 50);
-
-  // auto remove
-  let timeout = setTimeout(removeToast, 3000);
+    // 2. Redirect to the Roles page immediately
+    window.location.href = "frontend/pages/roles.html"; 
+});
 
   function removeToast() {
     toast.classList.remove("show");
