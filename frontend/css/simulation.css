@@ -396,6 +396,14 @@ button {
   height: 17px;
 }
 
+.workspace-jump-btn:disabled,
+.footer-btn:disabled,
+.primary-footer-btn:disabled,
+.icon-lite-btn:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
 /* MESSAGES */
 
 .reference-chat-feed {
@@ -673,6 +681,7 @@ kbd {
 .workspace-footer {
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
   padding: 10px 14px;
   border-top: 1px solid var(--line);
   background: #fff;
@@ -686,6 +695,8 @@ kbd {
 
 .workspace-footer-actions {
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .footer-btn,
@@ -705,6 +716,14 @@ kbd {
 .primary-footer-btn {
   background: var(--accent);
   color: white;
+}
+
+.scene-submit-btn {
+  height: 38px;
+  padding: 0 14px;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .workspace-tip-row {

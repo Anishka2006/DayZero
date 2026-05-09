@@ -2,6 +2,7 @@ const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0
 
 const STORAGE_KEYS = {
   selectedMission: "dayzeroSelectedMissionKey",
+  dashboardTask: "dayzero_task_id",
   sessionPrefix: "dayzeroSimulationSession::",
   workspacePrefix: "dayzeroWorkspaceState::",
   timelinePrefix: "dayzeroTimelineState::",
@@ -748,6 +749,20 @@ const MISSIONS = {
   },
 };
 
+const TASK_TO_MISSION_KEY = {
+  "mobile-growth": "mobile",
+  "security-patch": "security",
+  "docs-update": "mobile",
+  "fraud-dashboard": "ops",
+  "search-infra": "migration",
+  "ai-copilot": "copilot",
+  "search-ranking": "ops",
+  "surge-api": "wallet",
+  "video-encoding": "migration",
+  "playlist-generator": "ops",
+  "vr-marketplace": "mobile",
+};
+
 const state = {
   missionKey: null,
   mission: null,
@@ -762,6 +777,9 @@ const state = {
   timelineKeys: new Set(),
   triggeredBeats: new Set(),
   userMessageCount: 0,
+  submissionInFlight: false,
+  roomLocked: false,
+  allowNavigationAway: false,
 };
 
 const companyName = document.getElementById("companyName");
@@ -809,6 +827,8 @@ const runTestsBtn = document.getElementById("runTestsBtn");
 const shareWorkspaceBtn = document.getElementById("shareWorkspaceBtn");
 const requestCritiqueBtn = document.getElementById("requestCritiqueBtn");
 const submitBtn = document.getElementById("submitBtn");
+const submitSceneBtn = document.getElementById("submitSceneBtn");
+const submitWorkspaceBtn = document.getElementById("submitWorkspaceBtn");
 const triggerCrisisBtn = document.getElementById("triggerCrisisBtn");
 const crisisModal = document.getElementById("crisisModal");
 const closeCrisisModalBtn = document.getElementById("closeCrisisModalBtn");
@@ -816,6 +836,7 @@ const confirmCrisisBtn = document.getElementById("confirmCrisisBtn");
 const cancelCrisisBtn = document.getElementById("cancelCrisisBtn");
 const crisisModalText = document.getElementById("crisisModalText");
 const toast = document.getElementById("toast");
+const submitActionButtons = [submitBtn, submitSceneBtn, submitWorkspaceBtn].filter(Boolean);
 
 function channelItemsForMission(mission) {
   const defaults = {
@@ -832,6 +853,14 @@ function channelItemsForMission(mission) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function getMissionConfigByKey(key) {
+  if (MISSIONS[key]) {
+    return MISSIONS[key];
+  }
+  const mappedKey = TASK_TO_MISSION_KEY[key];
+  return mappedKey ? MISSIONS[mappedKey] : null;
 }
 
 function candidateName() {
@@ -854,20 +883,32 @@ function missionKeyFromRole() {
 }
 
 function selectedMissionKey() {
+  const dashboardTaskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  if (dashboardTaskId && getMissionConfigByKey(dashboardTaskId)) {
+    return dashboardTaskId;
+  }
   const stored = localStorage.getItem(STORAGE_KEYS.selectedMission);
-  return stored && MISSIONS[stored] ? stored : missionKeyFromRole();
+  return stored && getMissionConfigByKey(stored) ? stored : missionKeyFromRole();
+}
+
+function activeTaskId() {
+  const dashboardTaskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  if (dashboardTaskId && getMissionConfigByKey(dashboardTaskId)) {
+    return dashboardTaskId;
+  }
+  return state.mission ? state.mission.taskId : "mobile-growth";
 }
 
 function sessionStorageKey() {
-  return `${STORAGE_KEYS.sessionPrefix}${state.mission.taskId}`;
+  return `${STORAGE_KEYS.sessionPrefix}${activeTaskId()}`;
 }
 
 function workspaceStorageKey() {
-  return `${STORAGE_KEYS.workspacePrefix}${state.mission.taskId}`;
+  return `${STORAGE_KEYS.workspacePrefix}${activeTaskId()}`;
 }
 
 function timelineStorageKey() {
-  return `${STORAGE_KEYS.timelinePrefix}${state.mission.taskId}`;
+  return `${STORAGE_KEYS.timelinePrefix}${activeTaskId()}`;
 }
 
 function getInitials(name) {
@@ -904,6 +945,10 @@ function formatTime(value) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function clampScore(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function refreshIcons() {
   if (typeof lucide !== "undefined") {
     lucide.createIcons();
@@ -925,6 +970,75 @@ function showToast(message) {
   state.toastTimer = window.setTimeout(() => {
     toast.classList.add("hidden");
   }, 2600);
+}
+
+function shouldGuardSimulationExit() {
+  return Boolean(state.mission) && !state.allowNavigationAway;
+}
+
+function allowSimulationExit() {
+  state.allowNavigationAway = true;
+}
+
+function preventAccidentalRefresh(event) {
+  if (!shouldGuardSimulationExit()) {
+    return;
+  }
+
+  const key = String(event.key || "").toLowerCase();
+  const wantsRefresh = event.key === "F5" || ((event.ctrlKey || event.metaKey) && key === "r");
+  if (!wantsRefresh) {
+    return;
+  }
+
+  event.preventDefault();
+  showToast("Simulation is still live. Submit the room before refreshing.");
+}
+
+function handleBeforeUnload(event) {
+  if (!shouldGuardSimulationExit()) {
+    return;
+  }
+
+  event.preventDefault();
+  event.returnValue = "";
+}
+
+function navigateToResults() {
+  allowSimulationExit();
+  window.location.replace("results.html");
+}
+
+function setRoomLocked(locked, reason) {
+  state.roomLocked = locked;
+
+  if (candidateMessageInput) {
+    candidateMessageInput.disabled = locked;
+    if (locked && reason) {
+      candidateMessageInput.placeholder = reason;
+    } else if (!locked && state.mission) {
+      candidateMessageInput.placeholder = `Message #${state.mission.channel}`;
+    }
+  }
+  if (sendMessageBtn) sendMessageBtn.disabled = locked;
+  if (codeEditor) codeEditor.disabled = locked;
+  if (saveDraftBtn) saveDraftBtn.disabled = locked;
+  if (insertOutlineBtn) insertOutlineBtn.disabled = locked;
+  if (runTestsBtn) runTestsBtn.disabled = locked;
+  if (shareWorkspaceBtn) shareWorkspaceBtn.disabled = locked;
+  if (requestCritiqueBtn) requestCritiqueBtn.disabled = locked;
+  submitActionButtons.forEach((button) => {
+    button.disabled = locked;
+  });
+  if (triggerCrisisBtn) triggerCrisisBtn.disabled = locked;
+  if (workspaceTabs) {
+    workspaceTabs.style.pointerEvents = locked ? "none" : "";
+    workspaceTabs.style.opacity = locked ? "0.6" : "";
+  }
+
+  if (locked && reason) {
+    markSaved(reason);
+  }
 }
 
 function normalizeRoleKind(title) {
@@ -1252,10 +1366,14 @@ function scheduleAutoSave() {
   state.saveTimer = window.setTimeout(() => saveDraft(false), 400);
 }
 
-function resetCountdown() {
+function resetCountdown(payload) {
   window.clearInterval(state.countdownHandle);
-  state.countdownEndsAt = Date.now() + state.mission.deadlineMinutes * 60 * 1000;
-  countdownTimer.textContent = formatClock(state.mission.deadlineMinutes * 60 * 1000);
+  let endsAtMs = payload && payload.ends_at ? new Date(payload.ends_at).getTime() : Number.NaN;
+  if (!Number.isFinite(endsAtMs)) {
+    endsAtMs = Date.now() + state.mission.deadlineMinutes * 60 * 1000;
+  }
+
+  state.countdownEndsAt = endsAtMs;
   state.countdownHandle = window.setInterval(() => {
     const remaining = state.countdownEndsAt - Date.now();
     countdownTimer.textContent = formatClock(remaining);
@@ -1263,9 +1381,21 @@ function resetCountdown() {
       window.clearInterval(state.countdownHandle);
       countdownTimer.textContent = "00:00";
       crisisStatus.textContent = "Time expired";
-      showToast("The clock hit zero.");
+      if (!state.submissionInFlight) {
+        handleCountdownExpiry();
+      }
     }
   }, 1000);
+  countdownTimer.textContent = formatClock(Math.max(0, state.countdownEndsAt - Date.now()));
+}
+
+async function handleCountdownExpiry() {
+  if (state.submissionInFlight) {
+    return;
+  }
+  setRoomLocked(true, "Time ended - generating SkillRecord...");
+  showToast("Time ended - generating SkillRecord...");
+  await submitSimulation("expired");
 }
 
 function openCrisisModal() {
@@ -1414,6 +1544,96 @@ function persistEvaluation(report) {
   localStorage.setItem("feedback", finalReport.summary || "");
 }
 
+function recommendationForScore(score) {
+  if (score >= 84) return "Strong hire signal";
+  if (score >= 72) return "Promising with follow-up";
+  return "Needs more evidence";
+}
+
+function buildLocalEvaluationReport(reason = "submitted") {
+  const checklist = evaluationChecklist();
+  const passed = checklist.passed.length;
+  const failed = checklist.failed.length;
+  const snapshot = workspaceSnapshot().toLowerCase();
+  const explicitTradeoff =
+    snapshot.includes("defer") ||
+    snapshot.includes("not shipping") ||
+    snapshot.includes("rollback") ||
+    snapshot.includes("guardrail");
+  const timedPenalty = reason === "expired" ? 4 : 0;
+  const overallScore = clampScore(
+    66 + passed * 7 - failed * 5 + Math.min(state.userMessageCount, 3) * 3 + (explicitTradeoff ? 3 : 0) - timedPenalty
+  );
+
+  const scores = {
+    leadership: clampScore(overallScore + (state.userMessageCount > 0 ? 2 : -4)),
+    communication: clampScore(overallScore + (state.userMessageCount >= 2 ? 3 : -2)),
+    ownership: clampScore(overallScore + (codeEditor.value.trim() ? 3 : -5)),
+    prioritization: clampScore(overallScore + (explicitTradeoff ? 4 : -3)),
+    adaptability: clampScore(overallScore + Math.min((state.triggeredBeats && state.triggeredBeats.size) || 0, 4)),
+    technicalDepth: clampScore(overallScore + passed * 2 - failed * 3),
+  };
+
+  const pm = state.mission.teammates.find((person) => person.kind === "pm");
+  const qa = state.mission.teammates.find((person) => person.kind === "qa");
+
+  return {
+    mode: "workspace",
+    status: "completed",
+    completion_reason: reason === "expired" ? "expired" : "submitted",
+    overall_score: overallScore,
+    scores,
+    rubric: scores,
+    recommendation: recommendationForScore(overallScore),
+    summary: failed
+      ? `Local SkillRecord generated from the workspace and room activity. Strong progress is visible, but ${failed === 1 ? "one area still needs tightening" : `${failed} areas still need tightening`} before this would feel final.`
+      : "Local SkillRecord generated from the workspace and room activity. The solution covered the core flow and landed with a believable final recommendation.",
+    strengths: checklist.passed.length ? checklist.passed : ["The workspace moved forward with concrete task-aligned changes."],
+    weaknesses: checklist.failed,
+    observer_notes: [
+      "Local evaluation was used because the live backend was unavailable during submission.",
+      state.userMessageCount
+        ? `The room saw ${state.userMessageCount} candidate update${state.userMessageCount === 1 ? "" : "s"} before submission.`
+        : "The final delivery leaned more on workspace edits than room narration.",
+    ],
+    team_notes: [
+      pm
+        ? {
+            speaker_name: pm.name,
+            speaker_title: pm.title,
+            strength: checklist.passed[0] || "The recommendation stayed tied to the task.",
+            risk: checklist.failed[0] || "The room could still use sharper proof language.",
+            score: scores.leadership,
+          }
+        : null,
+      qa
+        ? {
+            speaker_name: qa.name,
+            speaker_title: qa.title,
+            strength: checklist.passed[1] || checklist.passed[0] || "Coverage improved through the draft.",
+            risk: checklist.failed[1] || checklist.failed[0] || "Residual risk should be called out more explicitly.",
+            score: scores.technicalDepth,
+          }
+        : null,
+    ].filter(Boolean),
+    next_steps: [
+      checklist.failed[0] || "Keep the final recommendation as explicit as the workspace itself.",
+      checklist.failed[1] || "Run one more pass that names the remaining risk out loud.",
+      "Open another simulation and practice making the final call faster under pressure.",
+    ],
+    timeline: state.timeline.slice(),
+    task: {
+      id: activeTaskId(),
+      title: state.mission.headline,
+      company: state.mission.company,
+      role: state.mission.role,
+      difficulty: state.mission.priority,
+      duration: `${state.mission.deadlineMinutes} mins`,
+    },
+    submitted_at: new Date().toISOString(),
+  };
+}
+
 function evaluationChecklist() {
   const snapshot = workspaceSnapshot().toLowerCase();
   switch (state.mission.key) {
@@ -1513,7 +1733,7 @@ async function createSession() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      task_id: state.mission.taskId,
+      task_id: activeTaskId(),
       role: state.mission.role,
       participant_name: candidateName(),
     }),
@@ -1533,12 +1753,28 @@ async function fetchSession(sessionId) {
 }
 
 function hydrateFromSession(payload) {
+  if (payload.report && payload.status === "completed") {
+    window.clearInterval(state.countdownHandle);
+    countdownTimer.textContent = "00:00";
+    crisisStatus.textContent = "Completed";
+    setRoomLocked(true, "Simulation completed");
+    persistEvaluation(payload.report);
+    localStorage.removeItem(sessionStorageKey());
+    showToast("SkillRecord ready. Opening results...");
+    window.setTimeout(() => {
+      navigateToResults();
+    }, 500);
+    return;
+  }
+
+  setRoomLocked(false, "");
   clearChat();
   clearTimeline();
   state.timeline = Array.isArray(payload.memory && payload.memory.timeline) ? payload.memory.timeline.slice() : loadTimelineState();
   state.timeline.forEach((entry) => state.timelineKeys.add(uniqueTimelineKey(entry)));
   renderTimeline();
   updatePhase(payload.phase || (payload.memory && payload.memory.phase) || "intro");
+  resetCountdown(payload);
 
   const messages = payload.messages || payload.initial_messages || [];
   if (messages.length) {
@@ -1547,6 +1783,7 @@ function hydrateFromSession(payload) {
 }
 
 function seedLocalRoom() {
+  setRoomLocked(false, "");
   clearChat();
   clearTimeline();
   state.timeline = loadTimelineState();
@@ -1562,6 +1799,7 @@ function seedLocalRoom() {
   state.timeline.forEach((entry) => state.timelineKeys.add(uniqueTimelineKey(entry)));
   renderTimeline();
   state.mission.introMessages.forEach((message) => appendChatMessage({ ...message, created_at: new Date().toISOString() }));
+  resetCountdown();
 }
 
 async function startOrResumeSession() {
@@ -1569,8 +1807,14 @@ async function startOrResumeSession() {
   try {
     let payload;
     if (storedSessionId) {
-      payload = await fetchSession(storedSessionId);
-      storeSessionId(storedSessionId);
+      try {
+        payload = await fetchSession(storedSessionId);
+        storeSessionId(storedSessionId);
+      } catch (resumeError) {
+        storeSessionId(null);
+        payload = await createSession();
+        storeSessionId(payload.session_id);
+      }
     } else {
       payload = await createSession();
       storeSessionId(payload.session_id);
@@ -1596,6 +1840,7 @@ async function ensureSession() {
 }
 
 async function sendRoomMessage(rawText) {
+  if (state.roomLocked) return;
   const text = String(rawText || "").trim();
   if (!text) return;
 
@@ -1658,6 +1903,7 @@ async function sendRoomMessage(rawText) {
 }
 
 async function runChecks() {
+  if (state.roomLocked) return;
   const results = evaluationChecklist();
   const hasFailures = results.failed.length > 0;
   testStatus.textContent = hasFailures ? `Checks found ${results.failed.length} issue(s)` : "Checks are green";
@@ -1739,6 +1985,7 @@ function insertOutline() {
 }
 
 function shareWorkspace() {
+  if (state.roomLocked) return;
   const excerpt = codeEditor.value.trim().slice(0, 900);
   if (!excerpt) {
     showToast("Edit the active file before sharing it with the room.");
@@ -1751,6 +1998,7 @@ function shareWorkspace() {
 }
 
 function requestCritique() {
+  if (state.roomLocked) return;
   const excerpt = codeEditor.value.trim().slice(0, 1200);
   if (!excerpt) {
     showToast("Write something in the workspace first so the team has something to critique.");
@@ -1760,11 +2008,18 @@ function requestCritique() {
   sendRoomMessage(`Review my current ${getActiveFile().name} draft and tell me what breaks first:\n\n${excerpt}`);
 }
 
-async function submitSimulation() {
+async function submitSimulation(reason = "submitted") {
+  if (state.roomLocked && reason === "submitted") {
+    return;
+  }
+  if (state.submissionInFlight) {
+    return;
+  }
+
   const submission = buildSubmission();
-  submitBtn.disabled = true;
-  markSaved("Submitting...");
-  showToast("Submitting simulation for evaluation...");
+  state.submissionInFlight = true;
+  setRoomLocked(true, reason === "expired" ? "Time ended - generating SkillRecord..." : "Submitting...");
+  showToast(reason === "expired" ? "Time ended - generating SkillRecord..." : "Submitting simulation for evaluation...");
 
   try {
     const sessionId = await ensureSession();
@@ -1773,6 +2028,7 @@ async function submitSimulation() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         submission,
+        reason,
         candidate_name: candidateName(),
         active_file: getActiveFile().name,
         workspace_snapshot: workspaceSnapshot(),
@@ -1785,9 +2041,10 @@ async function submitSimulation() {
     }
 
     persistEvaluation(payload.report || payload);
+    localStorage.removeItem(sessionStorageKey());
     showToast("Evaluation complete. Opening results...");
     window.setTimeout(() => {
-      window.location.href = "results.html";
+      navigateToResults();
     }, 700);
     return;
   } catch (error) {
@@ -1799,6 +2056,7 @@ async function submitSimulation() {
           submission,
           role: state.mission.role,
           session_id: state.sessionId,
+          reason,
         }),
       });
       const fallbackPayload = await fallbackResponse.json();
@@ -1806,30 +2064,42 @@ async function submitSimulation() {
         throw new Error(fallbackPayload.error || "Fallback submit failed.");
       }
       persistEvaluation(fallbackPayload.report || fallbackPayload);
+      localStorage.removeItem(sessionStorageKey());
       showToast("Evaluation complete. Opening results...");
       window.setTimeout(() => {
-        window.location.href = "results.html";
+        navigateToResults();
       }, 700);
     } catch (fallbackError) {
-      submitBtn.disabled = false;
-      markSaved("Submission failed");
-      showToast("Could not submit right now. Try again in a moment.");
+      addTimelineEvent({
+        title: "Local SkillRecord generated",
+        description: "The backend was unavailable during submit, so DayZero created a local evaluation from the current workspace state.",
+        created_at: new Date().toISOString(),
+      });
+      persistEvaluation(buildLocalEvaluationReport(reason));
+      storeSessionId(null);
+      showToast("Backend unavailable. Opening local SkillRecord...");
+      window.setTimeout(() => {
+        navigateToResults();
+      }, 700);
     }
   }
 }
 
 function resetMissionState(nextMissionKey) {
+  const missionConfig = getMissionConfigByKey(nextMissionKey) || getMissionConfigByKey("mobile");
   state.missionKey = nextMissionKey;
-  state.mission = clone(MISSIONS[nextMissionKey]);
+  state.mission = clone(missionConfig);
   state.workspace = loadWorkspaceState();
   state.timeline = loadTimelineState();
   state.triggeredBeats = new Set();
   state.userMessageCount = 0;
+  state.submissionInFlight = false;
+  state.allowNavigationAway = false;
   clearChat();
   clearTimeline();
   renderMission();
   renderTimeline();
-  resetCountdown();
+  setRoomLocked(false, "");
   startOrResumeSession();
 }
 
@@ -1894,6 +2164,8 @@ function bindEvents() {
   candidateMessageInput.addEventListener("input", autoResizeComposer);
 
   document.addEventListener("keydown", (event) => {
+    preventAccidentalRefresh(event);
+
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
       event.preventDefault();
       saveDraft(true);
@@ -1904,6 +2176,8 @@ function bindEvents() {
       closeCrisisModal();
     }
   });
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
 
   codeEditor.addEventListener("input", () => {
     updateCurrentFileContent(codeEditor.value);
@@ -1916,7 +2190,9 @@ function bindEvents() {
   runTestsBtn.addEventListener("click", runChecks);
   shareWorkspaceBtn.addEventListener("click", shareWorkspace);
   requestCritiqueBtn.addEventListener("click", requestCritique);
-  submitBtn.addEventListener("click", submitSimulation);
+  if (submitBtn) submitBtn.addEventListener("click", submitSimulation);
+  if (submitSceneBtn) submitSceneBtn.addEventListener("click", submitSimulation);
+  if (submitWorkspaceBtn) submitWorkspaceBtn.addEventListener("click", submitSimulation);
 
   triggerCrisisBtn.addEventListener("click", openCrisisModal);
   closeCrisisModalBtn.addEventListener("click", closeCrisisModal);
