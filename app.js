@@ -99,11 +99,7 @@ function animateBar(selector, value) {
 ===================================== */
 function initButtons() {
   // Contact Buttons
-
-  // Contact Buttons
-  const contactBtns = document.querySelectorAll(
-    'a[href="#contact"]'
-  );
+  const contactBtns = document.querySelectorAll('a[href="#contact"]');
 
   contactBtns.forEach(btn => {
     btn.addEventListener("click", e => {
@@ -185,21 +181,30 @@ function showToast(message, type = "success") {
 
 /* =====================================
    7. TIMER FUNCTION
+   FIX: Persists countdown in localStorage
+   so it does not reset on every page refresh
 ===================================== */
 function initTimer() {
   const timerElement = document.getElementById("countdown-timer");
   if (!timerElement) return;
 
-  let totalSeconds = 18 * 60 + 22; // 18:22
+  // Use saved time if available, otherwise start fresh at 18:22
+  let totalSeconds = parseInt(localStorage.getItem("timerSeconds")) || (18 * 60 + 22);
 
   setInterval(() => {
-    if (totalSeconds <= 0) return;
+    if (totalSeconds <= 0) {
+      timerElement.innerText = "0:00";
+      localStorage.removeItem("timerSeconds");
+      return;
+    }
+
     totalSeconds--;
-    
+    localStorage.setItem("timerSeconds", totalSeconds);
+
     let m = Math.floor(totalSeconds / 60);
     let s = totalSeconds % 60;
-    
-    timerElement.innerText = `${m}:${s < 10 ? '0' + s : s}`;
+
+    timerElement.innerText = `${m}:${s < 10 ? "0" + s : s}`;
   }, 1000);
 }
 
@@ -211,7 +216,7 @@ function initModal() {
   const closeBtn = document.getElementById("modal-close-btn");
   const form = document.getElementById("registration-form");
   const modalTitle = document.getElementById("modal-title");
-  
+
   if (!modal) return;
 
   function openModal(title) {
@@ -228,35 +233,21 @@ function initModal() {
     if (e.target === modal) closeModal();
   });
 
- form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  // Sets required localStorage keys before redirecting to roles page
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-  const name = document.getElementById("reg-name").value;
-  const phone = document.getElementById("reg-phone").value;
+    const name = document.getElementById("reg-name").value;
 
-  try {
-    const res = await fetch(`${AUTH_BASE_URL}/request-demo`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name, phone })
-    });
+    // Store name + placeholder user object + default role
+    // so the dashboard has the data it needs when it loads
+    localStorage.setItem("userName", name);
+    localStorage.setItem("user", JSON.stringify({ name }));
+    localStorage.setItem("role", "candidate");
 
-    const data = await res.json();
-
-    if (res.ok) {
-      showToast("Demo request sent! ");
-      form.reset();
-      closeModal();
-    } else {
-     showToast(data.error || "Failed ❌", "error");
-    }
-
-  } catch (err) {
-    showToast("Server error ⚠️");
-  }
-});
+    // Redirect to Roles page
+    window.location.href = "frontend/pages/roles.html";
+  });
 
   // Trigger modal on Get Started
   const getStartedBtns = document.querySelectorAll('a[href="#get-started"]');
@@ -402,6 +393,9 @@ function initAuthModal() {
 
   /* =============================
      FORM SUBMIT
+     FIX: Disable button during API call
+     to prevent duplicate submissions and
+     show loading feedback to the user
   ============================= */
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -420,6 +414,10 @@ function initAuthModal() {
     const body = isLogin
       ? { email, password, role }
       : { name, email, password, role };
+
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Please wait...";
 
     try {
       const res = await fetch(url, {
@@ -458,10 +456,18 @@ function initAuthModal() {
 
       } else {
         showToast(data.error || "Something went wrong ❌", "error");
+
+        // Re-enable button on failure so user can try again
+        submitBtn.disabled = false;
+        submitBtn.innerText = isLogin ? "Log In" : "Create Account";
       }
 
     } catch (err) {
       showToast("Network error. Please try again.", "error");
+
+      // Re-enable button on network error
+      submitBtn.disabled = false;
+      submitBtn.innerText = isLogin ? "Log In" : "Create Account";
     }
   });
 }
