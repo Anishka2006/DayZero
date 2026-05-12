@@ -1,52 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DayZero | Performance Record</title>
-    <link rel="stylesheet" href="../../main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | SkillRecord</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/results.css?v=4" />
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div class="results-container">
-        <header>
-            <h1>Simulation Complete: <span id="display-role">Frontend Developer</span></h1>
-            <p class="subtitle">Verified Readiness Score for <strong>DayZero Corp</strong></p>
-        </header>
-
-        <div class="score-circle">
-            <span id="final-score">88</span><small>%</small>
+  <main class="results-shell">
+    <section class="recruiter-profile-card">
+      <div class="profile-header">
+        <div class="profile-hero-bg"></div>
+        <div class="profile-hero-content">
+          <div class="profile-avatar-premium">YZ</div>
+          <div class="profile-identity">
+            <h2>Your SkillRecord</h2>
+            <p class="profile-title">Simulation Candidate</p>
+            <p class="profile-task" id="reportTaskTitle">Latest simulation</p>
+            <p class="profile-location"><i data-lucide="briefcase" class="icon-xs"></i> DayZero | <i data-lucide="calendar-days" class="icon-xs"></i> No completed flow yet</p>
+          </div>
+          <div class="profile-actions">
+            <button class="primary-btn" id="shareProfileBtn" type="button"><i data-lucide="share-2" class="icon-sm"></i> Share Profile</button>
+            <button class="secondary-btn" id="downloadReportBtn" type="button"><i data-lucide="download" class="icon-sm"></i> Download Report</button>
+            <a href="dashboard.html" class="secondary-btn action-link"><i data-lucide="layout-dashboard" class="icon-sm"></i> Open Dashboard</a>
+          </div>
         </div>
+      </div>
 
-        <div class="skills-grid">
-            <div class="skill-bar">
-                <span>Technical Execution</span>
-                <div class="progress"><div class="fill" style="width: 90%;"></div></div>
+      <div class="profile-summary-section">
+        <div class="overall-score-box">
+          <div class="score-ring-container">
+            <svg class="score-ring" viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="45"></circle>
+              <circle class="ring-fill" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: 283;"></circle>
+            </svg>
+            <div class="score-value" id="overallScore">0</div>
+          </div>
+          <div class="profile-score-text">
+            <h4>Overall Skill Score</h4>
+            <div class="score-tags">
+              <span class="badge top-tier" id="scoreBadge"><i data-lucide="award" class="icon-xs"></i> Awaiting submission</span>
+              <span class="subtitle" id="recommendation">No data</span>
             </div>
-            <div class="skill-bar">
-                <span>Communication</span>
-                <div class="progress"><div class="fill" style="width: 75%;"></div></div>
-            </div>
-            <div class="skill-bar">
-                <span>Problem Solving</span>
-                <div class="progress"><div class="fill" style="width: 82%;"></div></div>
-            </div>
+          </div>
         </div>
-
-        <div class="ai-feedback">
-            <h3>Manager's Final Review</h3>
-            <p id="manager-comments">"The candidate showed strong initiative in the Day 15 refactor. Communication was clear, though documentation could be more detailed. Highly recommended for Junior-Mid roles."</p>
+        <div class="professional-summary">
+          <h4>Professional Summary</h4>
+          <p id="reportSummary">Complete a simulation in the dashboard to generate a verified SkillRecord.</p>
         </div>
+      </div>
 
-        <button onclick="window.print()" class="btn-share">Download Proof of Work (PDF)</button>
-    </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const score = localStorage.getItem("lastScore") || "0";
-            const role = localStorage.getItem("userRole") || "Professional";
+      <div class="profile-skills-matrix">
+        <h4>Verified Core Competencies</h4>
+        <div class="skills-grid" id="rubricGrid"></div>
+      </div>
 
-            document.getElementById("final-score").innerText = score;
-            document.getElementById("display-role").innerText = role;
-        });
-    </script>
+      <div class="profile-bottom-section">
+        <div class="achievements-area">
+          <h4>Milestones & Certifications</h4>
+          <div class="badges-row" id="strengthList"></div>
+        </div>
+        <div class="recommendations-area">
+          <h4>Ideal Role Fit</h4>
+          <div class="roles-row" id="nextStepList"></div>
+        </div>
+      </div>
+
+      <div class="profile-footer">
+        <div class="trust-stamp">
+          <div class="stamp-icon"><i data-lucide="shield-check"></i></div>
+          <div class="stamp-details">
+            <strong>AI Verified Skill Assessment</strong>
+            <p id="issuedDate">Issued by DayZero Simulation OS | Assessment Date: Pending</p>
+          </div>
+        </div>
+        <a href="#" class="public-link" id="publicLink">dayzero.ai/your-profile</a>
+      </div>
+    </section>
+
+    <section class="details-grid" id="detailsGrid">
+      <article class="detail-card">
+        <div class="section-head">
+          <p class="eyebrow">Strengths</p>
+          <h3>What Landed Well</h3>
+        </div>
+        <ul id="strengthDetailList" class="signal-list"></ul>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-head">
+          <p class="eyebrow">Risks</p>
+          <h3>What Needs Tightening</h3>
+        </div>
+        <ul id="riskList" class="signal-list"></ul>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-head">
+          <p class="eyebrow">Observer</p>
+          <h3>Recruiter Notes</h3>
+        </div>
+        <ul id="observerNoteList" class="signal-list"></ul>
+      </article>
+
+      <article class="detail-card">
+        <div class="section-head">
+          <p class="eyebrow">Next Steps</p>
+          <h3>How To Level Up</h3>
+        </div>
+        <ul id="nextStepsDetailList" class="signal-list"></ul>
+      </article>
+
+      <article class="detail-card wide">
+        <div class="section-head">
+          <p class="eyebrow">Timeline</p>
+          <h3>Simulation Moments</h3>
+        </div>
+        <div id="timelineFeed" class="timeline-feed"></div>
+      </article>
+
+      <article class="detail-card wide">
+        <div class="section-head">
+          <p class="eyebrow">Team Feedback</p>
+          <h3>How The Room Read You</h3>
+        </div>
+        <div id="teamNotes" class="team-notes"></div>
+      </article>
+    </section>
+  </main>
+
+  <div class="results-toast hidden" id="toast"></div>
+
+  <script src="../js/results.js?v=3"></script>
 </body>
 </html>
