@@ -17,12 +17,14 @@ from backend.services.orchestrator import evaluate_work, get_session, handle_age
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for frontend interaction
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-@app.route("/health", methods=["GET"])
-def health() -> tuple:
-    return jsonify({"ok": True, "openrouter_configured": has_openrouter_config()}), 200
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    if not GROQ_API_KEY:
+        return jsonify({"error": "API Key not configured on server"}), 500
 
 
 @app.route("/api/chat", methods=["POST"])

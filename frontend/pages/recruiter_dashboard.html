@@ -543,11 +543,11 @@
 
     <div class="sidebar-footer">
       <div class="recruiter-info">
-        <div class="rec-avatar">AK</div>
-        <div>
-          <div class="rec-name">Arjun Kapoor</div>
-          <div class="rec-role">Senior Recruiter · Stripe</div>
-        </div>
+        <div class="rec-avatar" id="recruiterAvatar"></div>
+      <div>
+        <div class="rec-name" id="recruiterName"></div>
+        <div class="rec-role" id="recruiterRole"></div>
+      </div>
       </div>
     </div>
   </aside>
@@ -898,6 +898,38 @@
 <script>
 (function () {
   "use strict";
+
+  const recruiterData = {
+    name: " Anil Patel",
+    role: "Senior Recruiter",
+    company: "Google"
+};
+
+localStorage.setItem(
+    "recruiter",
+    JSON.stringify(recruiterData)
+);
+
+const recruiter =
+    JSON.parse(localStorage.getItem("recruiter"));
+
+if(recruiter){
+
+    document.getElementById("recruiterName").innerText =
+        recruiter.name;
+
+    document.getElementById("recruiterRole").innerText =
+        `${recruiter.role} · ${recruiter.company}`;
+
+    const initials = recruiter.name
+        .split(" ")
+        .map(word => word[0])
+        .join("")
+        .toUpperCase();
+
+    document.getElementById("recruiterAvatar").innerText =
+        initials;
+}
 
   /* ══════════════════════════════════════════════════════════
      DATA

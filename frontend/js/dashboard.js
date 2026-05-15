@@ -507,6 +507,23 @@ function advanceCalendarProgress() {
   }
 }
 
+async function loadProfile() {
+  const response = await fetch("http://127.0.0.1:5000/api/user-profile");
+  const data = await response.json();
+
+  document.getElementById("candidateName").innerText = data.name;
+
+  document.getElementById("candidateRole").innerText = data.role;
+
+  document.getElementById("candidateAvatar").innerText =
+      data.name
+          .split(" ")
+          .map(word => word[0])
+          .join("");
+}
+
+loadProfile();
+
 async function simulateAiResponse(userMessage) {
   advanceCalendarProgress();
   addTimelineEvent('AI Prompt: ' + userMessage);
@@ -2477,3 +2494,31 @@ if (welcomePopup) {
   if (closeWelcome) closeWelcome.addEventListener("click", dismissWelcome);
   if (startSimBtn) startSimBtn.addEventListener("click", dismissWelcome);
 }
+window.addEventListener("DOMContentLoaded", () => {
+
+    const studentData = {
+        name: "Saavi Patel",
+        role: "Frontend Developer"
+    };
+
+    localStorage.setItem(
+        "student",
+        JSON.stringify(studentData)
+    );
+
+    const student =
+        JSON.parse(localStorage.getItem("student"));
+
+    if(student){
+
+        const initials = student.name
+            .split(" ")
+            .map(word => word[0])
+            .join("")
+            .toUpperCase();
+
+        document.getElementById("studentAvatar").innerText =
+            initials;
+    }
+
+});

@@ -28,6 +28,17 @@
     <script>
         function selectRole(role) {
             localStorage.setItem("userRole", role);
+            const recruiterData = {
+                name: document.getElementById("nameInput").value,
+                role: document.getElementById("roleInput").value,
+                company: document.getElementById("companyInput").value
+            };
+
+            localStorage.setItem(
+                "recruiter",
+                JSON.stringify(recruiterData)
+            );
+
             window.location.href = "dashboard.html";
         }
     </script>
