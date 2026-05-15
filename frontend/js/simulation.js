@@ -1027,6 +1027,8 @@ function setRoomLocked(locked, reason) {
   if (runTestsBtn) runTestsBtn.disabled = locked;
   if (shareWorkspaceBtn) shareWorkspaceBtn.disabled = locked;
   if (requestCritiqueBtn) requestCritiqueBtn.disabled = locked;
+  if (refreshSceneBtn) refreshSceneBtn.disabled = locked;
+  if (notifySceneBtn) notifySceneBtn.disabled = locked;
   submitActionButtons.forEach((button) => {
     button.disabled = locked;
   });

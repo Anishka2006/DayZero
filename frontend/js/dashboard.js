@@ -1,6 +1,439 @@
 const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 
+const TASKS = {
+  "Frontend": {
+    "Beginner": [
+      {
+        id: "frontend-homeflow",
+        company: "Shoply",
+        logo: "S",
+        label: "Shoply Onboarding UI",
+        title: "Checkout Flow Improvements",
+        description: "Optimize the checkout screen for faster conversions and smoother input validation.",
+        role: "Frontend",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["React UI", "Accessibility", "Form validation"]
+      },
+      {
+        id: "frontend-dashboard",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Analytics Panel",
+        title: "Dashboard Performance Fix",
+        description: "Find the slow rendering issue in the analytics widget and make it fast for mobile users.",
+        role: "Frontend",
+        time: "35 mins",
+        difficulty: "Beginner",
+        teamSize: "2",
+        skills: ["Performance", "CSS", "Debugging"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "frontend-product",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Product Launch",
+        title: "Interactive Feature Banner",
+        description: "Build a launch banner that updates dynamically based on user segment and AB test status.",
+        role: "Frontend",
+        time: "55 mins",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Component design", "State management", "A/B testing"]
+      },
+      {
+        id: "frontend-accessibility",
+        company: "Nova",
+        logo: "N",
+        label: "Nova Accessibility Audit",
+        title: "Upgrade Keyboard Navigation",
+        description: "Improve the app's keyboard and screen reader support for the main content flow.",
+        role: "Frontend",
+        time: "1 hour",
+        difficulty: "Intermediate",
+        teamSize: "3",
+        skills: ["Accessibility", "UI/UX", "Documentation"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "frontend-spa",
+        company: "Astra",
+        logo: "A",
+        label: "Astra SPA Migration",
+        title: "Migrate Widget to Single Page App",
+        description: "Lead the frontend migration of a legacy widget into the new SPA shell without interrupting users.",
+        role: "Frontend",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Architecture", "Performance", "Release planning"]
+      },
+      {
+        id: "frontend-visual",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Visual Refresh",
+        title: "Revamp the Design System",
+        description: "Execute a polished refresh of core UI components while preserving existing branding.",
+        role: "Frontend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Design system", "Component library", "Cross-team alignment"]
+      }
+    ]
+  },
+  "Backend": {
+    "Beginner": [
+      {
+        id: "backend-api-health",
+        company: "Orbit",
+        logo: "O",
+        label: "Orbit API Health",
+        title: "Debug the API timeout path",
+        description: "Investigate the outage in the public API and restore healthy responses fast.",
+        role: "Backend",
+        time: "40 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Debugging", "Monitoring", "API stability"]
+      },
+      {
+        id: "backend-cache",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Cache Fix",
+        title: "Stabilize the cache layer",
+        description: "Resolve stale read issues with the cache invalidation strategy and document the behavior.",
+        role: "Backend",
+        time: "50 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Caching", "Data consistency", "Logging"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "backend-auth",
+        company: "Forge",
+        logo: "F",
+        label: "Forge Auth Harden",
+        title: "Secure the Login Service",
+        description: "Patch the authentication flow to protect against session fixation and improve retry handling.",
+        role: "Backend",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Security", "API design", "Reliability"]
+      },
+      {
+        id: "backend-queue",
+        company: "Altitude",
+        logo: "A",
+        label: "Altitude Queue Repair",
+        title: "Recover the job queue",
+        description: "Fix message ordering and retry behavior for the background worker pipeline.",
+        role: "Backend",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Queueing", "Resiliency", "Testing"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "backend-migration",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson DB Migration",
+        title: "Execute zero-downtime migration",
+        description: "Plan and run a database migration that preserves traffic while changing the schema safely.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Database", "Deployment", "Rollback planning"]
+      },
+      {
+        id: "backend-scaling",
+        company: "Nimbus",
+        logo: "N",
+        label: "Nimbus Scale Event",
+        title: "Build automatic scaling safeguards",
+        description: "Create a backend autoscaling strategy that protects the service during traffic spikes.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Scalability", "Load balancing", "Incident readiness"]
+      }
+    ]
+  },
+  "Product Manager": {
+    "Beginner": [
+      {
+        id: "pm-priority",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Feature Prioritization",
+        title: "Define the next sprint scope",
+        description: "Review customer feedback and decide which features must ship first for the upcoming release.",
+        role: "Product Manager",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Prioritization", "Stakeholder alignment", "Roadmapping"]
+      },
+      {
+        id: "pm-metrics",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Metrics Review",
+        title: "Validate launch KPIs",
+        description: "Audit the product metrics dashboard and confirm the leading indicators for success.",
+        role: "Product Manager",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Metrics", "Analysis", "Communication"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "pm-goals",
+        company: "Nova",
+        logo: "N",
+        label: "Nova GTM Plan",
+        title: "Create a go-to-market brief",
+        description: "Draft the launch plan and stakeholder messaging for a new mobile product.",
+        role: "Product Manager",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Launch planning", "User research", "Communication"]
+      },
+      {
+        id: "pm-feedback",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Feedback Loop",
+        title: "Turn customer insights into action",
+        description: "Translate qualitative user feedback into clear product changes and a follow-up plan.",
+        role: "Product Manager",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Customer insight", "Prioritization", "Roadmap"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "pm-strategy",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Strategy Sprint",
+        title: "Set the next quarter strategy",
+        description: "Define a compelling product strategy and leadership narrative for the upcoming quarter.",
+        role: "Product Manager",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Strategy", "Leadership", "Narrative"]
+      },
+      {
+        id: "pm-launch",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Launch Execution",
+        title: "Lead cross-functional launch readiness",
+        description: "Ensure engineering, design, and marketing are aligned for a successful feature release.",
+        role: "Product Manager",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Coordination", "Execution", "Risk management"]
+      }
+    ]
+  },
+  "Data Analyst": {
+    "Beginner": [
+      {
+        id: "data-adhoc",
+        company: "Orbit",
+        logo: "O",
+        label: "Orbit Ad-hoc Analysis",
+        title: "Answer a growth question",
+        description: "Produce a quick analysis of conversion and retention for the latest campaign.",
+        role: "Data Analyst",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["SQL", "Data storytelling", "Reporting"]
+      },
+      {
+        id: "data-dashboard",
+        company: "Forge",
+        logo: "F",
+        label: "Forge Reporting Update",
+        title: "Clean up the metrics dashboard",
+        description: "Fix metric definitions and clarify the dashboard for product and growth stakeholders.",
+        role: "Data Analyst",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Dashboarding", "Metrics", "Documentation"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "data-model",
+        company: "Nimbus",
+        logo: "N",
+        label: "Nimbus Data Model",
+        title: "Validate the reporting pipeline",
+        description: "Audit the event model and ensure analytics are accurate for the product dashboard.",
+        role: "Data Analyst",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Data modeling", "Validation", "Stakeholder sync"]
+      },
+      {
+        id: "data-experiment",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Experiment",
+        title: "Design a measurement plan",
+        description: "Define the success metrics for a new retention experiment and present the analysis approach.",
+        role: "Data Analyst",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Experimentation", "Analysis", "Communication"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "data-forecast",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson Forecast",
+        title: "Build the next quarter forecast",
+        description: "Develop a data-driven plan for revenue and retention that the executive team can trust.",
+        role: "Data Analyst",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Forecasting", "Executive reporting", "Scenario analysis"]
+      },
+      {
+        id: "data-scaling",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Data Scale",
+        title: "Scale analytics for growth",
+        description: "Design the analytics controls needed to support a platform scaling from 100k to 1M users.",
+        role: "Data Analyst",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Scale", "Data governance", "Architecture"]
+      }
+    ]
+  },
+  "Designer": {
+    "Beginner": [
+      {
+        id: "design-prototype",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Microcopy Audit",
+        title: "Improve the mobile signup flow",
+        description: "Refine the screens and microcopy for a smoother onboarding experience.",
+        role: "Designer",
+        time: "45 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["UX", "Copy", "Visual polish"]
+      },
+      {
+        id: "design-style",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Style Update",
+        title: "Refresh the product card library",
+        description: "Align the existing cards with the brand system and improve legibility.",
+        role: "Designer",
+        time: "40 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Design systems", "Brand", "UI"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "design-research",
+        company: "Nova",
+        logo: "N",
+        label: "Nova User Research",
+        title: "Synthesize feedback into design changes",
+        description: "Collect user insights and turn them into actionable UI improvements.",
+        role: "Designer",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Research", "Synthesis", "Wireframing"]
+      },
+      {
+        id: "design-dashboard-prototype",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Prototype",
+        title: "Prototype a new dashboard interaction",
+        description: "Design and prototype a richer interaction for the metrics dashboard.",
+        role: "Designer",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Interaction", "Prototyping", "Testing"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "design-system",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Design System",
+        title: "Lead the component library overhaul",
+        description: "Drive a brand-consistent system upgrade across web and mobile interfaces.",
+        role: "Designer",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Design systems", "Leadership", "Cross-platform"]
+      },
+      {
+        id: "design-ops",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson Design Ops",
+        title: "Create a design delivery framework",
+        description: "Establish the process and tooling for faster, higher quality design handoffs.",
+        role: "Designer",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Process", "Collaboration", "Quality"]
+      }
+    ]
+  }
+};
+
 if (typeof lucide !== 'undefined') {
   lucide.createIcons();
 }
@@ -226,6 +659,149 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.add("hidden");
   }, 3000);
+}
+
+function updateCandidateSummary() {
+  const role = localStorage.getItem("userRole") || "Frontend";
+  const level = localStorage.getItem("userExperience") || "Intermediate";
+  const simType = localStorage.getItem("simulationType") || "1-hour Task";
+  const summary = document.getElementById("candidateSummary");
+  const roleButtons = document.querySelectorAll(".candidate-role-btn");
+  const levelButtons = document.querySelectorAll(".candidate-level-btn");
+  const typeButtons = document.querySelectorAll(".candidate-simtype-btn");
+
+  roleButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.role === role);
+  });
+  levelButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.level === level);
+  });
+  typeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.simtype === simType);
+  });
+
+  if (summary) {
+    summary.innerHTML = `Current profile: <strong>${role}</strong> candidate, <strong>${level}</strong> level, running a <strong>${simType}</strong>. Select a task card to open your unique simulation room.`;
+  }
+
+  const topbarBadge = document.getElementById("topbarRoleBadge");
+  if (topbarBadge) {
+    topbarBadge.innerText = `${role} · ${level}`;
+  }
+
+  renderTaskGrid();
+}
+
+function getTasksForCurrentProfile() {
+  const role = localStorage.getItem("userRole") || "Frontend";
+  const level = localStorage.getItem("userExperience") || "Intermediate";
+  return (TASKS[role] && TASKS[role][level]) || [];
+}
+
+function renderTaskGrid() {
+  const taskGrid = document.getElementById("taskGrid");
+  if (!taskGrid) return;
+
+  const simType = localStorage.getItem("simulationType") || "1-hour Task";
+  const tasks = getTasksForCurrentProfile();
+
+  taskGrid.innerHTML = "";
+
+  if (!tasks.length) {
+    taskGrid.innerHTML = `<div class="card" style="padding: 28px; grid-column: span 2;">No tasks available for this profile yet.</div>`;
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const taskTime = simType === "5-day Sprint" ? "5 days" : task.time;
+
+    const card = document.createElement("div");
+    card.className = "card task-card";
+    card.dataset.taskId = task.id;
+    card.style.minHeight = "320px";
+    card.style.display = "flex";
+    card.style.flexDirection = "column";
+    card.style.justifyContent = "space-between";
+
+    card.innerHTML = `
+      <div>
+        <div class="company-header">
+          <div class="company-logo">${task.logo}</div>
+          <span class="company-name">${task.company}</span>
+        </div>
+        <p class="task-label">${task.label}</p>
+        <h2>${task.title}</h2>
+        <p class="task-desc">${task.description}</p>
+      </div>
+      <div>
+        <div class="task-meta">
+          <div class="meta-box"><span>Role</span><strong>${task.role}</strong></div>
+          <div class="meta-box"><span>Time</span><strong>${taskTime}</strong></div>
+          <div class="meta-box"><span>Difficulty</span><strong>${task.difficulty}</strong></div>
+          <div class="meta-box"><span>Team</span><strong>${task.teamSize}</strong></div>
+        </div>
+        <div class="requirement-list">
+          ${task.skills.map(skill => `<div class="req">${skill}</div>`).join("")}
+        </div>
+      </div>
+      <button class="primary-btn start-sim" data-task-id="${task.id}" style="margin-top:18px;">Start Room</button>
+    `;
+
+    taskGrid.appendChild(card);
+  });
+
+  taskGrid.querySelectorAll('.start-sim').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const taskId = btn.dataset.taskId;
+      localStorage.setItem('dayzero_task_id', taskId);
+      localStorage.setItem('selectedTaskId', taskId);
+      window.location.href = 'simulation.html';
+    });
+  });
+}
+
+function bindCandidateProfileSelections() {
+  document.querySelectorAll(".candidate-role-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      localStorage.setItem("userRole", btn.dataset.role || "Frontend");
+      updateCandidateSummary();
+      showToast(`Role set to ${btn.dataset.role}`);
+    });
+  });
+
+  document.querySelectorAll(".candidate-level-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      localStorage.setItem("userExperience", btn.dataset.level || "Intermediate");
+      updateCandidateSummary();
+      showToast(`Experience set to ${btn.dataset.level}`);
+    });
+  });
+
+  document.querySelectorAll(".candidate-simtype-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      localStorage.setItem("simulationType", btn.dataset.simtype || "1-hour Task");
+      updateCandidateSummary();
+      showToast(`Simulation type set to ${btn.dataset.simtype}`);
+    });
+  });
+}
+
+function initializeCandidateProfile() {
+  if (!localStorage.getItem("userRole")) {
+    localStorage.setItem("userRole", "Frontend");
+  }
+  if (!localStorage.getItem("userExperience")) {
+    localStorage.setItem("userExperience", "Intermediate");
+  }
+  if (!localStorage.getItem("simulationType")) {
+    localStorage.setItem("simulationType", "1-hour Task");
+  }
+  if (!localStorage.getItem("userName")) {
+    localStorage.setItem("userName", "Candidate");
+  }
+  bindCandidateProfileSelections();
+  updateCandidateSummary();
+  renderTaskGrid();
 }
 
 // Fake live teammate messages
@@ -1989,7 +2565,7 @@ document.querySelectorAll(".task-card").forEach(card => {
 
       setTimeout(() => {
         secondaryBtn.textContent = originalText;
-      }, 2000);
+      }, 2000);c
     });
   }
 });
@@ -2382,6 +2958,7 @@ if (teamChatInput) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  initializeCandidateProfile();
   initializeLiveSimulation().catch((error) => {
     console.error("Simulation init error:", error);
   });

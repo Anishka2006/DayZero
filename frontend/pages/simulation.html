@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/simulation.css?v=6" />
+  <link rel="stylesheet" href="../css/simulation.css?v=7" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -23,6 +23,21 @@
         </div>
       </div>
 
+      <div class="sidebar-status-grid">
+        <div>
+          <span>Priority</span>
+          <strong id="priorityBadge"></strong>
+        </div>
+        <div>
+          <span>Phase</span>
+          <strong id="phaseLabel"></strong>
+        </div>
+        <div>
+          <span>Timebox</span>
+          <strong id="taskDeadline"></strong>
+        </div>
+      </div>
+
       <section class="sidebar-block">
         <p class="sidebar-title">Channels</p>
         <div id="channelList" class="channel-stack"></div>
@@ -31,6 +46,11 @@
       <section class="sidebar-block teammate-block">
         <p class="sidebar-title">Teammates</p>
         <div id="teammateList" class="teammate-stack"></div>
+      </section>
+
+      <section class="sidebar-block timeline-block">
+        <p class="sidebar-title">Room Pulse</p>
+        <div id="timelineList" class="timeline-list"></div>
       </section>
 
       <div class="sidebar-self">
@@ -78,6 +98,7 @@
       <div id="typingIndicator" class="reference-typing hidden"></div>
 
       <div class="reference-composer-wrap">
+        <div id="quickPrompts" class="quick-prompts-bar"></div>
         <div class="reference-composer">
           <textarea id="candidateMessageInput" rows="1" placeholder="Message #launch-otp"></textarea>
           <button id="sendMessageBtn" class="reference-send-btn" type="button" aria-label="Send">
@@ -117,11 +138,25 @@
 
       <footer class="workspace-footer">
         <div class="workspace-footer-meta">
+          <span id="activeFileName"></span>
           <span id="wordCount">0 lines - 0 chars</span>
           <span id="saveStatus">Saved</span>
+          <span id="testStatus">Checks not run</span>
         </div>
 
         <div class="workspace-footer-actions">
+          <button id="insertOutlineBtn" class="footer-btn" type="button">
+            <i data-lucide="list-tree"></i>
+            <span>Outline</span>
+          </button>
+          <button id="runTestsBtn" class="footer-btn" type="button">
+            <i data-lucide="check-check"></i>
+            <span>Checks</span>
+          </button>
+          <button id="requestCritiqueBtn" class="footer-btn" type="button">
+            <i data-lucide="message-square-warning"></i>
+            <span>Critique</span>
+          </button>
           <button id="saveDraftBtn" class="footer-btn" type="button">
             <i data-lucide="save"></i>
             <span>Save</span>
@@ -144,23 +179,13 @@
   </div>
 
   <div class="hidden-support">
-    <span id="priorityBadge"></span>
     <span id="crisisStatus"></span>
-    <span id="phaseLabel"></span>
-    <span id="taskDeadline"></span>
     <span id="taskOutput"></span>
     <span id="taskUpdate"></span>
-    <span id="testStatus"></span>
-    <span id="activeFileName"></span>
     <span id="workspaceHelper"></span>
     <p id="scenarioSummary"></p>
     <ul id="taskRequirements"></ul>
     <ul id="taskAcceptance"></ul>
-    <div id="quickPrompts"></div>
-    <div id="timelineList"></div>
-    <button id="insertOutlineBtn" type="button"></button>
-    <button id="runTestsBtn" type="button"></button>
-    <button id="requestCritiqueBtn" type="button"></button>
     <button id="submitBtn" type="button"></button>
     <button id="triggerCrisisBtn" type="button"></button>
   </div>
