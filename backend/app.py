@@ -66,7 +66,12 @@ def api_start_simulation() -> tuple:
     role = request.args.get("role") or payload.get("role")
     task_id = request.args.get("task_id") or payload.get("task_id")
     participant_name = request.args.get("participant_name") or payload.get("participant_name")
-    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    data = start_simulation(
+        task_id=task_id,
+        role=role,
+        participant_name=participant_name,
+        task_context=payload.get("task_context"),
+    )
     return jsonify(data), 200
 
 
@@ -76,7 +81,12 @@ def legacy_start_simulation() -> tuple:
     role = payload.get("role")
     task_id = payload.get("task_id")
     participant_name = payload.get("participant_name")
-    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    data = start_simulation(
+        task_id=task_id,
+        role=role,
+        participant_name=participant_name,
+        task_context=payload.get("task_context"),
+    )
     return (
         jsonify(
             {
@@ -101,6 +111,7 @@ def api_create_session() -> tuple:
         task_id=payload.get("task_id"),
         role=payload.get("role"),
         participant_name=payload.get("participant_name"),
+        task_context=payload.get("task_context"),
     )
     return jsonify(data), 200
 
