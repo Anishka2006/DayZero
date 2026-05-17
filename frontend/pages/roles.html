@@ -1,35 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DayZero | Choose Your Path</title>
-    <link rel="stylesheet" href="../../main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | Choose Your Role</title>
+  <link rel="stylesheet" href="../css/roles.css" />
 </head>
 <body>
-    <div class="role-container">
-        <h1>Select Your First 90-Day Challenge</h1>
-        <div class="role-grid">
-            <div class="role-card" onclick="selectRole('Frontend')">
-                <div class="icon">💻</div>
-                <h2>Frontend Developer</h2>
-                <p>Build the interface, handle state, and perfect the UI.</p>
-                <button>Start Sprint</button>
-            </div>
-            <div class="role-card" onclick="selectRole('Backend')">
-                <div class="icon">⚙️</div>
-                <h2>Backend Developer</h2>
-                <p>Design APIs, manage databases, and scale the logic.</p>
-                <button>Start Sprint</button>
-            </div>
+  <main class="page">
+    <section class="left-panel">
+      <div class="brand">
+        <div class="logo">DZ</div>
+        <div>
+          <h1>DayZero</h1>
+          <p>Candidate setup</p>
         </div>
-    </div>
+      </div>
 
-    <script>
-        function selectRole(role) {
-            localStorage.setItem("userRole", role);
-            window.location.href = "dashboard.html";
-        }
-    </script>
+      <div class="hero-copy">
+        <span class="eyebrow">Role-based simulations</span>
+        <h2>Choose the work you want to be tested on.</h2>
+        <p>Your dashboard will show tasks for this role only, so a frontend candidate sees frontend work and a backend candidate sees backend work.</p>
+      </div>
+
+      <div class="preview-card">
+        <p>Current setup</p>
+        <h3 id="profilePreview">Frontend - Intermediate - 1-hour Task</h3>
+        <span>You can change these before entering the dashboard.</span>
+      </div>
+    </section>
+
+    <section class="setup-card" aria-labelledby="setupTitle">
+      <div class="setup-header">
+        <h2 id="setupTitle">Select Your Role</h2>
+        <p>Pick a role, experience level, and simulation length. DayZero will filter the dashboard tasks to match your selection.</p>
+      </div>
+
+      <div class="setup-section">
+        <h3>Role</h3>
+        <div class="option-grid" id="roleOptions">
+          <button class="option" type="button" data-value="Frontend">Frontend<span>UI, state, accessibility</span></button>
+          <button class="option" type="button" data-value="Backend">Backend<span>APIs, data, reliability</span></button>
+          <button class="option" type="button" data-value="Product Manager">Product Manager<span>Scope, metrics, strategy</span></button>
+          <button class="option" type="button" data-value="Data Analyst">Data Analyst<span>SQL, dashboards, insight</span></button>
+          <button class="option" type="button" data-value="Designer">Designer<span>UX, flows, prototypes</span></button>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <h3>Experience</h3>
+        <div class="option-grid three" id="levelOptions">
+          <button class="option" type="button" data-value="Beginner">Beginner<span>Guided task</span></button>
+          <button class="option" type="button" data-value="Intermediate">Intermediate<span>Realistic pressure</span></button>
+          <button class="option" type="button" data-value="Advanced">Advanced<span>Leadership scope</span></button>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <h3>Simulation type</h3>
+        <div class="option-grid two" id="typeOptions">
+          <button class="option" type="button" data-value="1-hour Task">1-hour Task<span>Focused assessment</span></button>
+          <button class="option" type="button" data-value="5-day Sprint">5-day Sprint<span>Extended project</span></button>
+        </div>
+      </div>
+
+      <button class="continue-btn" id="continueBtn" type="button">Open My Dashboard</button>
+    </section>
+  </main>
+
+  <script src="../js/roles.js"></script>
 </body>
 </html>

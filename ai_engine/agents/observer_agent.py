@@ -5,6 +5,7 @@ from typing import Any
 from ai_engine.core.llm import ask_ai_json
 
 from .base_agent import BaseAgent
+from .evaluator import build_summary_prompt
 
 
 class ObserverAgent(BaseAgent):
@@ -24,6 +25,9 @@ class ObserverAgent(BaseAgent):
         event_type = self._event_type(event)
         message = self._message_lower(event)
 
+        if event_type == "candidate_introduction":
+            return "Candidate introduction captured. Early communication signal is positive if they tied their role to how they will approach the work."
+
         if event_type == "crisis_triggered":
             return "Adaptability signal increased when the candidate engaged with time pressure instead of freezing."
 
@@ -35,6 +39,15 @@ class ObserverAgent(BaseAgent):
 
         if event_type == "submit_solution":
             return "Submission recorded. Final recommendation should weigh communication, prioritization, ownership, adaptability, and technical judgment together."
+
+        if event.get("plan_signal_detected"):
+            return "Candidate created a plan signal. Watch whether the next move turns that structure into a concrete decision."
+
+        if event.get("tradeoff_signal_detected"):
+            return "Candidate named scope or tradeoff, which is useful prioritization evidence under pressure."
+
+        if event.get("clarification_signal_detected"):
+            return "Candidate asked for precision instead of bluffing, which supports communication quality and technical depth."
 
         if "first" in message or "then" in message or "priority" in message:
             return "Candidate showed sequencing and structure, which is a positive leadership and communication signal."
@@ -56,34 +69,26 @@ class ObserverAgent(BaseAgent):
         timeline = session.get("memory", {}).get("timeline") or []
         transcript = session.get("transcript") or []
         submission = session.get("submission") or ""
+        transcript_tail = "\n".join(
+            f"{entry.get('speaker_name', 'Room')}: {entry.get('message', '')}"
+            for entry in transcript[-14:]
+            if entry.get("message")
+        )
+        note_text = "\n".join(str(note) for note in session.get("observer_notes", [])[-8:])
 
-        prompt = (
-            "You are Nova, the hidden recruiter observer inside DayZero.\n"
-            "Generate a final simulation report as valid JSON.\n"
-            "Use this structure exactly:\n"
-            "{"
-            '"summary": string, '
-            '"recommendation": string, '
-            '"strengths": [string, string, string], '
-            '"weaknesses": [string, string, string], '
-            '"next_steps": [string, string, string], '
-            '"team_notes": ['
-            '{"speaker_name": string, "speaker_title": string, "strength": string, "risk": string, "score": number}, '
-            '{"speaker_name": string, "speaker_title": string, "strength": string, "risk": string, "score": number}'
-            "]"
-            "}\n\n"
-            f"Task: {task}\n"
-            f"Scores: {scores}\n"
-            f"Timeline: {timeline[-8:]}\n"
-            f"Transcript tail: {transcript[-10:]}\n"
-            f"Submission: {submission[:2000]}\n\n"
-            "Ground the report in the actual simulation behavior. Be concise, credible, and startup-grade."
+        prompt = build_summary_prompt(
+            task=task,
+            submission=submission[:2000],
+            rubric=scores,
+            team_notes=note_text,
+            transcript=transcript_tail,
+            timeline=timeline[-8:],
         )
 
         data = ask_ai_json(
             prompt=prompt,
             system_prompt=(
-                "You are an expert recruiter observer summarizing a realistic work simulation. "
+                "You are Nova and Quinn, a hidden recruiter observer and evidence-based simulation evaluator. "
                 "Return only valid JSON."
             ),
             temperature=0.25,

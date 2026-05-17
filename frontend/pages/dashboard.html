@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DayZero Simulation Dashboard</title>
-  <link rel="stylesheet" href="../css/dashboard.css?v=2" />
+  <link rel="stylesheet" href="../css/dashboard.css?v=5" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="light">
@@ -40,8 +40,7 @@
         <div class="topbar-left">
           <div class="mobile-menu" id="mobileMenu">☰</div>
           <div class="role-badge" id="topbarRoleBadge">Enterprise Simulation</div>
-          <div class="day-badge" id="topbarDayBadge">Phase 1 of 5</div>
-        </div>
+            </div>
 
         <div class="topbar-center">
 
@@ -69,176 +68,33 @@
         <section class="center-panel">
           <!-- Workspace Panel -->
           <div id="panel-workspace" class="view-panel active">
-            
-
-
-
-          <!-- High Priority Task card -->
-          <div class="card task-card">
-            <div class="task-top">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                  <div style="width: 28px; height: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
-                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=AC&backgroundColor=1e3a8a" alt="Acme Corp Logo" style="width: 20px; height: 20px; border-radius: 4px;">
-                  </div>
-                  <span style="font-size: 14px; font-weight: 700; color: #0f172a;">Acme Corp</span>
-                </div>
-                <p class="mini-label">HIGH PRIORITY</p>
-                <h2>Critical Security Patch & Architecture Audit</h2>
-                <p class="task-desc">
-                  A high-severity vulnerability has been found in the legacy service. We need a rapid pivot. Re-allocate resources immediately to hit the release window.
-                </p>
-              </div>
-              <div class="difficulty">High Pressure</div>
-            </div>
-
-            <div class="task-meta">
-              <div class="meta-box">
-                <span>Estimated Time</span>
-                <strong>10 mins</strong>
-              </div>
-              <div class="meta-box">
-                <span>Deadline</span>
-                <strong>15m left</strong>
-              </div>
-              <div class="meta-box">
-                <span>Priority</span>
-                <strong>P0 Critical</strong>
-              </div>
-            </div>
-
-            <div class="task-actions">
-              <button class="primary-btn start-sim" data-task-id="security-patch">
-  Start Security Simulation
-</button>
-              <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
-                <option value="" disabled selected>Open with...</option>
-                <option value="vscode">VS Code Remote</option>
-                <option value="codespaces">GitHub Codespaces</option>
-                <option value="jupyter">JupyterLab</option>
-                <option value="tableau">Tableau Server</option>
-                <option value="figma">Figma</option>
-                <option value="jira">Jira / Notion</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Task card -->
-          <div class="card task-card">
-            <div class="task-top">
-              <div>
-                <p class="mini-label">CURRENT TASK</p>
-                <h2>Launch New Feature for Mobile Users</h2>
-                <p class="task-desc">
-                  Build product strategy for growth and retention. Define user pain points,
-                  prioritize top 3 features, and suggest primary growth metrics.
-                </p>
-              </div>
-              <div class="difficulty">Medium</div>
-            </div>
-
-            <div class="task-meta">
-              <div class="meta-box">
-                <span>Estimated Time</span>
-                <strong>30 mins</strong>
-              </div>
-              <div class="meta-box">
-                <span>Deadline</span>
-                <strong>1h 58m left</strong>
-              </div>
-              <div class="meta-box">
-                <span>Priority</span>
-                <strong>High Impact</strong>
-              </div>
-            </div>
-
-            <div class="requirement-list">
-              <div class="req">✓ Define user pain points</div>
-              <div class="req">✓ Prioritize top 3 features</div>
-              <div class="req">✓ Suggest primary growth metrics</div>
-            </div>
-
-            <div class="task-actions">
-              <button class="primary-btn start-sim" data-task-id="mobile-growth">
-  Start Simulation
-</button>
-<button class="secondary-btn start-sim" data-task-id="mobile-growth">
-  Continue
-</button>
-              <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
-                <option value="" disabled selected>Open with...</option>
-                <option value="vscode">VS Code Remote</option>
-                <option value="codespaces">GitHub Codespaces</option>
-                <option value="jupyter">JupyterLab</option>
-                <option value="tableau">Tableau Server</option>
-                <option value="figma">Figma</option>
-                <option value="jira">Jira / Notion</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Low Pressure Task card -->
-          <div class="card task-card">
-            <div class="task-top">
-              <div>
-                <p class="mini-label">BACKLOG TASK</p>
-                <h2>Update Documentation & Code Comments</h2>
-                <p class="task-desc">
-                  Review the recent API changes and ensure the internal developer docs are fully up to date. No rush on this, but it's good housekeeping.
-                </p>
-              </div>
-              <div class="difficulty">Low Pressure</div>
-            </div>
-
-            <div class="task-meta">
-              <div class="meta-box">
-                <span>Estimated Time</span>
-                <strong>45 mins</strong>
-              </div>
-              <div class="meta-box">
-                <span>Deadline</span>
-                <strong>End of Week</strong>
-              </div>
-              <div class="meta-box">
-                <span>Priority</span>
-                <strong>Low</strong>
-              </div>
-            </div>
-
-            <div class="task-actions">
-             <button class="secondary-btn start-sim" data-task-id="docs-update">
-  Start When Ready
-</button>
-              
            
-          </div>
+            <div class="role-task-grid" id="taskGrid" aria-live="polite"></div>
 
-
-          <!-- Teammate Feed (Moved from Right Panel) -->
-          <div class="card teammate-card horizontal-feed" style="margin-top: 24px;">
-            <div class="section-title-row">
-              <h3>Teammate Feed</h3>
-              <span class="live-dot">LIVE</span>
+            <div class="card teammate-card horizontal-feed">
+              <div class="section-title-row">
+                <h3>Teammate Feed</h3>
+                <span class="live-dot">LIVE</span>
+              </div>
+              <div class="team-feed horizontal">
+                <div class="feed-item">
+                  <span><i data-lucide="code" class="icon-sm"></i> Ravi</span>
+                  <p>I need the one path we trust before I touch the fix.</p>
+                </div>
+                <div class="feed-item">
+                  <span><i data-lucide="pen-tool" class="icon-sm"></i> Mira</span>
+                  <p>The empty state is still too vague. Users will think it broke.</p>
+                </div>
+                <div class="feed-item">
+                  <span><i data-lucide="bar-chart" class="icon-sm"></i> Leah</span>
+                  <p>Activation is up, but the sample is thin. I would caveat it.</p>
+                </div>
+                <div class="feed-item">
+                  <span><i data-lucide="megaphone" class="icon-sm"></i> Asha</span>
+                  <p>I need the launch call soon: ship, narrow, or hold.</p>
+                </div>
+              </div>
             </div>
-            <div class="team-feed horizontal">
-              <div class="feed-item">
-                <span><i data-lucide="code" class="icon-sm"></i> Engineer</span>
-                <p>Need final specs.</p>
-              </div>
-              <div class="feed-item">
-                <span><i data-lucide="pen-tool" class="icon-sm"></i> Designer</span>
-                <p>Retention metric missing.</p>
-              </div>
-              <div class="feed-item">
-                <span><i data-lucide="bar-chart" class="icon-sm"></i> Analyst</span>
-                <p>Activation data looks strong.</p>
-              </div>
-              <div class="feed-item">
-                <span><i data-lucide="megaphone" class="icon-sm"></i> Marketing</span>
-                <p>Launch assets ready.</p>
-              </div>
-            </div>
-          </div>
 
           </div><!-- End panel-workspace -->
 
@@ -413,8 +269,8 @@
                     <span class="proj-status active">● Active</span>
                   </div>
                 </div>
-                <h3 class="proj-title">Personalized Playlist Generator</h3>
-                <p class="proj-desc">Train a deep learning model to recommend obscure tracks based on listening history.</p>
+                <h3 class="proj-title">Creator Retention Recovery</h3>
+                <p class="proj-desc">Analyze why a redesign caused creator engagement and retention to drop, then prioritize a recovery plan under executive pressure.</p>
                 <div class="proj-meta">
                   <div class="role-tags">
                     <span class="role-tag data">Data Analytics</span>
@@ -425,7 +281,7 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                  <button class="primary-btn" id="spotifyStartBtn" style="flex: 1;">Start 5-Day Sprint</button>
+                  <button class="primary-btn start-sim" data-task-id="spotify-creator-retention" id="spotifyStartBtn" style="flex: 1;">Open Simulation Room</button>
                   <button class="secondary-btn" style="flex: 1;">View Details</button>
                 </div>
               </div>
@@ -1019,58 +875,7 @@
               </div>
             </div>
 
-            <!-- Input Bar -->
-            <div class="nova-input-bar">
-              <button class="icon-btn muted"><i data-lucide="paperclip" class="icon-sm"></i></button>
-              <input type="text" id="aiManagerInput" placeholder="Ask Nova anything..." class="nova-input" />
-              <button class="icon-btn muted"><i data-lucide="mic" class="icon-sm"></i></button>
-              <button id="aiManagerSendBtn" class="nova-send-btn"><i data-lucide="arrow-up" class="icon-sm"></i></button>
-            </div>
-          </div>
-
-        </aside>
-      </main>
-      <div style="padding: 20px;">
-        <textarea 
-          placeholder="Write your solution here..." 
-          style="width: 100%; height: 120px; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
-        </textarea>
-      </div>
-
-      <!-- Submission bar -->
-      <div class="submission-bar">
-        <div class="submission-actions">
-          <button class="secondary-btn icon-text-btn"><i data-lucide="save" class="icon-sm"></i> Save Draft</button>
-          <button class="secondary-btn icon-text-btn" id="requestHintBtn"><i data-lucide="lightbulb" class="icon-sm"></i> Request Hint</button>
-          <button class="secondary-btn icon-text-btn" id="askAiMentorBtn"><i data-lucide="message-square" class="icon-sm"></i> Ask AI Mentor</button>
-          <button class="primary-btn submit-action-btn" id="submitBtn">Submit Work <i data-lucide="arrow-right" class="icon-sm"></i></button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Welcome Popup -->
-  <div class="crisis-popup hidden" id="welcomePopup">
-    <div class="crisis-card" style="border: 2px solid var(--blue); max-width: 500px;">
-      <div class="crisis-header" style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px;">
-        <span style="color: var(--blue); font-weight: 800; display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="info"></i> WELCOME TO DAYZERO
-        </span>
-        <button id="closeWelcome">✕</button>
-      </div>
-      <h3>Simulation OS Overview</h3>
-      <p style="color: var(--subtext); margin-bottom: 20px; line-height: 1.6;">
-        You are in a <strong>Product Manager Simulation</strong>. This dashboard evaluates your skills in real-time as you handle mock crises, manage team tasks, and interact with your AI Manager (Nova).
-        <br><br>
-        <strong>Your Goal:</strong> Complete tasks, maintain high team collaboration, and make quick decisions under pressure to earn a top Candidate Score.
-      </p>
-      
-      <div style="text-align: right;">
-        <button class="primary-btn" id="startSimBtn" style="width: 100%;">Start Simulation</button>
-      </div>
-    </div>
-  </div>
-
+        
   <!-- Crisis Popup -->
   <div class="crisis-popup hidden" id="crisisPopup">
     <div class="crisis-card">
@@ -1159,9 +964,29 @@
       </div>
     </div>
   </div>
-<script src="../js/dashboard.js"></script>
+<script src="../../../workspaceFiles.js"></script>
+<script src="../js/dashboard.js?v=8"></script>
 
 <script>
+  function activateDashboardPanelFromPage(targetId) {
+    if (!targetId) return;
+    document.querySelectorAll(".view-panel").forEach((panel) => {
+      const active = panel.id === targetId;
+      panel.classList.toggle("hidden", !active);
+      panel.classList.toggle("active", active);
+    });
+    document.querySelectorAll(".menu-item").forEach((item) => {
+      item.classList.toggle("active", item.getAttribute("data-target") === targetId);
+    });
+  }
+
+  document.querySelectorAll(".menu-item[data-target]").forEach((item) => {
+    item.addEventListener("click", (event) => {
+      event.preventDefault();
+      activateDashboardPanelFromPage(item.getAttribute("data-target"));
+    });
+  });
+
   document.querySelectorAll(".start-sim").forEach((btn) => {
     btn.addEventListener("click", () => {
       const taskId = btn.dataset.taskId;

@@ -1,13 +1,17 @@
 const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
+const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 
 const STORAGE_KEYS = {
   selectedMission: "dayzeroSelectedMissionKey",
   dashboardTask: "dayzero_task_id",
+  selectedTaskDetails: "dayzero_selected_task_details",
   sessionPrefix: "dayzeroSimulationSession::",
   workspacePrefix: "dayzeroWorkspaceState::",
   timelinePrefix: "dayzeroTimelineState::",
   report: "lastEvaluationReport",
 };
+
+let workspaceFilesModulePromise = null;
 
 const TEAMS = {
   northstar: [
@@ -15,28 +19,48 @@ const TEAMS = {
     { name: "Ravi", title: "Engineering Lead", kind: "eng" },
     { name: "Mira", title: "Product Designer", kind: "design" },
     { name: "Kenji", title: "QA Engineer", kind: "qa" },
-    { name: "Leo", title: "Executive Sponsor", kind: "exec" },
   ],
   incident: [
     { name: "Asha", title: "Incident Commander", kind: "pm" },
     { name: "Ravi", title: "Engineering Lead", kind: "eng" },
     { name: "Mira", title: "Customer Experience", kind: "design" },
     { name: "Kenji", title: "Security QA", kind: "qa" },
-    { name: "Leo", title: "VP Security", kind: "exec" },
   ],
   ops: [
     { name: "Asha", title: "Product Manager", kind: "pm" },
     { name: "Ravi", title: "Engineering Lead", kind: "eng" },
     { name: "Mira", title: "Product Designer", kind: "design" },
     { name: "Kenji", title: "QA Engineer", kind: "qa" },
-    { name: "Leo", title: "Operations VP", kind: "exec" },
   ],
   ai: [
     { name: "Asha", title: "AI Product Lead", kind: "pm" },
     { name: "Ravi", title: "Engineering Lead", kind: "eng" },
     { name: "Mira", title: "Trust Designer", kind: "design" },
     { name: "Kenji", title: "Safety QA", kind: "qa" },
-    { name: "Leo", title: "Pilot Sponsor", kind: "exec" },
+  ],
+  netflix: [
+    { name: "Asha", title: "Incident Commander", kind: "pm" },
+    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
+    { name: "Mira", title: "Customer Experience", kind: "design" },
+    { name: "Kenji", title: "QA Engineer", kind: "qa" },
+  ],
+  linkedin: [
+    { name: "Asha", title: "Product Manager", kind: "pm" },
+    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
+    { name: "Mira", title: "Product Designer", kind: "design" },
+    { name: "Kenji", title: "QA Engineer", kind: "qa" },
+  ],
+  spotify: [
+    { name: "Asha", title: "Product Manager", kind: "pm" },
+    { name: "Ravi", title: "Data Engineering Lead", kind: "eng" },
+    { name: "Mira", title: "Product Designer", kind: "design" },
+    { name: "Kenji", title: "QA Engineer", kind: "qa" },
+  ],
+  openai: [
+    { name: "Asha", title: "Incident Commander", kind: "pm" },
+    { name: "Ravi", title: "Security Engineering Lead", kind: "eng" },
+    { name: "Mira", title: "Trust Designer", kind: "design" },
+    { name: "Kenji", title: "Security QA", kind: "qa" },
   ],
 };
 
@@ -747,21 +771,1659 @@ const MISSIONS = {
       },
     ],
   },
+  netflix: {
+    key: "netflix",
+    taskId: "netflix-reco-outage",
+    channel: "streaming-war-room",
+    company: "Netflix",
+    sprint: "Peak Traffic Incident",
+    role: "Backend Engineer / Incident Commander",
+    priority: "P0 Critical",
+    deadlineMinutes: 30,
+    headline: "Contain recommendation deployment failures during peak streaming traffic.",
+    summary: "A recommendation engine deployment caused streaming failures, partial rollback failure, rising complaints, and overloaded servers.",
+    output: "Incident command plan with code and rollback decision",
+    crisisStatus: "Streaming failures increasing",
+    latestChange: "Rollback is only 41% complete in EU-West, cache misses are spiking, and leadership wants a credible ETA.",
+    workspaceTitle: "Netflix incident workspace",
+    workspaceHelper: "Investigate logs, edit the recommendation service or cache layer, coordinate the room, and make the rollback decision.",
+    workspaceTip: "Tip: combine code changes with a short war-room update: impact, decision, owner, ETA, and risk.",
+    requirements: [
+      "Investigate logs and metrics before declaring root cause",
+      "Prioritize rollback or mitigation under peak traffic",
+      "Coordinate engineering, QA, product, and leadership updates",
+      "Patch risky retry/cache behavior in production-style code",
+    ],
+    acceptance: [
+      "ETA and customer impact are explicit",
+      "Rollback failure in EU is addressed",
+      "Code or config change reduces overload risk",
+      "Teammates understand owners and next checks",
+    ],
+    teammates: TEAMS.netflix,
+    introMessages: [
+      { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "We are at peak traffic, failures are rising, and socials are already turning. I need impact, ETA, and what we are doing in the next five minutes." },
+      { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Rollback is not clean. EU-West is stuck on mixed pods and the recommendation service is hammering cache on retries. Do not say rollback is done." },
+      { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "I am blocking any all-clear until we prove playback success recovered by region and cache eviction stopped thrashing." },
+      { speaker_name: "Elena", speaker_title: "Detail-focused Playback UX Lead", message: "Customer messaging needs to be honest. People are seeing titles load, then playback fail. That feels worse than a clean outage banner." },
+      { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "I joined because the complaint curve is now visible externally. Give me a decision and a real ETA, not optimism." },
+    ],
+    quickPrompts: [
+      "Dante, what evidence points to recommendation_service versus playback?",
+      "Priya, what check would unblock rollback confidence?",
+      "Maya, what update does leadership need in one sentence?",
+      "Elena, what should customer-facing messaging say right now?",
+    ],
+    crisisPrompt: "CEO joined war room and asks why rollback is failing in EU. Bring that pressure into the room now?",
+    pressureBeats: [
+      {
+        id: "netflix-first-message",
+        trigger: "first-message",
+        crisis: "Customer complaints increased 28%",
+        update: "Social media complaints jumped while rollback remains partial in EU-West.",
+        messages: [
+          { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "Complaints are up 28% in ten minutes. If we do not give leadership an ETA now, they will make the call for us." },
+          { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Then make the call based on data: cache failure rate, rollback completion, playback starts. Not vibes." },
+        ],
+      },
+      {
+        id: "netflix-manual-crisis",
+        trigger: "manual-crisis",
+        crisis: "Rollback failed in EU region",
+        update: "EU-West deployment controller reports mixed recommendation pods and overloaded cache shards.",
+        messages: [
+          { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "CEO is in the war room. Why is EU rollback failing, and who owns the next action?" },
+          { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "Do not call it mitigated until EU playback success and cache error rate recover together." },
+        ],
+      },
+      {
+        id: "netflix-draft",
+        trigger: "draft-80",
+        crisis: "Servers overloaded",
+        update: "Autoscaling is lagging because retry storms are increasing load faster than capacity is coming online.",
+        messages: [
+          { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Your draft is moving, but retries are still too aggressive. We need circuit breaking or cache backoff, not another paragraph." },
+          { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "Translate the technical fix into a customer ETA. Leadership will ask again in two minutes." },
+        ],
+      },
+      {
+        id: "netflix-critique",
+        trigger: "critique",
+        crisis: "ETA still not credible",
+        update: "The room needs a region-by-region recovery check and a clear rollback owner.",
+        messages: [
+          { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "Name the validation gates: playback starts, cache hit rate, error budget burn, and affected regions." },
+          { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "I can carry bad news. I cannot carry a vague ETA." },
+        ],
+      },
+    ],
+    workspaceFiles: [
+      { id: "incident-report", name: "incident_report.md", kind: "brief", content: buildNetflixIncidentReport() },
+      { id: "server-logs", name: "server_logs.txt", kind: "logs", content: buildNetflixServerLogs() },
+      { id: "recommendation-service", name: "recommendation_service.py", kind: "code", content: buildNetflixRecommendationService() },
+      { id: "cache-layer", name: "cache_layer.py", kind: "code", content: buildNetflixCacheLayer() },
+      { id: "deployment-changes", name: "deployment_changes.md", kind: "brief", content: buildNetflixDeploymentChanges() },
+      { id: "leadership-chat", name: "leadership_chat.json", kind: "json", content: buildNetflixLeadershipChat() },
+      { id: "live-metrics", name: "live_metrics.png", kind: "image", content: buildNetflixLiveMetricsPreview() },
+    ],
+  },
+  linkedin: {
+    key: "linkedin",
+    taskId: "linkedin-ai-resume-launch",
+    channel: "resume-assistant-launch",
+    company: "LinkedIn",
+    sprint: "Launch Readiness - T-1 Day",
+    role: "Product Manager / Full Stack Engineer",
+    priority: "P0 Launch Risk",
+    deadlineMinutes: 35,
+    headline: "Decide whether the AI Resume Assistant can launch tomorrow.",
+    summary: "Leadership publicly promised the launch before engineering completed development; AI quality, onboarding, mobile UI, and QA blockers remain unresolved.",
+    output: "Launch readiness decision with product and code changes",
+    crisisStatus: "QA blockers unresolved",
+    latestChange: "Marketing scheduled press for tomorrow morning while mobile preview and AI consistency remain unstable.",
+    workspaceTitle: "LinkedIn launch workspace",
+    workspaceHelper: "Triage launch blockers, edit the AI service or preview component, and coordinate a go/no-go recommendation.",
+    workspaceTip: "Tip: make a launch call, then tell engineering, QA, and leadership what ships, what is blocked, and what gets cut.",
+    requirements: [
+      "Investigate inconsistent AI output and onboarding gaps",
+      "Fix or scope mobile UI and accessibility issues",
+      "Prioritize launch blockers against public commitment",
+      "Communicate a credible go/no-go path to leadership",
+    ],
+    acceptance: [
+      "Launch decision is explicit",
+      "Blocked tasks and dependencies are named",
+      "Code changes reduce a real launch risk",
+      "Stakeholder update is honest and actionable",
+    ],
+    teammates: TEAMS.linkedin,
+    introMessages: [
+      { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Leadership already promised AI Resume Assistant publicly. Launch is tomorrow, but the readiness board is ugly." },
+      { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "The service still caches weak prompts, mobile preview layout breaks, and we have partial implementations in prod branch." },
+      { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "I have P0 QA blockers with repro steps. If we launch as-is, support will inherit the mess." },
+      { speaker_name: "Jules", speaker_title: "Detail-focused Product Designer", message: "Onboarding is incomplete, especially on mobile. Users will not understand what the AI changed in their resume." },
+      { speaker_name: "Vikram", speaker_title: "VP Product", message: "Marketing wants a decision today. If we slip, I need the public narrative. If we ship, I need risk containment." },
+    ],
+    quickPrompts: [
+      "Nora, which QA blocker should stop launch?",
+      "Marcus, what code path is causing inconsistent AI responses?",
+      "Anika, what launch promise can we safely keep?",
+      "Jules, what mobile issue hurts trust the most?",
+    ],
+    crisisPrompt: "QA blocked deployment while marketing asks for final launch copy. Bring that conflict into the room now?",
+    pressureBeats: [
+      {
+        id: "linkedin-first-message",
+        trigger: "first-message",
+        crisis: "Launch scheduled tomorrow",
+        update: "Marketing is asking for final copy while QA still lists mobile and AI blockers as unresolved.",
+        messages: [
+          { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Marketing just asked for final launch copy. I need to know whether we are shipping full launch, limited beta, or slipping." },
+          { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "A limited beta is defensible. A full launch with this mobile preview is not." },
+        ],
+      },
+      {
+        id: "linkedin-manual-crisis",
+        trigger: "manual-crisis",
+        crisis: "QA blocked deployment",
+        update: "QA moved mobile preview overlap and inconsistent AI rewrites to launch-blocking severity.",
+        messages: [
+          { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "I am officially blocking full launch. Give me a scoped release or a fix that passes the repro steps." },
+          { speaker_name: "Vikram", speaker_title: "VP Product", message: "If QA blocks, we need a leadership-ready explanation in the next standup." },
+        ],
+      },
+      {
+        id: "linkedin-draft",
+        trigger: "draft-80",
+        crisis: "Enterprise client requesting update",
+        update: "A flagship customer asked whether the assistant will be available in tomorrow's admin rollout.",
+        messages: [
+          { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Enterprise client wants an answer. Be precise: who gets access tomorrow and what is disabled?" },
+          { speaker_name: "Jules", speaker_title: "Detail-focused Product Designer", message: "Please do not bury the mobile limitation. Users will find it immediately." },
+        ],
+      },
+      {
+        id: "linkedin-critique",
+        trigger: "critique",
+        crisis: "Launch call still hedging",
+        update: "The room wants the recommendation expressed as ship, limited beta, or delay, with exact blockers.",
+        messages: [
+          { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "This still reads like a status update. Make the call." },
+          { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "And tie the call to the blockers. Otherwise I cannot sign off." },
+        ],
+      },
+    ],
+    workspaceFiles: [
+      { id: "launch-plan", name: "launch_plan.md", kind: "brief", content: buildLinkedInLaunchPlan() },
+      { id: "jira-board", name: "jira_board.json", kind: "json", content: buildLinkedInJiraBoard() },
+      { id: "resume-service", name: "resumeAssistant.ts", kind: "code", content: buildLinkedInResumeAssistant() },
+      { id: "resume-preview", name: "ResumePreview.jsx", kind: "code", content: buildLinkedInResumePreview() },
+      { id: "analytics", name: "analytics_dashboard.csv", kind: "data", content: buildLinkedInAnalyticsCsv() },
+      { id: "qa-report", name: "qa_report.md", kind: "brief", content: buildLinkedInQaReport() },
+      { id: "leadership-notes", name: "leadership_notes.txt", kind: "brief", content: buildLinkedInLeadershipNotes() },
+    ],
+  },
+  spotify: {
+    key: "spotify",
+    taskId: "spotify-creator-retention",
+    channel: "creator-growth-recovery",
+    company: "Spotify",
+    sprint: "Creator Redesign Recovery",
+    role: "Data Analyst / Product Strategist",
+    priority: "High",
+    deadlineMinutes: 40,
+    headline: "Diagnose why creator engagement dropped after redesign.",
+    summary: "A redesign caused creator engagement and retention to drop sharply while experiments and user feedback point in conflicting directions.",
+    output: "Creator retention recovery plan",
+    crisisStatus: "Creator engagement dropping",
+    latestChange: "Early heatmaps show creators missing the new analytics entry point, but model notes suggest recommendation changes also reduced repeat actions.",
+    workspaceTitle: "Spotify creator strategy workspace",
+    workspaceHelper: "Analyze metrics, feedback, model notes, and onboarding code to prioritize a recovery plan.",
+    workspaceTip: "Tip: ground your recommendation in data, then tell Sofia and Gabe what to reverse, test, or monitor first.",
+    requirements: [
+      "Analyze funnel and retention data",
+      "Weigh conflicting experiment outcomes",
+      "Prioritize product changes under leadership pressure",
+      "Coordinate analytics, design, and strategy decisions",
+    ],
+    acceptance: [
+      "Primary retention driver is named",
+      "Conflicting evidence is handled explicitly",
+      "Recovery plan has metrics and owners",
+      "Code or tracking issue is improved",
+    ],
+    teammates: TEAMS.spotify,
+    introMessages: [
+      { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "Creator retention dropped after redesign. Leadership wants a recovery plan before the weekly business review." },
+      { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "The funnel says onboarding completion fell, but model notes show recommendation quality also shifted. Do not oversimplify this." },
+      { speaker_name: "Mina", speaker_title: "Detail-focused Onboarding Designer", message: "The new flow hides analytics setup behind a second screen. Creators are not finding the thing they came for." },
+      { speaker_name: "Leah", speaker_title: "Risk-averse Research Ops", message: "User feedback is angry but noisy. We need to separate creator trust issues from normal redesign dislike." },
+      { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "I need an urgent recovery plan with a metric we can defend." },
+    ],
+    quickPrompts: [
+      "Oskar, what does the retention data really prove?",
+      "Mina, where is the onboarding friction highest?",
+      "Leah, what feedback pattern should we trust?",
+      "Sofia, what recovery decision does leadership need?",
+    ],
+    crisisPrompt: "Creator complaints spiked and leadership wants a rollback recommendation. Bring that pressure into the room now?",
+    pressureBeats: [
+      {
+        id: "spotify-first-message",
+        trigger: "first-message",
+        crisis: "Creator complaints increased 31%",
+        update: "Feedback volume jumped after a creator newsletter called out the redesign.",
+        messages: [
+          { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "Complaints are up 31% since the newsletter. Are we rolling back, hotfixing onboarding, or changing recommendations?" },
+          { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "Do not let volume alone decide. Look at cohort retention and feature discovery." },
+        ],
+      },
+      {
+        id: "spotify-manual-crisis",
+        trigger: "manual-crisis",
+        crisis: "Executive review moved up",
+        update: "Leadership wants a recovery recommendation today, not after another full experiment cycle.",
+        messages: [
+          { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "We need a decision that is reversible and measurable. A pure wait-and-see answer will not survive review." },
+          { speaker_name: "Leah", speaker_title: "Risk-averse Research Ops", message: "If we rollback, name what evidence justifies it. If we hotfix, name what remains uncertain." },
+        ],
+      },
+      {
+        id: "spotify-draft",
+        trigger: "draft-80",
+        crisis: "AB results conflict",
+        update: "One experiment improves short sessions while another worsens seven-day creator return rate.",
+        messages: [
+          { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "Your analysis needs to explain why activation and retention disagree. That conflict is the whole problem." },
+          { speaker_name: "Mina", speaker_title: "Detail-focused Onboarding Designer", message: "And if tracking is broken in onboarding, call it out before we blame the wrong screen." },
+        ],
+      },
+      {
+        id: "spotify-critique",
+        trigger: "critique",
+        crisis: "Recovery plan missing owner",
+        update: "The room wants owner, metric, and next check for each recovery action.",
+        messages: [
+          { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "I can take a hard plan upstairs. I cannot take a list of observations." },
+          { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "Turn this into owner, action, metric, and deadline." },
+        ],
+      },
+    ],
+    workspaceFiles: [
+      { id: "retention-metrics", name: "retention_metrics.csv", kind: "data", content: buildSpotifyRetentionMetrics() },
+      { id: "user-feedback", name: "user_feedback.txt", kind: "brief", content: buildSpotifyUserFeedback() },
+      { id: "model-notes", name: "recommendation_model_notes.md", kind: "brief", content: buildSpotifyRecommendationNotes() },
+      { id: "onboarding-flow", name: "onboardingFlow.jsx", kind: "code", content: buildSpotifyOnboardingFlow() },
+      { id: "ab-results", name: "ab_test_results.md", kind: "brief", content: buildSpotifyAbResults() },
+      { id: "executive-email", name: "executive_email.txt", kind: "brief", content: buildSpotifyExecutiveEmail() },
+      { id: "heatmap", name: "heatmap.png", kind: "image", content: buildSpotifyHeatmapPreview() },
+    ],
+  },
+  openai: {
+    key: "openai",
+    taskId: "openai-prompt-leakage",
+    channel: "enterprise-demo-security",
+    company: "OpenAI",
+    sprint: "Enterprise Demo - T-4 Hours",
+    role: "Security Engineer / Tech Lead",
+    priority: "P0 Security",
+    deadlineMinutes: 25,
+    headline: "Mitigate prompt leakage before the enterprise demo.",
+    summary: "A prompt leakage vulnerability was discovered hours before an enterprise demo, with unsafe memory references and debate across security, product, and leadership.",
+    output: "Security mitigation and demo go/no-go recommendation",
+    crisisStatus: "Prompt leakage confirmed",
+    latestChange: "Red team reproduced leakage through stale session memory after a tool retry path reused unsafe memory references.",
+    workspaceTitle: "OpenAI security workspace",
+    workspaceHelper: "Patch memory handling or gateway validation, analyze red-team notes, and make the demo risk call.",
+    workspaceTip: "Tip: state exploit scope, mitigation, residual risk, owner, and go/no-go decision clearly.",
+    requirements: [
+      "Investigate leakage source and exploit path",
+      "Patch unsafe memory or gateway handling",
+      "Coordinate security, product, engineering, and leadership",
+      "Make a defensible enterprise demo decision",
+    ],
+    acceptance: [
+      "Leakage source is named",
+      "Mitigation includes rollback or guardrail",
+      "Residual risk is explicit",
+      "Stakeholder update is demo-ready",
+    ],
+    teammates: TEAMS.openai,
+    introMessages: [
+      { speaker_name: "Iris", speaker_title: "Security Incident PM", message: "Enterprise demo is in four hours. Red team reproduced prompt leakage through stale session memory." },
+      { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "The gateway retry path is passing unsafe memory references. We need code mitigation, not a nicer demo script." },
+      { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "I am not signing off until memory isolation and sanitization survive the exploit steps." },
+      { speaker_name: "Tessa", speaker_title: "Detail-focused Enterprise UX Lead", message: "If we add refusal or degraded memory behavior, enterprise users need clear language. Silent failure looks like instability." },
+      { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "Tell me whether we demo, delay, or demo with a restricted configuration. I need the decision soon." },
+    ],
+    quickPrompts: [
+      "Farah, what exact exploit path still works?",
+      "Noah, where is the unsafe memory reference?",
+      "Iris, what does leadership need for go/no-go?",
+      "Tessa, how should degraded memory behavior be explained?",
+    ],
+    crisisPrompt: "Enterprise client requested a security update before the demo. Bring that pressure into the room now?",
+    pressureBeats: [
+      {
+        id: "openai-first-message",
+        trigger: "first-message",
+        crisis: "Enterprise client requesting update",
+        update: "A strategic customer asked whether memory isolation risk affects the demo environment.",
+        messages: [
+          { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "The customer is asking for a security update. Can we say the demo environment is contained?" },
+          { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "Only if the exploit path is actually closed. Do not let customer pressure outrun evidence." },
+        ],
+      },
+      {
+        id: "openai-manual-crisis",
+        trigger: "manual-crisis",
+        crisis: "CEO joined war room",
+        update: "Leadership wants a go/no-go decision and exact mitigation scope within minutes.",
+        messages: [
+          { speaker_name: "Iris", speaker_title: "Security Incident PM", message: "CEO joined. We need exploit scope, mitigation, residual risk, and demo recommendation in plain language." },
+          { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "Then patch the unsafe reference or disable memory. Anything else is theater." },
+        ],
+      },
+      {
+        id: "openai-draft",
+        trigger: "draft-80",
+        crisis: "Unsafe memory reference persists",
+        update: "Static review still sees one gateway branch forwarding raw memory ids into inference context.",
+        messages: [
+          { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "Your draft names the risk, but the gateway still has a raw memory reference branch. Close it or restrict the demo." },
+          { speaker_name: "Tessa", speaker_title: "Detail-focused Enterprise UX Lead", message: "If memory is disabled, say what the user sees. Enterprise demos cannot look mysteriously broken." },
+        ],
+      },
+      {
+        id: "openai-critique",
+        trigger: "critique",
+        crisis: "Go/no-go still unclear",
+        update: "The room wants a clear demo recommendation tied to mitigation evidence and rollback instructions.",
+        messages: [
+          { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "I need a hard line: demo blocked, restricted demo, or safe after mitigation. Pick one and prove it." },
+          { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "I can handle a restricted demo. I cannot handle uncertainty disguised as confidence." },
+        ],
+      },
+    ],
+    workspaceFiles: [
+      { id: "security-report", name: "security_report.md", kind: "brief", content: buildOpenAISecurityReport() },
+      { id: "memory-manager", name: "memory_manager.py", kind: "code", content: buildOpenAIMemoryManager() },
+      { id: "gateway", name: "inference_gateway.ts", kind: "code", content: buildOpenAIInferenceGateway() },
+      { id: "red-team", name: "red_team_notes.txt", kind: "brief", content: buildOpenAIRedTeamNotes() },
+      { id: "engineering-chat", name: "engineering_chat.json", kind: "json", content: buildOpenAIEngineeringChat() },
+      { id: "architecture", name: "system_architecture.png", kind: "image", content: buildOpenAIArchitecturePreview() },
+      { id: "rollback-guide", name: "rollback_guide.md", kind: "brief", content: buildOpenAIRollbackGuide() },
+    ],
+  },
 };
 
 const TASK_TO_MISSION_KEY = {
+  "netflix-reco-outage": "security",
+  "linkedin-ai-resume-launch": "mobile",
+  "spotify-creator-retention": "ops",
+  "openai-prompt-leakage": "security",
   "mobile-growth": "mobile",
   "security-patch": "security",
   "docs-update": "mobile",
   "fraud-dashboard": "ops",
-  "search-infra": "migration",
-  "ai-copilot": "copilot",
+  "search-infra": "data-migration",
+  "ai-copilot": "ai",
   "search-ranking": "ops",
   "surge-api": "wallet",
-  "video-encoding": "migration",
+  "video-encoding": "security",
   "playlist-generator": "ops",
   "vr-marketplace": "mobile",
+  "backend-api-health": "security",
+  "backend-cache": "ops",
+  "backend-auth": "security",
+  "backend-queue": "security",
+  "backend-migration": "data-migration",
+  "backend-scaling": "security",
+  "pm-priority": "mobile",
+  "pm-metrics": "ops",
+  "pm-goals": "mobile",
+  "pm-feedback": "mobile",
+  "pm-strategy": "ops",
+  "pm-launch": "mobile",
+  "data-adhoc": "ops",
+  "data-dashboard": "ops",
+  "data-model": "ops",
+  "data-experiment": "mobile",
+  "data-forecast": "ops",
+  "data-scaling": "ops",
+  "frontend-homeflow": "mobile",
+  "frontend-dashboard": "ops",
+  "frontend-product": "ai",
+  "frontend-accessibility": "mobile",
+  "frontend-spa": "data-migration",
+  "frontend-visual": "mobile",
+  "design-prototype": "mobile",
+  "design-style": "mobile",
+  "design-research": "mobile",
+  "design-dashboard-prototype": "ops",
+  "design-system": "mobile",
+  "design-ops": "ops",
 };
+
+const TASK_TO_BACKEND_TASK_ID = {
+  "frontend-homeflow": "mobile-growth",
+  "frontend-dashboard": "fraud-dashboard",
+  "frontend-product": "ai-copilot",
+  "frontend-accessibility": "docs-update",
+  "frontend-spa": "search-infra",
+  "frontend-visual": "mobile-growth",
+  "backend-api-health": "security-patch",
+  "backend-cache": "search-infra",
+  "backend-auth": "security-patch",
+  "backend-queue": "video-encoding",
+  "backend-migration": "search-infra",
+  "backend-scaling": "search-infra",
+  "pm-priority": "mobile-growth",
+  "pm-metrics": "fraud-dashboard",
+  "pm-goals": "mobile-growth",
+  "pm-feedback": "mobile-growth",
+  "pm-strategy": "fraud-dashboard",
+  "pm-launch": "mobile-growth",
+  "data-adhoc": "fraud-dashboard",
+  "data-dashboard": "fraud-dashboard",
+  "data-model": "fraud-dashboard",
+  "data-experiment": "search-ranking",
+  "data-forecast": "fraud-dashboard",
+  "data-scaling": "search-infra",
+  "design-prototype": "mobile-growth",
+  "design-style": "mobile-growth",
+  "design-research": "mobile-growth",
+  "design-dashboard-prototype": "fraud-dashboard",
+  "design-system": "mobile-growth",
+  "design-ops": "docs-update",
+  "mobile-onboarding": "mobile-growth",
+  "security-control-center": "security-patch",
+  "ops-analytics-dashboard": "fraud-dashboard",
+  "wallet-outage": "surge-api",
+  "copilot-trust": "ai-copilot",
+  "data-migration-freeze": "search-infra",
+};
+
+function buildNetflixIncidentReport() {
+  return [
+    "# Netflix P0 Incident Report - Recommendation Deployment",
+    "",
+    "## Situation",
+    "Peak-traffic deployment `reco-ranker-2026.05.15.1742` introduced elevated playback start failures after the recommendation service began issuing slower candidate-set responses. The incident appears tied to a retry storm, cache invalidation pressure, and partial rollback failure in EU-West.",
+    "",
+    "## Candidate responsibilities",
+    "- Investigate service logs and live metrics before declaring root cause.",
+    "- Communicate impact and ETA to leadership without overstating certainty.",
+    "- Decide whether to continue rollback, isolate traffic, or patch forward.",
+    "- Coordinate backend, QA, product, UX messaging, and executive updates.",
+    "",
+    "## Detailed timeline",
+    "| Time UTC | Event | Failure rate | Regions | Severity | Notes |",
+    "| --- | --- | ---: | --- | --- | --- |",
+    "| 17:42 | Recommendation deployment started at 5% canary | 0.8% | us-east, eu-west | SEV3 | Initial metrics normal. |",
+    "| 17:47 | Canary expanded to 25% | 1.9% | us-east, eu-west | SEV3 | Cache hit rate fell from 94% to 83%. |",
+    "| 17:51 | Playback start failures crossed alert threshold | 4.7% | eu-west | SEV2 | Timeout errors concentrated on personalized rows. |",
+    "| 17:55 | Auto rollback triggered | 6.4% | eu-west, ap-south | SEV2 | Rollback controller stalled on mixed pod set. |",
+    "| 18:02 | Social complaints visible | 8.1% | global | SEV1 | Support tagged top complaint: title loads, playback fails. |",
+    "| 18:08 | Servers overloaded | 10.6% | eu-west | SEV1 | Retry traffic saturated cache shards 12, 14, 19. |",
+    "| 18:12 | Leadership joined bridge | 11.8% | global | SEV1 | ETA requested. No confirmed root cause yet. |",
+    "",
+    "## Current hypotheses",
+    "1. Recommendation service retry policy is creating a thundering herd against cache and ranking backends.",
+    "2. Cache invalidation now runs async but does not dedupe keys per profile batch, causing memory growth and stale hot rows.",
+    "3. Rollback is partial because EU-West deployment controller is waiting for long-running warmup pods to drain.",
+    "4. Playback failures are secondary: playback service is healthy but blocks while waiting for personalized rows.",
+    "",
+    "## Open decisions",
+    "- Continue rollback and hard-disable personalized rows in EU until cache stabilizes.",
+    "- Patch retry/circuit breaker behavior and keep canary active only in stable regions.",
+    "- Send customer-facing status copy acknowledging streaming failures without overexplaining internals.",
+    "",
+    "## Required next update format",
+    "Impact: affected regions and failure rate.",
+    "Decision: rollback, isolate, or patch-forward.",
+    "Owner: Dante for service mitigation, Priya for validation, Maya for leadership update.",
+    "ETA: give confidence level and next checkpoint.",
+  ].join("\n");
+}
+
+function buildNetflixServerLogs() {
+  const lines = [
+    "timestamp level region host trace_id component message",
+    "2026-05-15T17:42:11.432Z INFO us-east-1 reco-api-0 a19f deploy canary=reco-ranker-2026.05.15.1742 weight=5%",
+    "2026-05-15T17:47:03.012Z INFO eu-west-1 reco-api-4 b83a deploy canary_expanded weight=25%",
+  ];
+  const regions = ["eu-west-1", "us-east-1", "ap-south-1", "sa-east-1"];
+  const hosts = ["reco-api-4", "reco-api-7", "playback-gw-2", "cache-shard-12", "ranking-worker-5"];
+  const failures = [
+    "WARN retry attempt=2 route=/v3/recommendations/home timeout_ms=850 budget_remaining_ms=120",
+    "ERROR timeout downstream=ranking-v2 elapsed_ms=1900 circuit=open:false",
+    "WARN cache_miss key=user_profile:v3:{profile} hot_key=true ttl=0 invalidation_pending=true",
+    "ERROR playback_start_failed reason=reco_timeout stream_state=manifest_ready personalization_wait=true",
+    "WARN rollback controller_state=mixed_pods desired=reco-ranker-prev observed=reco-ranker-2026.05.15.1742",
+    "ERROR cache write failed shard={shard} err=ConnectionResetError retries=3",
+    "WARN distributed_trace gap parent_span=reco_request child_span=cache_fill missing=true",
+  ];
+  for (let i = 0; i < 72; i += 1) {
+    const minute = String(48 + Math.floor(i / 4)).padStart(2, "0");
+    const second = String((i * 7) % 60).padStart(2, "0");
+    const region = regions[i % regions.length];
+    const host = hosts[i % hosts.length];
+    const level = i % 5 === 0 ? "ERROR" : i % 3 === 0 ? "WARN" : "INFO";
+    const raw = failures[i % failures.length]
+      .replace("{profile}", String(880000 + i * 17))
+      .replace("{shard}", String(10 + (i % 12)));
+    lines.push(`2026-05-15T17:${minute}:${second}.0${i % 9}Z ${level} ${region} ${host} trace-${8000 + i} ${raw}`);
+    if (i % 11 === 0) {
+      lines.push("Traceback (most recent call last):");
+      lines.push("  File \"/srv/reco/recommendation_service.py\", line 188, in fetch_ranked_titles");
+      lines.push("    ranked = await self._ranking_client.rank(candidate_set, timeout_ms=budget.remaining())");
+      lines.push("  File \"/srv/reco/cache_layer.py\", line 96, in get_or_fill");
+      lines.push("    await self._pending_invalidations[user_key].wait()");
+      lines.push("TimeoutError: ranking-v2 exceeded remaining request budget while cache invalidation lock was held");
+    }
+  }
+  lines.push("2026-05-15T18:12:44.993Z CRITICAL global incident-bridge sev=1 complaints=18422 active_users_delta=-12.7% eta=unknown");
+  return lines.join("\n");
+}
+
+function buildNetflixRecommendationService() {
+  return [
+    "import asyncio",
+    "import logging",
+    "import random",
+    "import time",
+    "from dataclasses import dataclass",
+    "from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple",
+    "",
+    "from cache_layer import AsyncProfileCache, CacheUnavailable",
+    "",
+    "logger = logging.getLogger(\"reco.service\")",
+    "",
+    "class RecommendationError(Exception):",
+    "    pass",
+    "",
+    "@dataclass",
+    "class RequestBudget:",
+    "    started_at: float",
+    "    max_ms: int",
+    "",
+    "    def remaining(self) -> int:",
+    "        elapsed = int((time.monotonic() - self.started_at) * 1000)",
+    "        return max(0, self.max_ms - elapsed)",
+    "",
+    "@dataclass",
+    "class RecommendationRequest:",
+    "    profile_id: str",
+    "    region: str",
+    "    device_type: str",
+    "    row_count: int = 12",
+    "    include_experiments: bool = True",
+    "",
+    "class RecommendationService:",
+    "    def __init__(self, ranking_client: Any, playback_client: Any, cache: AsyncProfileCache, metrics: Any) -> None:",
+    "        self._ranking_client = ranking_client",
+    "        self._playback_client = playback_client",
+    "        self._cache = cache",
+    "        self._metrics = metrics",
+    "        self._inflight_profiles: Dict[str, asyncio.Task] = {}",
+    "        self._circuit_open_until = 0.0",
+    "        self._max_retries = 3",
+    "",
+    "    async def handle_home_request(self, request: RecommendationRequest) -> Dict[str, Any]:",
+    "        budget = RequestBudget(started_at=time.monotonic(), max_ms=1200)",
+    "        self._metrics.increment(\"reco.request\", tags={\"region\": request.region})",
+    "        if self._is_circuit_open():",
+    "            logger.warning(\"circuit_open fallback profile_id=%s region=%s\", request.profile_id, request.region)",
+    "            return await self._fallback_rows(request, reason=\"circuit_open\")",
+    "",
+    "        try:",
+    "            profile = await self._load_profile(request, budget)",
+    "            candidates = await self._candidate_set(profile, request, budget)",
+    "            ranked = await self._rank_with_retry(candidates, request, budget)",
+    "            playable = await self._filter_unplayable(ranked, request, budget)",
+    "            return {\"profileId\": request.profile_id, \"rows\": playable[: request.row_count], \"fallback\": False}",
+    "        except asyncio.TimeoutError as exc:",
+    "            self._metrics.increment(\"reco.timeout\", tags={\"region\": request.region})",
+    "            logger.exception(\"recommendation timeout profile_id=%s remaining=%s\", request.profile_id, budget.remaining())",
+    "            self._trip_circuit_if_needed(request.region)",
+    "            return await self._fallback_rows(request, reason=\"timeout\")",
+    "        except CacheUnavailable:",
+    "            self._metrics.increment(\"reco.cache_unavailable\", tags={\"region\": request.region})",
+    "            # TODO: This fallback still calls ranking on some paths. During incidents it should avoid ranking entirely.",
+    "            return await self._fallback_rows(request, reason=\"cache_unavailable\")",
+    "",
+    "    async def _load_profile(self, request: RecommendationRequest, budget: RequestBudget) -> Dict[str, Any]:",
+    "        cache_key = f\"profile:v3:{request.profile_id}:{request.region}\"",
+    "        if cache_key in self._inflight_profiles:",
+    "            # Possible race condition: a cancelled task can remain here and every caller awaits stale work.",
+    "            return await self._inflight_profiles[cache_key]",
+    "        task = asyncio.create_task(self._cache.get_or_fill(cache_key, lambda: self._fetch_profile(request), ttl_seconds=180))",
+    "        self._inflight_profiles[cache_key] = task",
+    "        try:",
+    "            return await asyncio.wait_for(task, timeout=budget.remaining() / 1000)",
+    "        finally:",
+    "            # TODO: use task.add_done_callback cleanup; current cleanup is skipped if wait_for cancellation propagates.",
+    "            if task.done():",
+    "                self._inflight_profiles.pop(cache_key, None)",
+    "",
+    "    async def _fetch_profile(self, request: RecommendationRequest) -> Dict[str, Any]:",
+    "        await asyncio.sleep(0.012)",
+    "        return {\"profile_id\": request.profile_id, \"taste_vectors\": [random.random() for _ in range(32)]}",
+    "",
+    "    async def _candidate_set(self, profile: Dict[str, Any], request: RecommendationRequest, budget: RequestBudget) -> List[str]:",
+    "        if budget.remaining() < 200:",
+    "            raise asyncio.TimeoutError(\"budget exhausted before candidate set\")",
+    "        rows = [f\"title-{request.region}-{idx}\" for idx in range(180)]",
+    "        if request.include_experiments:",
+    "            rows.extend([f\"exp-ranker-{idx}\" for idx in range(40)])",
+    "        return rows",
+    "",
+    "    async def _rank_with_retry(self, candidates: Sequence[str], request: RecommendationRequest, budget: RequestBudget) -> List[str]:",
+    "        last_error: Optional[BaseException] = None",
+    "        for attempt in range(self._max_retries):",
+    "            try:",
+    "                timeout = max(0.05, min(0.55, budget.remaining() / 1000))",
+    "                return await asyncio.wait_for(self._ranking_client.rank(candidates, request.profile_id), timeout=timeout)",
+    "            except Exception as exc:",
+    "                last_error = exc",
+    "                self._metrics.increment(\"reco.rank_retry\", tags={\"attempt\": str(attempt), \"region\": request.region})",
+    "                # Scalability problem: jitter can still align thousands of retries during cache misses.",
+    "                await asyncio.sleep(0.03 * (attempt + 1))",
+    "        raise RecommendationError(f\"ranking failed after retries: {last_error}\")",
+    "",
+    "    async def _filter_unplayable(self, ranked: Iterable[str], request: RecommendationRequest, budget: RequestBudget) -> List[Dict[str, Any]]:",
+    "        playable: List[Dict[str, Any]] = []",
+    "        for title_id in list(ranked)[:120]:",
+    "            if budget.remaining() <= 0:",
+    "                break",
+    "            is_playable = await self._playback_client.is_playable(title_id, region=request.region)",
+    "            if is_playable:",
+    "                playable.append({\"titleId\": title_id, \"reason\": \"personalized\"})",
+    "        return playable",
+    "",
+    "    async def _fallback_rows(self, request: RecommendationRequest, reason: str) -> Dict[str, Any]:",
+    "        self._metrics.increment(\"reco.fallback\", tags={\"reason\": reason, \"region\": request.region})",
+    "        return {",
+    "            \"profileId\": request.profile_id,",
+    "            \"rows\": [{\"titleId\": f\"safe-popular-{i}\", \"reason\": reason} for i in range(request.row_count)],",
+    "            \"fallback\": True,",
+    "        }",
+    "",
+    "    def _is_circuit_open(self) -> bool:",
+    "        return time.monotonic() < self._circuit_open_until",
+    "",
+    "    def _trip_circuit_if_needed(self, region: str) -> None:",
+    "        # TODO: make this per-region. Global circuit is too blunt but safer than a retry storm.",
+    "        self._circuit_open_until = time.monotonic() + 45",
+    "        logger.error(\"recommendation circuit opened region=%s seconds=45\", region)",
+  ].join("\n");
+}
+
+function buildNetflixCacheLayer() {
+  return [
+    "import asyncio",
+    "import logging",
+    "import time",
+    "from collections import defaultdict",
+    "from dataclasses import dataclass",
+    "from typing import Any, Awaitable, Callable, Dict, Optional",
+    "",
+    "logger = logging.getLogger(\"reco.cache\")",
+    "",
+    "class CacheUnavailable(Exception):",
+    "    pass",
+    "",
+    "@dataclass",
+    "class CacheEntry:",
+    "    value: Any",
+    "    expires_at: float",
+    "    version: int",
+    "",
+    "class AsyncProfileCache:",
+    "    def __init__(self, redis_client: Any, metrics: Any) -> None:",
+    "        self._redis = redis_client",
+    "        self._metrics = metrics",
+    "        self._local: Dict[str, CacheEntry] = {}",
+    "        self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)",
+    "        self._pending_invalidations: Dict[str, asyncio.Event] = {}",
+    "        self._background_tasks = set()",
+    "",
+    "    async def get_or_fill(self, key: str, loader: Callable[[], Awaitable[Any]], ttl_seconds: int) -> Any:",
+    "        local = self._local.get(key)",
+    "        if local and local.expires_at > time.time():",
+    "            self._metrics.increment(\"cache.local_hit\")",
+    "            return local.value",
+    "",
+    "        invalidation = self._pending_invalidations.get(key)",
+    "        if invalidation and not invalidation.is_set():",
+    "            await asyncio.wait_for(invalidation.wait(), timeout=0.2)",
+    "",
+    "        async with self._locks[key]:",
+    "            local = self._local.get(key)",
+    "            if local and local.expires_at > time.time():",
+    "                return local.value",
+    "            try:",
+    "                packed = await self._redis.get(key)",
+    "            except Exception as exc:",
+    "                logger.warning(\"redis get failed key=%s err=%r\", key, exc)",
+    "                raise CacheUnavailable() from exc",
+    "            if packed:",
+    "                value = self._deserialize(packed)",
+    "                self._local[key] = CacheEntry(value=value, expires_at=time.time() + min(ttl_seconds, 30), version=1)",
+    "                return value",
+    "",
+    "            value = await loader()",
+    "            await self.set_async(key, value, ttl_seconds)",
+    "            return value",
+    "",
+    "    async def set_async(self, key: str, value: Any, ttl_seconds: int) -> None:",
+    "        self._local[key] = CacheEntry(value=value, expires_at=time.time() + min(ttl_seconds, 30), version=1)",
+    "        task = asyncio.create_task(self._write_behind(key, value, ttl_seconds))",
+    "        self._background_tasks.add(task)",
+    "        # Potential memory leak: completed tasks are only cleaned up on writes, not when traffic stops.",
+    "        task.add_done_callback(lambda done: self._background_tasks.discard(done))",
+    "",
+    "    async def invalidate_profile(self, profile_id: str, region: str) -> None:",
+    "        keys = [",
+    "            f\"profile:v3:{profile_id}:{region}\",",
+    "            f\"profile:v3:{profile_id}:global\",",
+    "            f\"rows:v2:{profile_id}:{region}\",",
+    "        ]",
+    "        for key in keys:",
+    "            event = asyncio.Event()",
+    "            self._pending_invalidations[key] = event",
+    "            self._local.pop(key, None)",
+    "            try:",
+    "                await self._redis.delete(key)",
+    "            finally:",
+    "                event.set()",
+    "                # TODO: remove pending event after a short delay. Current map grows with every profile invalidation.",
+    "",
+    "    async def bulk_invalidate_region(self, region: str, profile_ids: list[str]) -> None:",
+    "        # Scalability problem: this launches one task per profile and can flood Redis during deploy rollback.",
+    "        tasks = [asyncio.create_task(self.invalidate_profile(profile_id, region)) for profile_id in profile_ids]",
+    "        await asyncio.gather(*tasks, return_exceptions=True)",
+    "",
+    "    async def _write_behind(self, key: str, value: Any, ttl_seconds: int) -> None:",
+    "        try:",
+    "            await self._redis.set(key, self._serialize(value), ex=ttl_seconds)",
+    "        except Exception:",
+    "            logger.exception(\"cache write behind failed key=%s\", key)",
+    "            self._metrics.increment(\"cache.write_failed\")",
+    "",
+    "    def _serialize(self, value: Any) -> bytes:",
+    "        return repr(value).encode(\"utf-8\")",
+    "",
+    "    def _deserialize(self, packed: bytes) -> Any:",
+    "        # Technical debt: repr/eval compatibility from legacy service. Replace with typed msgpack.",
+    "        return eval(packed.decode(\"utf-8\"), {\"__builtins__\": {}})",
+  ].join("\n");
+}
+
+function buildNetflixDeploymentChanges() {
+  return [
+    "# Recent Infrastructure Updates",
+    "",
+    "- Deployed `reco-ranker-2026.05.15.1742` to 25% global traffic.",
+    "- Enabled async cache invalidation for profile rows.",
+    "- Increased ranking candidate set from 120 to 220 titles for premium accounts.",
+    "- Changed rollback controller to wait for warmup pod drain before switching traffic.",
+    "- Added experiment flag `personalized_row_blend_v4` in EU-West and AP-South.",
+    "",
+    "## Suspect changes",
+    "1. Candidate expansion increases ranking latency under peak load.",
+    "2. Async invalidation does not dedupe hot profile keys.",
+    "3. Rollback waits for pods that are stuck with long-running warmup work.",
+    "",
+    "## Candidate action",
+    "Decide whether to disable `personalized_row_blend_v4`, open a per-region circuit, or patch retry/cache behavior before continuing rollback.",
+  ].join("\n");
+}
+
+function buildNetflixLeadershipChat() {
+  return JSON.stringify({
+    room: "streaming-war-room",
+    messages: [
+      { from: "Maya", role: "Incident PM", stress: "high", text: "Leadership wants ETA. We need impact and decision before the next update." },
+      { from: "Dante", role: "Streaming Platform", stress: "critical", text: "Rollback is partially failing. Stop repeating rollback as if it is a completed mitigation." },
+      { from: "Priya", role: "QA", stress: "high", text: "Validation must be per region. Global average hides EU-West." },
+      { from: "Reed", role: "Executive", stress: "critical", text: "CEO joined war room. Customer complaints are visible externally." },
+      { from: "Elena", role: "Playback UX", stress: "medium", text: "If we show a status message, say streaming may fail after title selection. That is what users see." },
+      { from: "Dante", role: "Streaming Platform", stress: "critical", text: "I disagree with patch-forward unless we add circuit breaking. Ranking retries are multiplying load." },
+      { from: "Maya", role: "Incident PM", stress: "high", text: "Candidate needs to make the call: isolate EU, disable personalization, or continue rollback." }
+    ]
+  }, null, 2);
+}
+
+function buildNetflixLiveMetricsPreview() {
+  return [
+    "PNG_PREVIEW: live_metrics.png",
+    "Dashboard panels:",
+    "- Active users: 92.4M -> 80.6M over 18 minutes, steepest drop in EU-West.",
+    "- Playback start failure rate: 0.8% baseline, 11.8% current, 16.2% EU-West.",
+    "- CPU: recommendation pods 91%, ranking workers 88%, cache shards 12/14/19 above 94%.",
+    "- Request latency p95: home recommendations 1840ms, playback gateway 620ms.",
+    "- Customer complaints: +28% in ten minutes, top terms: buffering, title loads then fails, app retry.",
+    "",
+    "Suggested candidate interpretation: playback is downstream symptom; recommendation/cache instability is primary incident driver.",
+  ].join("\n");
+}
+
+function buildLinkedInLaunchPlan() {
+  return [
+    "# LinkedIn AI Resume Assistant - Launch Plan",
+    "",
+    "## Public promise",
+    "Leadership announced that AI Resume Assistant will be available to selected premium members tomorrow. Marketing assets are staged. Engineering has not completed every launch blocker.",
+    "",
+    "## Launch objectives",
+    "- Help members rewrite resume bullets using role-specific suggestions.",
+    "- Improve onboarding completion for first-time job seekers.",
+    "- Keep AI output explainable, consistent, and editable.",
+    "- Protect mobile users from broken preview and inaccessible controls.",
+    "",
+    "## Deadline",
+    "- T-24h: QA signoff decision.",
+    "- T-18h: Enterprise and support messaging.",
+    "- T-12h: Final mobile smoke tests.",
+    "- T-4h: Executive go/no-go review.",
+    "",
+    "## Decision options",
+    "1. Full launch: highest marketing value, highest risk.",
+    "2. Limited beta: premium desktop only, mobile preview disabled, AI responses guarded.",
+    "3. Delay launch: safest for trust, requires public narrative from leadership.",
+    "",
+    "## Candidate task",
+    "Make a launch recommendation. Edit code if needed, identify blockers, and communicate tradeoffs to PM, engineering, QA, design, and executives.",
+  ].join("\n");
+}
+
+function buildLinkedInJiraBoard() {
+  const tasks = [
+    ["LRA-101", "BLOCKED", "P0", "Mobile preview overlaps action buttons", "ResumePreview.jsx", "Nora", "Depends on responsive layout fix"],
+    ["LRA-102", "BLOCKED", "P0", "AI rewrite returns inconsistent tone for same resume", "resumeAssistant.ts", "Marcus", "Depends on prompt cache fix"],
+    ["LRA-103", "IN_PROGRESS", "P1", "Onboarding does not explain AI edits", "launch_plan.md", "Jules", "Needs copy review"],
+    ["LRA-104", "DELAYED", "P1", "Analytics event resume_ai_accept missing on mobile", "analytics_dashboard.csv", "Anika", "Schema review pending"],
+    ["LRA-105", "OPEN", "P2", "Keyboard focus lost after preview regenerate", "ResumePreview.jsx", "Jules", "Accessibility issue"],
+    ["LRA-106", "BLOCKED", "P0", "QA signoff blocked by hallucinated credential wording", "qa_report.md", "Nora", "Needs guardrail"],
+    ["LRA-107", "IN_REVIEW", "P1", "Support macro for limited beta", "leadership_notes.txt", "Anika", "Needs VP approval"],
+    ["LRA-108", "DELAYED", "P2", "Resume import spinner lacks timeout state", "ResumePreview.jsx", "Marcus", "Low confidence estimate"],
+  ];
+  return JSON.stringify({
+    project: "AI Resume Assistant",
+    launchDate: "2026-05-16",
+    boardHealth: "red",
+    tasks: tasks.map(([key, status, priority, summary, component, owner, dependency]) => ({
+      key,
+      status,
+      priority,
+      summary,
+      component,
+      owner,
+      dependency,
+      labels: ["launch", priority === "P0" ? "launch-blocker" : "readiness"],
+    })),
+  }, null, 2);
+}
+
+function buildLinkedInResumeAssistant() {
+  return [
+    "import { createHash } from \"crypto\";",
+    "import { fetchWithTimeout } from \"./network/fetchWithTimeout\";",
+    "import { recordEvent } from \"./analytics\";",
+    "import { redactPII, normalizeResumeText } from \"./resumeSanitizer\";",
+    "",
+    "type ResumeAssistantRequest = {",
+    "  memberId: string;",
+    "  resumeText: string;",
+    "  targetRole?: string;",
+    "  locale: string;",
+    "  device: \"desktop\" | \"mobile\";",
+    "};",
+    "",
+    "type AssistantResult = {",
+    "  bullets: string[];",
+    "  confidence: number;",
+    "  source: \"cache\" | \"model\" | \"fallback\";",
+    "  warnings: string[];",
+    "};",
+    "",
+    "const responseCache = new Map<string, AssistantResult>();",
+    "const MAX_CACHE_SIZE = 5000;",
+    "",
+    "export class ResumeAssistantService {",
+    "  constructor(private readonly endpoint: string, private readonly apiKey: string) {}",
+    "",
+    "  async rewriteBullets(request: ResumeAssistantRequest): Promise<AssistantResult> {",
+    "    const normalized = normalizeResumeText(request.resumeText);",
+    "    const cacheKey = this.cacheKey(request.memberId, normalized, request.targetRole);",
+    "    const cached = responseCache.get(cacheKey);",
+    "    if (cached) {",
+    "      recordEvent(\"resume_ai_cache_hit\", { memberId: request.memberId, device: request.device });",
+    "      return cached;",
+    "    }",
+    "",
+    "    if (!normalized || normalized.length < 120) {",
+    "      return this.fallback(\"Resume text is too short for a reliable rewrite.\");",
+    "    }",
+    "",
+    "    const prompt = this.buildPrompt(normalized, request.targetRole, request.locale);",
+    "    try {",
+    "      const response = await fetchWithTimeout(this.endpoint, {",
+    "        method: \"POST\",",
+    "        headers: {",
+    "          \"Authorization\": `Bearer ${this.apiKey}`,",
+    "          \"Content-Type\": \"application/json\",",
+    "        },",
+    "        body: JSON.stringify({ prompt, temperature: 0.7, max_tokens: 650 }),",
+    "      }, 4200);",
+    "",
+    "      const payload = await response.json();",
+    "      const result = this.parseModelResponse(payload, request);",
+    "      if (result.confidence < 0.64) {",
+    "        result.warnings.push(\"Low confidence output requires member review before accepting.\");",
+    "      }",
+    "      this.remember(cacheKey, result);",
+    "      return result;",
+    "    } catch (error) {",
+    "      recordEvent(\"resume_ai_error\", { memberId: request.memberId, message: String(error) });",
+    "      return this.fallback(\"AI rewrite is temporarily unavailable. Keep original bullets editable.\");",
+    "    }",
+    "  }",
+    "",
+    "  private buildPrompt(resumeText: string, targetRole = \"\", locale: string): string {",
+    "    const safeText = redactPII(resumeText);",
+    "    // TODO: Add stronger instruction to avoid inventing employers, degrees, or metrics.",
+    "    return [",
+    "      \"Rewrite resume bullets for clarity and measurable impact.\",",
+    "      `Locale: ${locale}`.",
+    "      `Target role: ${targetRole || \"not specified\"}`.",
+    "      \"Never invent credentials. Preserve factual claims.\",",
+    "      safeText,",
+    "    ].join(\"\\n\\n\");",
+    "  }",
+    "",
+    "  private parseModelResponse(payload: any, request: ResumeAssistantRequest): AssistantResult {",
+    "    const rawBullets = Array.isArray(payload?.bullets) ? payload.bullets : String(payload?.text || \"\").split(\"\\n\");",
+    "    const bullets = rawBullets.map((line: string) => line.replace(/^[-*]\\s*/, \"\").trim()).filter(Boolean).slice(0, 8);",
+    "    const warnings: string[] = [];",
+    "    if (bullets.some((bullet) => /certified|phd|patent|fortune 500/i.test(bullet))) {",
+    "      warnings.push(\"Potential unsupported credential claim detected.\");",
+    "    }",
+    "    if (request.device === \"mobile\" && bullets.join(\" \").length > 1400) {",
+    "      warnings.push(\"Output may overflow mobile preview.\");",
+    "    }",
+    "    return { bullets, confidence: Number(payload?.confidence || 0.58), source: \"model\", warnings };",
+    "  }",
+    "",
+    "  private remember(key: string, result: AssistantResult): void {",
+    "    if (responseCache.size > MAX_CACHE_SIZE) {",
+    "      // Technical debt: deletes oldest insertion by Map order but ignores member/session boundaries.",
+    "      const oldest = responseCache.keys().next().value;",
+    "      responseCache.delete(oldest);",
+    "    }",
+    "    responseCache.set(key, result);",
+    "  }",
+    "",
+    "  private cacheKey(memberId: string, resumeText: string, targetRole?: string): string {",
+    "    // Edge case: target role changes should invalidate cache, but locale currently does not.",
+    "    return createHash(\"sha256\").update(`${memberId}:${targetRole || \"\"}:${resumeText}`).digest(\"hex\");",
+    "  }",
+    "",
+    "  private fallback(message: string): AssistantResult {",
+    "    return { bullets: [], confidence: 0, source: \"fallback\", warnings: [message] };",
+    "  }",
+    "}",
+  ].join("\n").replace("`Locale: ${locale}`.", "`Locale: ${locale}`,").replace("`Target role: ${targetRole || \"not specified\"}`.", "`Target role: ${targetRole || \"not specified\"}`,");
+}
+
+function buildLinkedInResumePreview() {
+  return [
+    "import React, { useEffect, useMemo, useRef, useState } from \"react\";",
+    "import { track } from \"../analytics/track\";",
+    "import { ResumeAssistantService } from \"../services/resumeAssistant\";",
+    "",
+    "export default function ResumePreview({ memberId, resumeText, targetRole, service }) {",
+    "  const [bullets, setBullets] = useState([]);",
+    "  const [warnings, setWarnings] = useState([]);",
+    "  const [isLoading, setIsLoading] = useState(false);",
+    "  const [selected, setSelected] = useState(new Set());",
+    "  const [error, setError] = useState(null);",
+    "  const previewRef = useRef(null);",
+    "",
+    "  const canGenerate = useMemo(() => resumeText && resumeText.length > 120 && !isLoading, [resumeText, isLoading]);",
+    "",
+    "  useEffect(() => {",
+    "    track(\"resume_preview_view\", { memberId, hasText: Boolean(resumeText) });",
+    "  }, [memberId, resumeText]);",
+    "",
+    "  async function handleGenerate() {",
+    "    if (!canGenerate) return;",
+    "    setIsLoading(true);",
+    "    setError(null);",
+    "    try {",
+    "      const result = await service.rewriteBullets({",
+    "        memberId,",
+    "        resumeText,",
+    "        targetRole,",
+    "        locale: navigator.language || \"en-US\",",
+    "        device: window.innerWidth < 720 ? \"mobile\" : \"desktop\",",
+    "      });",
+    "      setBullets(result.bullets);",
+    "      setWarnings(result.warnings);",
+    "      track(\"resume_ai_generate\", { source: result.source, confidence: result.confidence });",
+    "    } catch (err) {",
+    "      setError(\"We could not generate suggestions. Keep editing your original resume.\");",
+    "    } finally {",
+    "      setIsLoading(false);",
+    "    }",
+    "  }",
+    "",
+    "  function toggleBullet(index) {",
+    "    const next = selected;",
+    "    if (next.has(index)) next.delete(index);",
+    "    else next.add(index);",
+    "    // BUG: mutates state Set in place, so React may not re-render consistently.",
+    "    setSelected(next);",
+    "  }",
+    "",
+    "  function acceptSelected() {",
+    "    track(\"resume_ai_accept\", { count: selected.size, surface: \"preview\" });",
+    "    // TODO: mobile event is missing member plan and onboarding step.",
+    "  }",
+    "",
+    "  return (",
+    "    <section className=\"resume-preview\" ref={previewRef} aria-live=\"polite\">",
+    "      <header className=\"preview-header\">",
+    "        <h2>AI Resume Assistant</h2>",
+    "        <button onClick={handleGenerate} disabled={!canGenerate} aria-busy={isLoading}>",
+    "          {isLoading ? \"Generating\" : \"Generate suggestions\"}",
+    "        </button>",
+    "      </header>",
+    "      {error && <div role=\"alert\" className=\"error-banner\">{error}</div>}",
+    "      {warnings.map((warning) => <p className=\"warning\" key={warning}>{warning}</p>)}",
+    "      <ol className=\"bullet-list\">",
+    "        {bullets.map((bullet, index) => (",
+    "          <li key={`${index}-${bullet.slice(0, 18)}`} className={selected.has(index) ? \"selected\" : \"\"}>",
+    "            <label>",
+    "              <input type=\"checkbox\" checked={selected.has(index)} onChange={() => toggleBullet(index)} />",
+    "              <span>{bullet}</span>",
+    "            </label>",
+    "          </li>",
+    "        ))}",
+    "      </ol>",
+    "      <footer className=\"preview-actions\">",
+    "        <button onClick={acceptSelected} disabled={!selected.size}>Accept selected</button>",
+    "        <button>Regenerate</button>",
+    "      </footer>",
+    "    </section>",
+    "  );",
+    "}",
+    "",
+    "/* Known mobile CSS issue:",
+    ".resume-preview { min-width: 680px; }",
+    ".preview-actions { position: sticky; bottom: -12px; }",
+    "This overflows small screens and hides the accept button under the nav bar.",
+    "*/",
+  ].join("\n");
+}
+
+function buildLinkedInAnalyticsCsv() {
+  const rows = ["date,segment,onboarding_completion,ai_generate_rate,ai_accept_rate,mobile_dropoff,qa_blockers"];
+  const segments = ["desktop_premium", "mobile_premium", "new_job_seekers", "enterprise_beta"];
+  for (let day = 1; day <= 28; day += 1) {
+    segments.forEach((segment, index) => {
+      const completion = (72 - index * 5 - (segment.includes("mobile") ? day * 0.7 : day * 0.2)).toFixed(1);
+      const generate = (38 + index * 4 + day * 0.3).toFixed(1);
+      const accept = (18 + index * 2 - (segment.includes("mobile") ? day * 0.25 : 0)).toFixed(1);
+      const dropoff = (segment.includes("mobile") ? 29 + day * 0.8 : 11 + index).toFixed(1);
+      rows.push(`2026-04-${String(day).padStart(2, "0")},${segment},${completion},${generate},${accept},${dropoff},${day > 20 ? 6 : 3}`);
+    });
+  }
+  return rows.join("\n");
+}
+
+function buildLinkedInQaReport() {
+  return [
+    "# QA Report - AI Resume Assistant",
+    "",
+    "## P0 blockers",
+    "1. Mobile preview action buttons overlap with generated bullet list.",
+    "   - Repro: iPhone 14 Safari, import resume, generate suggestions, rotate once, tap Accept.",
+    "   - Actual: CTA hidden below nav; checkbox state is inconsistent.",
+    "   - Expected: CTA visible and selected bullets preserved.",
+    "2. AI response invents unsupported credential phrasing.",
+    "   - Repro: Resume without certifications, target role Product Analyst, generate 5 times.",
+    "   - Actual: one run suggests `certified analytics leader`.",
+    "   - Expected: no unsupported credential claims.",
+    "",
+    "## P1 issues",
+    "- Onboarding copy does not explain AI edits before first generation.",
+    "- Accessibility: keyboard focus is lost after regenerate.",
+    "- Screenshot evidence: /qa/screenshots/mobile-overlap-0515.png, /qa/screenshots/focus-loss-0515.png.",
+    "",
+    "## QA stance",
+    "Full launch is blocked. Limited beta can proceed only if mobile is disabled or fixed, AI guardrails are tightened, and support copy names limitations.",
+  ].join("\n");
+}
+
+function buildLinkedInLeadershipNotes() {
+  return [
+    "Leadership Notes",
+    "",
+    "Marketing: Public launch copy is scheduled for tomorrow at 09:00 PT.",
+    "VP Product: A limited beta is acceptable if the customer narrative is crisp.",
+    "Engineering: Full launch requires mobile preview fix and prompt cache guard.",
+    "QA: Full launch blocked until P0 repro steps pass.",
+    "Legal/Trust: Do not imply AI verifies credentials or employment history.",
+    "",
+    "Candidate expected update:",
+    "- Decision: full launch, limited beta, or delay.",
+    "- Why: tie to blockers and customer risk.",
+    "- Scope: desktop/mobile, cohorts, disabled features.",
+    "- ETA: next checkpoint and owners.",
+  ].join("\n");
+}
+
+function buildSpotifyRetentionMetrics() {
+  const rows = ["week,cohort,creator_segment,activated_setup,day1_return,day7_return,playlist_publish_rate,analytics_open_rate,creator_revenue_delta"];
+  const segments = ["new_creators", "podcasters", "indie_artists", "label_teams", "power_creators"];
+  for (let week = 1; week <= 16; week += 1) {
+    segments.forEach((segment, index) => {
+      const redesignPenalty = week >= 11 ? (week - 10) * (2.1 + index * 0.3) : 0;
+      const setup = (81 - index * 3 - redesignPenalty).toFixed(1);
+      const day1 = (64 - index * 2 - redesignPenalty * 0.8).toFixed(1);
+      const day7 = (42 - index * 2.4 - redesignPenalty * 1.15).toFixed(1);
+      const publish = (31 - index * 1.6 - redesignPenalty * 0.7).toFixed(1);
+      const analytics = (58 - index * 2.1 - redesignPenalty * 1.4).toFixed(1);
+      const revenue = (week >= 11 ? -1 * (3 + index + (week - 10) * 1.2) : 1.5 - index * 0.2).toFixed(1);
+      rows.push(`2026-W${String(week).padStart(2, "0")},redesign_${week >= 11 ? "post" : "pre"},${segment},${setup},${day1},${day7},${publish},${analytics},${revenue}`);
+    });
+  }
+  return rows.join("\n");
+}
+
+function buildSpotifyUserFeedback() {
+  const themes = [
+    "I cannot find the old audience analytics page after the redesign.",
+    "The new creator home looks cleaner but hides the daily listener trend.",
+    "I published less this week because I do not trust the new recommendation prompt.",
+    "The onboarding checklist keeps resetting after I connect social links.",
+    "I need revenue impact first, not a giant promo card.",
+    "The redesign feels built for new users, not working creators.",
+    "Analytics setup is buried behind a second screen on mobile.",
+    "I clicked create campaign and lost the draft.",
+    "Recommendations are pushing generic tips I already completed.",
+    "The old flow was ugly but I knew where everything was.",
+  ];
+  const lines = ["# Creator feedback snippets", ""];
+  for (let i = 1; i <= 180; i += 1) {
+    const severity = i % 13 === 0 ? "high" : i % 5 === 0 ? "medium" : "low";
+    const segment = ["indie_artist", "podcaster", "label_team", "new_creator", "power_creator"][i % 5];
+    lines.push(`${String(i).padStart(3, "0")} | severity=${severity} | segment=${segment} | ${themes[i % themes.length]}`);
+  }
+  lines.push("");
+  lines.push("Research read: complaints cluster around hidden analytics, onboarding reset, and reduced trust in recommendation prompts. Not every complaint supports a full rollback.");
+  return lines.join("\n");
+}
+
+function buildSpotifyRecommendationNotes() {
+  return [
+    "# Recommendation Model Notes",
+    "",
+    "Experiment: creator_next_best_action_v7",
+    "Owner: Oskar / Creator ML",
+    "",
+    "## Changes",
+    "- Reweighted educational prompts above analytics actions for creators with incomplete onboarding.",
+    "- Added exploration bucket for creators with fewer than three published assets.",
+    "- Reduced repeat exposure for revenue analytics cards to avoid dashboard fatigue.",
+    "- Introduced new feature embeddings from creator profile tags.",
+    "",
+    "## Observations",
+    "- Short session engagement improved by 4.2% for new creators.",
+    "- Seven-day return dropped 6.8% among power creators.",
+    "- Analytics open rate fell sharply when revenue cards were demoted.",
+    "- Model confidence is lower for podcasters because historical tags are sparse.",
+    "",
+    "## Conflicting read",
+    "The redesign created UX friction at the same time that the model changed ranking. It is unsafe to attribute all retention decline to one layer without a recovery experiment.",
+    "",
+    "## Candidate notes",
+    "- Decide whether to rollback design, hotfix onboarding, or rebalance recommendations.",
+    "- Name a leading indicator: analytics open rate, setup completion, day-7 return, or publish rate.",
+    "- Include owner and next checkpoint.",
+  ].join("\n");
+}
+
+function buildSpotifyOnboardingFlow() {
+  return [
+    "import React, { useEffect, useMemo, useReducer } from \"react\";",
+    "import { emitCreatorEvent } from \"../analytics/events\";",
+    "import { fetchCreatorProfile, saveOnboardingStep } from \"../api/creator\";",
+    "",
+    "const initialState = {",
+    "  step: \"welcome\",",
+    "  profile: null,",
+    "  completed: new Set(),",
+    "  loading: false,",
+    "  error: null,",
+    "  pendingAnalyticsConsent: false,",
+    "};",
+    "",
+    "function reducer(state, action) {",
+    "  switch (action.type) {",
+    "    case \"LOAD_START\":",
+    "      return { ...state, loading: true, error: null };",
+    "    case \"LOAD_SUCCESS\":",
+    "      return { ...state, loading: false, profile: action.profile };",
+    "    case \"LOAD_ERROR\":",
+    "      return { ...state, loading: false, error: action.error };",
+    "    case \"COMPLETE_STEP\": {",
+    "      const completed = state.completed;",
+    "      completed.add(action.step);",
+    "      // BUG: mutates Set in place. React may skip render and tracking may miss completion.",
+    "      return { ...state, completed, step: action.nextStep || state.step };",
+    "    }",
+    "    case \"GO_TO\":",
+    "      return { ...state, step: action.step };",
+    "    default:",
+    "      return state;",
+    "  }",
+    "}",
+    "",
+    "export default function OnboardingFlow({ creatorId, variant }) {",
+    "  const [state, dispatch] = useReducer(reducer, initialState);",
+    "",
+    "  useEffect(() => {",
+    "    let cancelled = false;",
+    "    async function load() {",
+    "      dispatch({ type: \"LOAD_START\" });",
+    "      try {",
+    "        const profile = await fetchCreatorProfile(creatorId);",
+    "        if (!cancelled) dispatch({ type: \"LOAD_SUCCESS\", profile });",
+    "      } catch (error) {",
+    "        if (!cancelled) dispatch({ type: \"LOAD_ERROR\", error: String(error) });",
+    "      }",
+    "    }",
+    "    load();",
+    "    return () => { cancelled = true; };",
+    "  }, [creatorId]);",
+    "",
+    "  const steps = useMemo(() => {",
+    "    const base = [\"welcome\", \"connect_social\", \"set_goal\", \"analytics_setup\", \"publish_prompt\"];\n",
+    "    if (variant === \"education_first\") return [\"welcome\", \"set_goal\", \"learn_growth\", \"connect_social\", \"publish_prompt\"];",
+    "    return base;",
+    "  }, [variant]);",
+    "",
+    "  async function completeCurrentStep() {",
+    "    const current = state.step;",
+    "    const nextStep = steps[Math.min(steps.indexOf(current) + 1, steps.length - 1)];",
+    "    emitCreatorEvent(\"creator_onboarding_step_complete\", { creatorId, step: current, variant });",
+    "    await saveOnboardingStep(creatorId, current);",
+    "    dispatch({ type: \"COMPLETE_STEP\", step: current, nextStep });",
+    "  }",
+    "",
+    "  function renderStep() {",
+    "    if (state.loading) return <div className=\"skeleton\">Loading creator workspace</div>;",
+    "    if (state.error) return <div role=\"alert\">We could not load setup. Try again.</div>;",
+    "    switch (state.step) {",
+    "      case \"analytics_setup\":",
+    "        return <AnalyticsSetup profile={state.profile} onComplete={completeCurrentStep} />;",
+    "      case \"connect_social\":",
+    "        return <ConnectSocial onComplete={completeCurrentStep} />;",
+    "      case \"set_goal\":",
+    "        return <SetGoal onComplete={completeCurrentStep} />;",
+    "      case \"publish_prompt\":",
+    "        return <PublishPrompt onComplete={completeCurrentStep} />;",
+    "      default:",
+    "        return <Welcome onComplete={completeCurrentStep} />;",
+    "    }",
+    "  }",
+    "",
+    "  return (",
+    "    <main className=\"creator-onboarding\" data-variant={variant}>",
+    "      <Progress steps={steps} current={state.step} completed={state.completed} />",
+    "      {renderStep()}",
+    "    </main>",
+    "  );",
+    "}",
+    "",
+    "function AnalyticsSetup({ profile, onComplete }) {",
+    "  return <section><h2>Understand your listeners</h2><button onClick={onComplete}>Continue</button></section>;",
+    "}",
+    "function ConnectSocial({ onComplete }) { return <section><h2>Connect socials</h2><button onClick={onComplete}>Continue</button></section>; }",
+    "function SetGoal({ onComplete }) { return <section><h2>Choose a goal</h2><button onClick={onComplete}>Continue</button></section>; }",
+    "function PublishPrompt({ onComplete }) { return <section><h2>Publish your next update</h2><button onClick={onComplete}>Finish</button></section>; }",
+    "function Welcome({ onComplete }) { return <section><h2>Welcome back</h2><button onClick={onComplete}>Start</button></section>; }",
+    "function Progress({ steps, current, completed }) { return <ol>{steps.map((step) => <li key={step} aria-current={step === current}>{step}</li>)}</ol>; }",
+  ].join("\n");
+}
+
+function buildSpotifyAbResults() {
+  return [
+    "# AB Test Results",
+    "",
+    "## Experiment A: education_first onboarding",
+    "- Activation +3.8%",
+    "- Analytics setup -9.4%",
+    "- Day-7 return -4.1%",
+    "- Strongest negative effect among power creators.",
+    "",
+    "## Experiment B: creator_home_simplified",
+    "- Session length +6.2%",
+    "- Publish rate -2.8%",
+    "- Analytics open rate -12.7%",
+    "- Qualitative feedback: simpler but less useful.",
+    "",
+    "## Experiment C: recommendation_rebalance",
+    "- New creator setup +2.4%",
+    "- Existing creator return -6.8%",
+    "- Revenue analytics clickthrough -14.3%",
+    "",
+    "## Interpretation",
+    "Activation and retention disagree. The recovery plan should not optimize only for short-session activation. Recommend a targeted hotfix and follow-up experiment rather than a blind full rollback.",
+  ].join("\n");
+}
+
+function buildSpotifyExecutiveEmail() {
+  return [
+    "From: Gabe <gabe.creator-growth@spotify.example>",
+    "To: Creator Recovery Room",
+    "Subject: Recovery plan needed before business review",
+    "",
+    "Team,",
+    "",
+    "Creator retention fell faster than expected after the redesign. I need a clear recommendation today: rollback, targeted hotfix, recommendation rebalance, or phased recovery plan.",
+    "",
+    "Please include:",
+    "- What changed and what evidence supports the diagnosis.",
+    "- What we do first and why.",
+    "- Owner, metric, and next checkpoint.",
+    "- What we will tell creator support if complaints keep rising.",
+    "",
+    "I do not want a dashboard tour. I want a decision.",
+    "",
+    "Gabe",
+  ].join("\n");
+}
+
+function buildSpotifyHeatmapPreview() {
+  return [
+    "PNG_PREVIEW: heatmap.png",
+    "Visualization summary:",
+    "- Pre-redesign hotspots: left rail analytics, revenue card, publish CTA.",
+    "- Post-redesign hotspots: hero education card, low interaction with analytics setup.",
+    "- Mobile heatmap: thumb taps cluster on back button and collapsed menu.",
+    "- Rage clicks: analytics setup, campaign draft, revenue trend module.",
+    "",
+    "Interpretation: discovery friction is real. Pair heatmap with retention metrics before recommending rollback.",
+  ].join("\n");
+}
+
+function buildOpenAISecurityReport() {
+  return [
+    "# Security Report - Prompt Leakage Vulnerability",
+    "",
+    "## Summary",
+    "Red team reproduced prompt leakage by forcing a tool retry path to reuse stale session memory. The issue appears in the boundary between memory_manager.py and inference_gateway.ts.",
+    "",
+    "## Severity",
+    "P0 for enterprise demo environment until mitigated. Potential exposure includes system prompt fragments, prior tool metadata, and stale memory snippets from same tenant if isolation fails.",
+    "",
+    "## Exploit path",
+    "1. Start enterprise demo session with memory enabled.",
+    "2. Trigger tool timeout with adversarial prompt requesting hidden policy.",
+    "3. Retry path reattaches memory ids without sanitization.",
+    "4. Gateway forwards unsafe memory reference into inference context.",
+    "5. Model produces partial prompt leakage in refusal-adjacent answer.",
+    "",
+    "## Required mitigation",
+    "- Sanitize memory before every retry.",
+    "- Bind memory references to tenant, session, and request id.",
+    "- Disable memory for demo if exploit cannot be closed.",
+    "- Prepare rollback guide and customer-safe explanation.",
+  ].join("\n");
+}
+
+function buildOpenAIMemoryManager() {
+  return [
+    "import asyncio",
+    "import logging",
+    "import time",
+    "from dataclasses import dataclass",
+    "from typing import Any, Dict, Iterable, List, Optional",
+    "",
+    "logger = logging.getLogger(\"enterprise.memory\")",
+    "",
+    "@dataclass",
+    "class MemoryRecord:",
+    "    tenant_id: str",
+    "    session_id: str",
+    "    request_id: str",
+    "    content: str",
+    "    labels: List[str]",
+    "    created_at: float",
+    "",
+    "class UnsafeMemoryReference(Exception):",
+    "    pass",
+    "",
+    "class MemoryManager:",
+    "    def __init__(self, store: Any, policy: Any, metrics: Any) -> None:",
+    "        self._store = store",
+    "        self._policy = policy",
+    "        self._metrics = metrics",
+    "        self._session_cache: Dict[str, List[MemoryRecord]] = {}",
+    "        self._cache_expiry: Dict[str, float] = {}",
+    "        self._lock = asyncio.Lock()",
+    "",
+    "    async def load_context(self, tenant_id: str, session_id: str, request_id: str, memory_ids: Iterable[str]) -> List[str]:",
+    "        cache_key = f\"{tenant_id}:{session_id}\"",
+    "        cached = self._session_cache.get(cache_key)",
+    "        if cached and self._cache_expiry.get(cache_key, 0) > time.time():",
+    "            # Vulnerability source: cached records are not rebound to request_id before reuse.",
+    "            records = cached",
+    "        else:",
+    "            records = await self._fetch_records(memory_ids)",
+    "            await self._remember(cache_key, records)",
+    "",
+    "        safe: List[str] = []",
+    "        for record in records:",
+    "            self._assert_scope(record, tenant_id, session_id)",
+    "            sanitized = self.sanitize(record.content)",
+    "            if self._policy.is_allowed(sanitized):",
+    "                safe.append(sanitized)",
+    "            else:",
+    "                self._metrics.increment(\"memory.policy_block\", tags={\"tenant\": tenant_id})",
+    "        return safe",
+    "",
+    "    async def attach_retry_memory(self, original_context: List[str], retry_metadata: Dict[str, Any]) -> List[str]:",
+    "        # TODO: This should call load_context with tenant/session/request binding. It currently trusts retry metadata.",
+    "        unsafe_refs = retry_metadata.get(\"memory_refs\", [])",
+    "        if unsafe_refs and retry_metadata.get(\"allow_raw_memory_refs\"):",
+    "            logger.warning(\"raw memory refs allowed on retry count=%s\", len(unsafe_refs))",
+    "            return original_context + list(unsafe_refs)",
+    "        return original_context",
+    "",
+    "    def sanitize(self, content: str) -> str:",
+    "        blocked_markers = [\"SYSTEM_PROMPT\", \"developer_message\", \"policy_override\", \"tool_secret\"]",
+    "        sanitized = content",
+    "        for marker in blocked_markers:",
+    "            sanitized = sanitized.replace(marker, \"[redacted]\")",
+    "        # Edge case: base64 or markdown fenced prompt fragments are not detected here.",
+    "        return sanitized[:4000]",
+    "",
+    "    def _assert_scope(self, record: MemoryRecord, tenant_id: str, session_id: str) -> None:",
+    "        if record.tenant_id != tenant_id or record.session_id != session_id:",
+    "            raise UnsafeMemoryReference(f\"memory scope mismatch tenant={tenant_id} session={session_id}\")",
+    "",
+    "    async def _fetch_records(self, memory_ids: Iterable[str]) -> List[MemoryRecord]:",
+    "        rows = await self._store.fetch_many(list(memory_ids))",
+    "        return [MemoryRecord(**row) for row in rows]",
+    "",
+    "    async def _remember(self, cache_key: str, records: List[MemoryRecord]) -> None:",
+    "        async with self._lock:",
+    "            self._session_cache[cache_key] = records",
+    "            self._cache_expiry[cache_key] = time.time() + 90",
+    "            if len(self._session_cache) > 10000:",
+    "                # Potential memory leak under enterprise load: evicts only one arbitrary key.",
+    "                oldest_key = next(iter(self._session_cache.keys()))",
+    "                self._session_cache.pop(oldest_key, None)",
+    "                self._cache_expiry.pop(oldest_key, None)",
+  ].join("\n");
+}
+
+function buildOpenAIInferenceGateway() {
+  return [
+    "import { Request, Response, NextFunction } from \"express\";",
+    "import { z } from \"zod\";",
+    "import { getMemoryManager } from \"./memory\";",
+    "import { runInference } from \"./runtime\";",
+    "import { auditLog } from \"./audit\";",
+    "",
+    "const InferenceRequest = z.object({",
+    "  tenantId: z.string().min(1),",
+    "  sessionId: z.string().min(1),",
+    "  requestId: z.string().min(1),",
+    "  prompt: z.string().min(1),",
+    "  memoryIds: z.array(z.string()).default([]),",
+    "  retry: z.object({",
+    "    attempt: z.number().default(0),",
+    "    memory_refs: z.array(z.string()).optional(),",
+    "    allow_raw_memory_refs: z.boolean().optional(),",
+    "  }).optional(),",
+    "});",
+    "",
+    "export async function inferenceGateway(req: Request, res: Response, next: NextFunction) {",
+    "  const started = Date.now();",
+    "  try {",
+    "    const parsed = InferenceRequest.parse(req.body);",
+    "    const memoryManager = getMemoryManager();",
+    "    const context = await memoryManager.loadContext({",
+    "      tenantId: parsed.tenantId,",
+    "      sessionId: parsed.sessionId,",
+    "      requestId: parsed.requestId,",
+    "      memoryIds: parsed.memoryIds,",
+    "    });",
+    "",
+    "    let finalContext = context;",
+    "    if (parsed.retry?.attempt && parsed.retry.attempt > 0) {",
+    "      // Vulnerability: retry metadata can reintroduce unsafe raw memory refs.",
+    "      finalContext = await memoryManager.attachRetryMemory(context, parsed.retry);",
+    "    }",
+    "",
+    "    const result = await runInference({",
+    "      tenantId: parsed.tenantId,",
+    "      sessionId: parsed.sessionId,",
+    "      requestId: parsed.requestId,",
+    "      prompt: parsed.prompt,",
+    "      context: finalContext,",
+    "      safetyMode: \"enterprise-demo\",",
+    "    });",
+    "",
+    "    auditLog(\"inference.complete\", {",
+    "      tenantId: parsed.tenantId,",
+    "      requestId: parsed.requestId,",
+    "      latencyMs: Date.now() - started,",
+    "      memoryCount: finalContext.length,",
+    "    });",
+    "",
+    "    res.json({ output: result.output, safety: result.safety, requestId: parsed.requestId });",
+    "  } catch (error) {",
+    "    auditLog(\"inference.error\", { message: String(error), latencyMs: Date.now() - started });",
+    "    next(error);",
+    "  }",
+    "}",
+    "",
+    "export function validateDemoMode(req: Request, res: Response, next: NextFunction) {",
+    "  const demoRestricted = process.env.ENTERPRISE_DEMO_RESTRICT_MEMORY === \"true\";",
+    "  if (demoRestricted && Array.isArray(req.body?.memoryIds) && req.body.memoryIds.length > 0) {",
+    "    req.body.memoryIds = [];",
+    "    req.body.retry = { attempt: 0 };",
+    "  }",
+    "  next();",
+    "}",
+  ].join("\n");
+}
+
+function buildOpenAIRedTeamNotes() {
+  return [
+    "Red Team Notes",
+    "",
+    "Exploit name: stale_retry_memory_leak",
+    "Status: reproduced 4/7 attempts in enterprise demo staging.",
+    "",
+    "Steps:",
+    "1. Seed session with benign doc containing hidden marker.",
+    "2. Trigger tool timeout and retry with adversarial prompt.",
+    "3. Observe gateway retry metadata includes raw memory_refs.",
+    "4. Ask model to summarize hidden setup and previous tool instruction.",
+    "",
+    "Observed leakage:",
+    "- partial system instruction phrasing",
+    "- tool routing metadata",
+    "- stale memory fragment from previous request",
+    "",
+    "Red team stance:",
+    "Restrict or disable memory for demo unless attachRetryMemory is patched and staging exploit repro passes 0/20 attempts.",
+  ].join("\n");
+}
+
+function buildOpenAIEngineeringChat() {
+  return JSON.stringify({
+    room: "enterprise-demo-security",
+    messages: [
+      { from: "Iris", role: "Security PM", stress: "critical", text: "We need a mitigation decision and customer-safe update before the demo prep call." },
+      { from: "Noah", role: "Platform Security", stress: "critical", text: "The raw memory refs branch is unacceptable. Disable memory or bind every ref to tenant/session/request." },
+      { from: "Farah", role: "Red Team", stress: "high", text: "I can still reproduce leakage when retry metadata is trusted." },
+      { from: "Tessa", role: "Enterprise UX", stress: "medium", text: "If memory is disabled, the demo script needs to explain why context is limited." },
+      { from: "Sam", role: "Demo Sponsor", stress: "critical", text: "I need go/no-go. Restricted demo is acceptable if we can explain it." },
+      { from: "Noah", role: "Platform Security", stress: "critical", text: "I disagree with demoing unrestricted memory. We are one retry away from an incident." }
+    ]
+  }, null, 2);
+}
+
+function buildOpenAIArchitecturePreview() {
+  return [
+    "PNG_PREVIEW: system_architecture.png",
+    "Diagram nodes:",
+    "Client -> Enterprise Gateway -> Policy Middleware -> Memory Manager -> Inference Runtime -> Tool Router",
+    "",
+    "Highlighted risk path:",
+    "Tool Router timeout -> Gateway retry -> raw memory_refs -> Memory Manager attachRetryMemory -> Inference context",
+    "",
+    "Mitigation overlay:",
+    "- Bind memory records to tenant/session/request.",
+    "- Sanitize on every retry.",
+    "- ENTERPRISE_DEMO_RESTRICT_MEMORY=true fallback.",
+    "- Audit all blocked memory references.",
+  ].join("\n");
+}
+
+function buildOpenAIRollbackGuide() {
+  return [
+    "# Emergency Rollback Guide",
+    "",
+    "## Option A: Restricted demo mode",
+    "1. Set ENTERPRISE_DEMO_RESTRICT_MEMORY=true.",
+    "2. Clear staging session memory ids.",
+    "3. Restart gateway pods.",
+    "4. Run red-team repro suite: expected 0/20 leakage.",
+    "",
+    "## Option B: Patch-forward",
+    "1. Remove raw retry memory branch.",
+    "2. Require tenant/session/request binding on all memory references.",
+    "3. Sanitize retrieved memory before retry context assembly.",
+    "4. Add audit event for blocked unsafe refs.",
+    "",
+    "## Rollback trigger",
+    "Any successful leakage repro, missing audit event, or cross-session memory mismatch blocks unrestricted demo.",
+    "",
+    "## Customer-safe language",
+    "We are demonstrating with memory isolation controls enabled. Some long-context personalization may be limited while we validate the newest security guardrails.",
+  ].join("\n");
+}
 
 const state = {
   missionKey: null,
@@ -777,6 +2439,7 @@ const state = {
   timelineKeys: new Set(),
   triggeredBeats: new Set(),
   userMessageCount: 0,
+  usingLiveBackend: false,
   submissionInFlight: false,
   roomLocked: false,
   allowNavigationAway: false,
@@ -840,6 +2503,10 @@ const submitActionButtons = [submitBtn, submitSceneBtn, submitWorkspaceBtn].filt
 
 function channelItemsForMission(mission) {
   const defaults = {
+    netflix: ["streaming-war-room", "recommendations", "playback", "sre", "leadership"],
+    linkedin: ["resume-assistant-launch", "product", "engineering", "qa", "leadership"],
+    spotify: ["creator-growth-recovery", "analytics", "creator-feedback", "experiments", "leadership"],
+    openai: ["enterprise-demo-security", "security", "platform", "red-team", "leadership"],
     mobile: ["launch-otp", "product", "engineering", "design"],
     security: ["security-bridge", "product", "engineering", "qa"],
     ops: ["ops-v1", "product", "engineering", "design"],
@@ -855,11 +2522,165 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function getMissionConfigByKey(key) {
-  if (MISSIONS[key]) {
-    return MISSIONS[key];
+function selectedDashboardTask() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.selectedTaskDetails);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
   }
-  const mappedKey = TASK_TO_MISSION_KEY[key];
+}
+
+function loadWorkspaceFilesModule() {
+  if (window.getWorkspaceFiles || window.WORKSPACE_FILES) {
+    return Promise.resolve({
+      default: window.WORKSPACE_FILES || {},
+      WORKSPACE_FILES: window.WORKSPACE_FILES || {},
+      getWorkspaceFiles: window.getWorkspaceFiles,
+    });
+  }
+
+  if (!workspaceFilesModulePromise) {
+    workspaceFilesModulePromise = import(WORKSPACE_FILES_MODULE_PATH).catch((error) => {
+      console.warn("Could not load workspaceFiles.js", error);
+      workspaceFilesModulePromise = null;
+      return null;
+    });
+  }
+  return workspaceFilesModulePromise;
+}
+
+function workspaceFileId(name, index) {
+  const slug = String(name || `workspace-file-${index + 1}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return `${index + 1}-${slug || "workspace-file"}`;
+}
+
+function normalizeWorkspaceFiles(files) {
+  return (Array.isArray(files) ? files : [])
+    .filter((file) => file && typeof file === "object")
+    .map((file, index) => {
+      const name = String(file.name || file.path || `workspace_file_${index + 1}.md`);
+      return {
+        id: file.id || workspaceFileId(name, index),
+        name,
+        kind: file.kind || file.type || "brief",
+        type: file.type || file.kind || "brief",
+        language: file.language || "",
+        content: String(file.content || ""),
+      };
+    });
+}
+
+async function hydrateSelectedDashboardTaskWorkspaceFiles() {
+  const taskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  const selectedTask = selectedDashboardTask() || (taskId ? { id: taskId } : null);
+  if (!selectedTask || !selectedTask.id || (Array.isArray(selectedTask.workspaceFiles) && selectedTask.workspaceFiles.length)) {
+    return;
+  }
+
+  const mod = await loadWorkspaceFilesModule();
+  const getter = (mod && mod.getWorkspaceFiles) || window.getWorkspaceFiles;
+  const workspaceFiles = normalizeWorkspaceFiles(getter ? getter(selectedTask.id) : []);
+  if (!workspaceFiles.length) {
+    return;
+  }
+
+  localStorage.setItem(
+    STORAGE_KEYS.selectedTaskDetails,
+    JSON.stringify({
+      ...selectedTask,
+      files: workspaceFiles.map((file) => file.name),
+      workspaceFiles,
+    })
+  );
+}
+
+function slugifyTask(text) {
+  return String(text || "simulation")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 36) || "simulation";
+}
+
+function personalizeMissionForDashboardTask(mission, task) {
+  if (!task || !task.id) {
+    return mission;
+  }
+
+  const skills = Array.isArray(task.skills) && task.skills.length ? task.skills : mission.requirements;
+  const taskWorkspaceFiles = normalizeWorkspaceFiles(task.workspaceFiles || task.workspace_files);
+  const channel = slugifyTask(task.label || task.title || task.id);
+  const timeMatch = String(task.time || "").match(/\d+/);
+  const timeText = String(task.time || "").toLowerCase();
+  const deadlineMinutes = timeMatch
+    ? Number(timeMatch[0]) * (timeText.includes("day") ? 24 * 60 : timeText.includes("hour") ? 60 : 1)
+    : mission.deadlineMinutes;
+
+  mission.taskId = task.id;
+  mission.company = task.company || mission.company;
+  mission.channel = channel;
+  mission.sprint = task.label || mission.sprint;
+  mission.role = task.role || mission.role;
+  mission.priority = task.difficulty || mission.priority;
+  mission.deadlineMinutes = Number.isFinite(deadlineMinutes) ? deadlineMinutes : mission.deadlineMinutes;
+  mission.headline = task.title || mission.headline;
+  mission.summary = task.description || mission.summary;
+  mission.output = `${task.role || mission.role} simulation handoff`;
+  mission.crisisStatus = "Interview room active";
+  mission.latestChange = "";
+  mission.workspaceTitle = `${mission.company} shared workspace`;
+  mission.workspaceHelper = taskWorkspaceFiles.length
+    ? "Use the task-specific files to show your thinking, then explain the decision and evidence to the team."
+    : "Use the workspace to show your thinking, then explain the decision and evidence to the team.";
+  mission.workspaceTip = taskWorkspaceFiles.length
+    ? "Tip: edit or reference the provided task files, then share the decision, tradeoff, and validation path with the room."
+    : "Tip: share a clear decision, the tradeoff, and the validation path with Asha, Ravi, Mira, and Kenji.";
+  mission.requirements = skills;
+  mission.acceptance = skills.map((skill) => `${skill} is demonstrated with a concrete decision or evidence.`);
+  mission.crisisPrompt = "The room is adding pressure to test adaptability. Do you want to handle the change now?";
+
+  const brief = [
+    `# ${task.title || mission.headline}`,
+    "",
+    `Company: ${mission.company}`,
+    `Role: ${mission.role}`,
+    `Scenario: ${mission.summary}`,
+    "",
+    "## Skills the room will test",
+    ...skills.map((skill) => `- ${skill}`),
+    "",
+    "## Candidate handoff",
+    "- State the first decision.",
+    "- Explain the tradeoff.",
+    "- Name the validation evidence.",
+    "- Assign the next owner or follow-up.",
+  ].join("\n");
+
+  mission.workspaceFiles = [
+    { id: "task-brief", name: "task_brief.md", kind: "brief", content: brief },
+    ...(taskWorkspaceFiles.length ? taskWorkspaceFiles : mission.workspaceFiles || []),
+  ];
+
+  return mission;
+}
+
+function getMissionConfigByKey(key) {
+  const legacyRedirects = {
+    netflix: "security",
+    linkedin: "mobile",
+    spotify: "ops",
+    openai: "security",
+  };
+  const normalizedKey = legacyRedirects[key] || key;
+  if (MISSIONS[normalizedKey]) {
+    return MISSIONS[normalizedKey];
+  }
+  const mappedKey = TASK_TO_MISSION_KEY[normalizedKey];
   return mappedKey ? MISSIONS[mappedKey] : null;
 }
 
@@ -873,11 +2694,17 @@ function currentRole() {
 
 function missionKeyFromRole() {
   const role = currentRole().toLowerCase();
+  if (role.includes("security") || role.includes("incident")) {
+    return "security";
+  }
   if (role.includes("backend")) {
     return "security";
   }
   if (role.includes("data") || role.includes("analyst")) {
     return "ops";
+  }
+  if (role.includes("product") || role.includes("full stack") || role.includes("frontend")) {
+    return "mobile";
   }
   return "mobile";
 }
@@ -896,7 +2723,12 @@ function activeTaskId() {
   if (dashboardTaskId && getMissionConfigByKey(dashboardTaskId)) {
     return dashboardTaskId;
   }
-  return state.mission ? state.mission.taskId : "mobile-growth";
+  return state.mission ? state.mission.taskId : "mobile-onboarding";
+}
+
+function activeBackendTaskId() {
+  const uiTaskId = activeTaskId();
+  return TASK_TO_BACKEND_TASK_ID[uiTaskId] || uiTaskId;
 }
 
 function sessionStorageKey() {
@@ -1150,16 +2982,8 @@ function renderLists() {
 }
 
 function renderQuickPrompts() {
-  quickPrompts.innerHTML = state.mission.quickPrompts
-    .map((prompt, index) => `<button type="button" data-prompt-index="${index}">${escapeHtml(prompt)}</button>`)
-    .join("");
-
-  quickPrompts.querySelectorAll("[data-prompt-index]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const prompt = state.mission.quickPrompts[Number(button.getAttribute("data-prompt-index"))];
-      sendRoomMessage(prompt);
-    });
-  });
+  quickPrompts.innerHTML = "";
+  quickPrompts.classList.add("hidden");
 }
 
 function renderChannelList() {
@@ -1251,7 +3075,54 @@ function uniqueTimelineKey(entry) {
   return [entry.title || "", entry.description || "", entry.created_at || ""].join("::");
 }
 
+function sanitizeRoomMessage(rawMessage) {
+  const aliases = {
+    Maya: { name: "Asha", title: "Product Manager" },
+    Anika: { name: "Asha", title: "Product Manager" },
+    Sofia: { name: "Asha", title: "Product Manager" },
+    Iris: { name: "Asha", title: "Product Manager" },
+    Dante: { name: "Ravi", title: "Engineering Lead" },
+    Marcus: { name: "Ravi", title: "Engineering Lead" },
+    Oskar: { name: "Ravi", title: "Engineering Lead" },
+    Noah: { name: "Ravi", title: "Engineering Lead" },
+    Priya: { name: "Kenji", title: "QA Engineer" },
+    Nora: { name: "Kenji", title: "QA Engineer" },
+    Leah: { name: "Kenji", title: "QA Engineer" },
+    Farah: { name: "Kenji", title: "QA Engineer" },
+    Elena: { name: "Mira", title: "Product Designer" },
+    Jules: { name: "Mira", title: "Product Designer" },
+    Mina: { name: "Mira", title: "Product Designer" },
+    Tessa: { name: "Mira", title: "Product Designer" },
+    Reed: { name: "Asha", title: "Product Manager" },
+    Vikram: { name: "Asha", title: "Product Manager" },
+    Gabe: { name: "Asha", title: "Product Manager" },
+    Sam: { name: "Asha", title: "Product Manager" },
+    Leo: { name: "Asha", title: "Product Manager" },
+  };
+  const message = { ...rawMessage };
+  const originalName = message.speaker_name || message.name;
+  const alias = aliases[originalName];
+  if (alias) {
+    message.speaker_name = alias.name;
+    message.name = alias.name;
+    message.speaker_title = alias.title;
+    message.title = alias.title;
+  }
+
+  const oldNames = Object.keys(aliases).join("|");
+  const namePattern = new RegExp(`\\b(${oldNames})\\b`, "g");
+  if (typeof message.message === "string") {
+    message.message = message.message.replace(namePattern, (name) => aliases[name].name);
+  }
+  if (typeof message.content === "string") {
+    message.content = message.content.replace(namePattern, (name) => aliases[name].name);
+  }
+
+  return message;
+}
+
 function normalizeMessage(message) {
+  message = sanitizeRoomMessage(message);
   const speakerName = message.speaker_name || message.name || "Room update";
   const speakerTitle = message.speaker_title || message.title || message.role || "";
   const body = message.message || message.content || "";
@@ -1270,13 +3141,14 @@ function normalizeMessage(message) {
 }
 
 function appendChatMessage(rawMessage) {
-  const key = uniqueMessageKey(rawMessage);
+  const safeMessage = sanitizeRoomMessage(rawMessage);
+  const key = uniqueMessageKey(safeMessage);
   if (state.messageKeys.has(key)) {
     return;
   }
 
   state.messageKeys.add(key);
-  const message = normalizeMessage(rawMessage);
+  const message = normalizeMessage(safeMessage);
   const item = document.createElement("article");
 
   if (message.type === "system") {
@@ -1424,9 +3296,9 @@ function scrollChatToBottom() {
   teamChat.scrollTop = teamChat.scrollHeight;
 }
 
-function appendMessagesSequentially(messages, startDelay = 180) {
+function appendMessagesSequentially(messages, startDelay = 180, stepDelay = 520) {
   messages.forEach((message, index) => {
-    window.setTimeout(() => appendChatMessage(message), startDelay + index * 340);
+    window.setTimeout(() => appendChatMessage(message), startDelay + index * stepDelay);
   });
 }
 
@@ -1455,59 +3327,90 @@ function localReplyPair(userText) {
   const eng = state.mission.teammates.find((person) => person.kind === "eng");
   const design = state.mission.teammates.find((person) => person.kind === "design");
   const qa = state.mission.teammates.find((person) => person.kind === "qa");
+  const exec = state.mission.teammates.find((person) => person.kind === "exec");
+  const missionKey = state.mission ? state.mission.key : "";
+  const mentions = (person) => person && text.includes(person.name.toLowerCase());
+  const missionGuidance = {
+    netflix: {
+      technical: "Tie the code change to playback recovery: retry budget, cache stability, rollback state, and region validation.",
+      risk: "Name the region and validation gate you trust least. EU-West rollback and cache error rate cannot be hand-waved.",
+      decision: "Make the incident call: isolate traffic, continue rollback, or patch retry/cache behavior. Then give owner and ETA.",
+      user: "Customer messaging should say streaming may fail after title selection and give the next update window.",
+    },
+    linkedin: {
+      technical: "Tie the fix to launch risk: AI consistency, prompt caching, mobile preview, and analytics instrumentation.",
+      risk: "Name the launch blocker you are accepting or refusing. QA needs full launch, limited beta, or delay.",
+      decision: "Make the launch call: full launch, limited beta, or slip. Then list what ships and what is disabled.",
+      user: "Member-facing language should explain AI suggestions, limitations, and edit control without overpromising.",
+    },
+    spotify: {
+      technical: "Tie the analysis to retention: onboarding completion, analytics discovery, recommendation changes, and cohort return.",
+      risk: "Name the evidence conflict. Activation improved in places while seven-day creator return got worse.",
+      decision: "Make the recovery call: rollback, hotfix onboarding, rebalance recommendations, or run a targeted experiment.",
+      user: "Creator messaging should acknowledge workflow disruption and point to the first recovery change.",
+    },
+    openai: {
+      technical: "Tie the patch to exploit closure: memory binding, retry sanitization, audit logs, and restricted demo fallback.",
+      risk: "Name the residual security risk and the repro gate. Red team needs 0 successful leakage attempts before signoff.",
+      decision: "Make the demo call: go, restricted demo, or delay. Then state mitigation and rollback trigger.",
+      user: "Enterprise-facing language should explain memory isolation controls without exposing exploit details.",
+    },
+  }[missionKey] || {
+    technical: "Tie the change to the failing path and the validation evidence.",
+    risk: "Name the riskiest edge case and the check that proves it is controlled.",
+    decision: "Make the call, name what gets cut, and assign owners.",
+    user: "Keep customer-facing language honest and specific.",
+  };
 
-  if (text.includes("ravi")) {
+  if (mentions(eng) || text.includes("engineer") || text.includes("backend") || text.includes("code")) {
     return [
-      { speaker_name: eng.name, speaker_title: eng.title, message: "Tell me the exact behavior change. What should the client do on success, error, and retry?" },
-      { speaker_name: pm.name, speaker_title: pm.title, message: "Once that is clear, I can tell if the scope is tight enough." },
+      { speaker_name: eng.name, speaker_title: eng.title, message: missionGuidance.technical },
+      { speaker_name: qa.name, speaker_title: qa.title, message: "I need the validation gate that proves this is not just a plausible theory." },
     ];
   }
 
-  if (text.includes("kenji")) {
+  if (mentions(qa) || text.includes("qa") || text.includes("test") || text.includes("risk") || text.includes("edge")) {
     return [
-      { speaker_name: qa.name, speaker_title: qa.title, message: "What edge case are you protecting first? If you cannot name it, the fix still sounds soft." },
-      { speaker_name: eng.name, speaker_title: eng.title, message: "Give Kenji that path and I can tell you if the implementation stays narrow." },
+      { speaker_name: qa.name, speaker_title: qa.title, message: missionGuidance.risk },
+      { speaker_name: eng.name, speaker_title: eng.title, message: "Give me that proof target and I can align the implementation around it." },
     ];
   }
 
-  if (text.includes("mira")) {
+  if (mentions(design) || text.includes("design") || text.includes("mobile") || text.includes("copy") || text.includes("customer") || text.includes("user")) {
     return [
-      { speaker_name: design.name, speaker_title: design.title, message: "Make the user-facing state obvious. If the UI feels unsure, nobody will trust the fix." },
-      { speaker_name: pm.name, speaker_title: pm.title, message: "And say if that UX change is enough for today or if we still need to cut scope." },
+      { speaker_name: design.name, speaker_title: design.title, message: missionGuidance.user },
+      { speaker_name: pm.name, speaker_title: pm.title, message: "Good. Now tie that user-facing message to the operational decision we are making." },
     ];
   }
 
-  if (text.includes("api") || text.includes("retry") || text.includes("backend") || text.includes("payload")) {
+  if (mentions(exec) || text.includes("leadership") || text.includes("ceo") || text.includes("eta") || text.includes("go/no-go")) {
     return [
-      { speaker_name: eng.name, speaker_title: eng.title, message: "I need the exact client behavior for invalid input, throttling, and server failure. Be concrete." },
-      { speaker_name: qa.name, speaker_title: qa.title, message: "And tell me what ugly path you would retest right after that. I do not want a happy-path-only fix." },
+      { speaker_name: exec.name, speaker_title: exec.title, message: "I need the decision, impact, owner, ETA, and residual risk in plain language." },
+      { speaker_name: pm.name, speaker_title: pm.title, message: missionGuidance.decision },
     ];
   }
 
-  if (text.includes("design") || text.includes("mobile") || text.includes("loading") || text.includes("copy")) {
+  if (text.includes("log") || text.includes("metric") || text.includes("rollback") || text.includes("cache") || text.includes("latency") || text.includes("memory")) {
     return [
-      { speaker_name: design.name, speaker_title: design.title, message: "Make the user-facing state explicit. Silent taps and vague copy are what make these flows feel broken." },
-      { speaker_name: pm.name, speaker_title: pm.title, message: "Good. Once the UI state is clear, tell me if that is enough or if we still need to cut scope." },
-    ];
-  }
-
-  if (text.includes("test") || text.includes("risk") || text.includes("edge")) {
-    return [
-      { speaker_name: qa.name, speaker_title: qa.title, message: "Name the edge case you trust least. That is usually the fastest way to prove if the plan is real." },
-      { speaker_name: eng.name, speaker_title: eng.title, message: "If the plan survives that edge case, I can usually build around the rest. Be precise." },
+      { speaker_name: eng.name, speaker_title: eng.title, message: missionGuidance.technical },
+      { speaker_name: pm.name, speaker_title: pm.title, message: "Summarize what the evidence changes about the decision. The room needs action, not just analysis." },
     ];
   }
 
   return [
-    { speaker_name: pm.name, speaker_title: pm.title, message: "Sharpen the call. Tell the room what happens first, what gets cut, and what counts as stable today." },
-    { speaker_name: eng.name, speaker_title: eng.title, message: "Once you make the call, give me the exact behavior I need to build so we do not lose time translating strategy." },
+    { speaker_name: pm.name, speaker_title: pm.title, message: missionGuidance.decision },
+    { speaker_name: eng.name, speaker_title: eng.title, message: "Once you make the call, give me the concrete change and the validation signal so we can move." },
   ];
 }
 
-function triggerPressureBeat(trigger) {
+function triggerPressureBeat(trigger, options = {}) {
+  if (state.usingLiveBackend && !options.forceLocal) {
+    return false;
+  }
+
   const beat = state.mission.pressureBeats.find((entry) => entry.trigger === trigger && !state.triggeredBeats.has(entry.id));
   if (!beat) {
-    return;
+    return false;
   }
 
   state.triggeredBeats.add(beat.id);
@@ -1520,6 +3423,7 @@ function triggerPressureBeat(trigger) {
     created_at: new Date().toISOString(),
   });
   appendMessagesSequentially(beat.messages.map((message) => ({ ...message, created_at: new Date().toISOString() })), 240);
+  return true;
 }
 
 function maybeTriggerDraftBeat() {
@@ -1574,6 +3478,9 @@ function buildLocalEvaluationReport(reason = "submitted") {
     prioritization: clampScore(overallScore + (explicitTradeoff ? 4 : -3)),
     adaptability: clampScore(overallScore + Math.min((state.triggeredBeats && state.triggeredBeats.size) || 0, 4)),
     technicalDepth: clampScore(overallScore + passed * 2 - failed * 3),
+    technicalReasoning: clampScore(overallScore + passed * 2 - failed * 2),
+    collaboration: clampScore(overallScore + (state.userMessageCount >= 2 ? 4 : -3)),
+    stakeholderManagement: clampScore(overallScore + (snapshot.includes("eta") || snapshot.includes("leadership") || snapshot.includes("customer") || snapshot.includes("enterprise") ? 4 : -2)),
   };
 
   const pm = state.mission.teammates.find((person) => person.kind === "pm");
@@ -1639,6 +3546,62 @@ function buildLocalEvaluationReport(reason = "submitted") {
 function evaluationChecklist() {
   const snapshot = workspaceSnapshot().toLowerCase();
   switch (state.mission.key) {
+    case "netflix":
+      return {
+        passed: [
+          snapshot.includes("rollback") ? "Rollback state is investigated and named." : "",
+          snapshot.includes("cache") || snapshot.includes("retry") ? "Cache or retry failure mode is addressed." : "",
+          snapshot.includes("eta") || snapshot.includes("leadership") ? "Leadership communication includes timing or executive context." : "",
+          snapshot.includes("eu-west") || snapshot.includes("region") ? "Regional impact is considered." : "",
+        ].filter(Boolean),
+        failed: [
+          snapshot.includes("playback") ? "" : "Playback impact is not connected clearly to the backend incident.",
+          snapshot.includes("owner") || snapshot.includes("dante") || snapshot.includes("priya") ? "" : "Owners and validation responsibilities are still unclear.",
+          snapshot.includes("circuit") || snapshot.includes("backoff") || snapshot.includes("disable") ? "" : "Mitigation does not yet reduce retry/cache pressure.",
+        ].filter(Boolean),
+      };
+    case "linkedin":
+      return {
+        passed: [
+          snapshot.includes("limited beta") || snapshot.includes("delay") || snapshot.includes("full launch") ? "Launch decision path is explicit." : "",
+          snapshot.includes("mobile") ? "Mobile launch risk is acknowledged." : "",
+          snapshot.includes("qa") || snapshot.includes("blocker") ? "QA blockers are considered." : "",
+          snapshot.includes("cache") || snapshot.includes("guardrail") || snapshot.includes("confidence") ? "AI consistency or guardrail issue is addressed." : "",
+        ].filter(Boolean),
+        failed: [
+          snapshot.includes("tomorrow") || snapshot.includes("launch") ? "" : "The public launch deadline is not shaping the decision.",
+          snapshot.includes("accessibility") || snapshot.includes("onboarding") ? "" : "Onboarding or accessibility risk remains underspecified.",
+          snapshot.includes("marketing") || snapshot.includes("leadership") || snapshot.includes("vikram") ? "" : "Stakeholder messaging is not yet leadership-ready.",
+        ].filter(Boolean),
+      };
+    case "spotify":
+      return {
+        passed: [
+          snapshot.includes("retention") || snapshot.includes("day7") || snapshot.includes("day-7") ? "Retention impact is central to the analysis." : "",
+          snapshot.includes("onboarding") || snapshot.includes("analytics") ? "Creator workflow friction is considered." : "",
+          snapshot.includes("experiment") || snapshot.includes("ab") ? "Experiment conflict is acknowledged." : "",
+          snapshot.includes("owner") || snapshot.includes("metric") ? "Recovery plan includes ownership or metrics." : "",
+        ].filter(Boolean),
+        failed: [
+          snapshot.includes("creator") ? "" : "The affected creator segment is not clear.",
+          snapshot.includes("rollback") || snapshot.includes("hotfix") || snapshot.includes("rebalance") ? "" : "Recovery action is not decisive enough.",
+          snapshot.includes("conflict") || snapshot.includes("cohort") ? "" : "Conflicting evidence is not handled explicitly.",
+        ].filter(Boolean),
+      };
+    case "openai":
+      return {
+        passed: [
+          snapshot.includes("memory") ? "Memory risk is identified." : "",
+          snapshot.includes("sanitize") || snapshot.includes("binding") || snapshot.includes("tenant") ? "Mitigation addresses unsafe memory handling." : "",
+          snapshot.includes("restricted demo") || snapshot.includes("go/no-go") || snapshot.includes("delay") ? "Demo decision is explicit." : "",
+          snapshot.includes("red team") || snapshot.includes("0/20") || snapshot.includes("repro") ? "Security validation gate is named." : "",
+        ].filter(Boolean),
+        failed: [
+          snapshot.includes("leak") || snapshot.includes("prompt") ? "" : "Prompt leakage source is not named clearly.",
+          snapshot.includes("rollback") || snapshot.includes("disable") ? "" : "Rollback or emergency mitigation path is missing.",
+          snapshot.includes("enterprise") || snapshot.includes("customer") || snapshot.includes("demo") ? "" : "Enterprise stakeholder communication remains too vague.",
+        ].filter(Boolean),
+      };
     case "mobile":
       return {
         passed: [
@@ -1730,14 +3693,19 @@ function storeSessionId(sessionId) {
   }
 }
 
+function setLiveBackendMode(isLive) {
+  state.usingLiveBackend = Boolean(isLive);
+}
+
 async function createSession() {
   const response = await fetch(`${API_BASE_URL}/api/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      task_id: activeTaskId(),
+      task_id: activeBackendTaskId(),
       role: state.mission.role,
       participant_name: candidateName(),
+      task_context: selectedDashboardTask(),
     }),
   });
   if (!response.ok) {
@@ -1780,8 +3748,46 @@ function hydrateFromSession(payload) {
 
   const messages = payload.messages || payload.initial_messages || [];
   if (messages.length) {
-    messages.forEach(appendChatMessage);
+    const hasCandidateMessage = messages.some((message) => String(message.role || "").toLowerCase() === "user");
+    const introOnly = !hasCandidateMessage && messages.length <= 5;
+    if (introOnly) {
+      appendMessagesSequentially(messages, 350, 850);
+    } else {
+      messages.forEach(appendChatMessage);
+    }
   }
+}
+
+function introMessagesForMission() {
+  const teammates = Array.isArray(state.mission.teammates) ? state.mission.teammates : [];
+  const byKind = (kind, fallback) => teammates.find((mate) => mate.kind === kind) || fallback;
+  const pm = byKind("pm", { name: "Asha", title: "Product Manager" });
+  const eng = byKind("eng", { name: "Ravi", title: "Engineering Lead" });
+  const design = byKind("design", { name: "Mira", title: "Product Designer" });
+  const qa = byKind("qa", { name: "Kenji", title: "QA Engineer" });
+
+  return [
+    {
+      speaker_name: pm.name,
+      speaker_title: pm.title,
+      message: `Hi, I am ${pm.name}, ${pm.title} for ${state.mission.company}. We are in #${state.mission.channel}; before we jump in, please introduce yourself and how you approach this kind of work.`,
+    },
+    {
+      speaker_name: eng.name,
+      speaker_title: eng.title,
+      message: `I am ${eng.name}, ${eng.title}. I will watch contracts, failure modes, and what can ship safely.`,
+    },
+    {
+      speaker_name: design.name,
+      speaker_title: design.title,
+      message: `I am ${design.name}, ${design.title}. I will keep the user-facing path clear, calm, and trustworthy.`,
+    },
+    {
+      speaker_name: qa.name,
+      speaker_title: qa.title,
+      message: `I am ${qa.name}, ${qa.title}. I will press on edge cases and proof before we call anything done. Current issue: ${state.mission.summary}`,
+    },
+  ];
 }
 
 function seedLocalRoom() {
@@ -1800,7 +3806,11 @@ function seedLocalRoom() {
   }
   state.timeline.forEach((entry) => state.timelineKeys.add(uniqueTimelineKey(entry)));
   renderTimeline();
-  state.mission.introMessages.forEach((message) => appendChatMessage({ ...message, created_at: new Date().toISOString() }));
+  appendMessagesSequentially(
+    introMessagesForMission().map((message) => ({ ...message, created_at: new Date().toISOString() })),
+    350,
+    850
+  );
   resetCountdown();
 }
 
@@ -1821,11 +3831,13 @@ async function startOrResumeSession() {
       payload = await createSession();
       storeSessionId(payload.session_id);
     }
+    setLiveBackendMode(true);
     hydrateFromSession(payload);
     scrollChatToBottom();
     showToast("Room ready.");
   } catch (error) {
     storeSessionId(null);
+    setLiveBackendMode(false);
     seedLocalRoom();
     scrollChatToBottom();
     showToast("Live backend unavailable. Running in local simulation mode.");
@@ -1838,6 +3850,7 @@ async function ensureSession() {
   }
   const payload = await createSession();
   storeSessionId(payload.session_id);
+  setLiveBackendMode(true);
   return state.sessionId;
 }
 
@@ -1857,10 +3870,8 @@ async function sendRoomMessage(rawText) {
   candidateMessageInput.value = "";
   autoResizeComposer();
 
+  const isFirstUserMessage = state.userMessageCount === 0;
   state.userMessageCount += 1;
-  if (state.userMessageCount === 1) {
-  
-  }
 
   showTyping("Team is typing...");
 
@@ -1895,6 +3906,10 @@ async function sendRoomMessage(rawText) {
     }
   } catch (error) {
     hideTyping();
+    setLiveBackendMode(false);
+    if (isFirstUserMessage) {
+      triggerPressureBeat("first-message", { forceLocal: true });
+    }
     appendMessagesSequentially(localReplyPair(text).map((message) => ({ ...message, created_at: new Date().toISOString() })));
     addTimelineEvent({
       title: "Local simulation reaction",
@@ -1951,6 +3966,7 @@ async function runChecks() {
     appendMessagesSequentially((payload.new_messages || []).map((message) => ({ ...message })));
   } catch (error) {
     hideTyping();
+    setLiveBackendMode(false);
     appendMessagesSequentially(
       localReplyPair(hasFailures ? "test risk edge case" : "test validation green").map((message) => ({
         ...message,
@@ -2008,6 +4024,48 @@ function requestCritique() {
   }
   triggerPressureBeat("critique");
   sendRoomMessage(`Review my current ${getActiveFile().name} draft and tell me what breaks first:\n\n${excerpt}`);
+}
+
+async function triggerCrisis() {
+  if (state.roomLocked) return;
+
+  if (state.usingLiveBackend || state.sessionId) {
+    showTyping("Team is reacting...");
+    try {
+      const sessionId = await ensureSession();
+      const response = await fetch(`${API_BASE_URL}/api/agent/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          event_type: "crisis_triggered",
+          candidate_name: candidateName(),
+          active_file: getActiveFile().name,
+          workspace_snapshot: workspaceSnapshot(),
+          code: codeEditor.value,
+        }),
+      });
+      const payload = await response.json();
+      hideTyping();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Crisis failed to send.");
+      }
+
+      setLiveBackendMode(true);
+      updatePhase(payload.phase);
+      if (payload.timeline_event) {
+        addTimelineEvent(payload.timeline_event);
+      }
+      appendMessagesSequentially((payload.new_messages || []).map((message) => ({ ...message })));
+      return;
+    } catch (error) {
+      hideTyping();
+      setLiveBackendMode(false);
+    }
+  }
+
+  triggerPressureBeat("manual-crisis", { forceLocal: true });
 }
 
 async function submitSimulation(reason = "submitted") {
@@ -2090,7 +4148,7 @@ async function submitSimulation(reason = "submitted") {
 function resetMissionState(nextMissionKey) {
   const missionConfig = getMissionConfigByKey(nextMissionKey) || getMissionConfigByKey("mobile");
   state.missionKey = nextMissionKey;
-  state.mission = clone(missionConfig);
+  state.mission = personalizeMissionForDashboardTask(clone(missionConfig), selectedDashboardTask());
   state.workspace = loadWorkspaceState();
   state.timeline = loadTimelineState();
   state.triggeredBeats = new Set();
@@ -2201,7 +4259,7 @@ function bindEvents() {
   cancelCrisisBtn.addEventListener("click", closeCrisisModal);
   confirmCrisisBtn.addEventListener("click", () => {
     closeCrisisModal();
-    triggerPressureBeat("manual-crisis");
+    triggerCrisis();
   });
 
   crisisModal.addEventListener("click", (event) => {
@@ -2211,10 +4269,16 @@ function bindEvents() {
   });
 }
 
-function init() {
+async function init() {
+  await hydrateSelectedDashboardTaskWorkspaceFiles();
   bindEvents();
   resetMissionState(selectedMissionKey());
   refreshIcons();
 }
 
-init();
+init().catch((error) => {
+  console.error("Simulation init failed:", error);
+  bindEvents();
+  resetMissionState(selectedMissionKey());
+  refreshIcons();
+});

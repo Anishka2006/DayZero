@@ -1006,6 +1006,10 @@ kbd {
   background: #7c3aed;
 }
 
+.avatar-k {
+  background: #16a34a;
+}
+
 .reference-tabs {
   display: flex;
   gap: 6px;

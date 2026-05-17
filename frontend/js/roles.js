@@ -1,5 +1,25 @@
+const ROLE_ALIASES = {
+  frontend: "Frontend",
+  "frontend developer": "Frontend",
+  backend: "Backend",
+  "backend developer": "Backend",
+  pm: "Product Manager",
+  product: "Product Manager",
+  "product manager": "Product Manager",
+  data: "Data Analyst",
+  analyst: "Data Analyst",
+  "data analyst": "Data Analyst",
+  design: "Designer",
+  designer: "Designer"
+};
+
+function normalizeRole(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return ROLE_ALIASES[key] || "Frontend";
+}
+
 const profile = {
-  role: localStorage.getItem("userRole") || "Frontend",
+  role: normalizeRole(localStorage.getItem("userRole")),
   level: localStorage.getItem("userExperience") || "Intermediate",
   type: localStorage.getItem("simulationType") || "1-hour Task"
 };
@@ -17,7 +37,9 @@ function setActive(containerId, value) {
 }
 
 function updatePreview() {
-  profilePreview.textContent = `${profile.role} · ${profile.level} · ${profile.type}`;
+  if (profilePreview) {
+    profilePreview.textContent = `${profile.role} - ${profile.level} - ${profile.type}`;
+  }
 
   localStorage.setItem("userRole", profile.role);
   localStorage.setItem("userExperience", profile.level);
@@ -34,19 +56,29 @@ function bindOptions(containerId, key) {
 
   container.querySelectorAll(".option").forEach((btn) => {
     btn.addEventListener("click", () => {
-      profile[key] = btn.dataset.value;
+      profile[key] = key === "role" ? normalizeRole(btn.dataset.value) : btn.dataset.value;
       updatePreview();
     });
   });
+}
+
+function clearCandidateSimulationState() {
+  localStorage.removeItem("dayzero_orchestrator_state");
+  localStorage.removeItem("dayzero_task_id");
+  localStorage.removeItem("selectedTaskId");
+  localStorage.removeItem("dayzero_selected_task_details");
 }
 
 bindOptions("roleOptions", "role");
 bindOptions("levelOptions", "level");
 bindOptions("typeOptions", "type");
 
-continueBtn.addEventListener("click", () => {
-  localStorage.setItem("candidateSetupComplete", "true");
-  window.location.href = "dashboard.html";
-});
+if (continueBtn) {
+  continueBtn.addEventListener("click", () => {
+    localStorage.setItem("candidateSetupComplete", "true");
+    clearCandidateSimulationState();
+    window.location.href = "dashboard.html";
+  });
+}
 
 updatePreview();

@@ -451,7 +451,7 @@ function initAuthModal() {
           window.location.href =
             (data.user?.role || role) === "recruiter"
               ? "frontend/pages/recruiter_dashboard.html"
-              : "frontend/pages/dashboard.html";
+              : "frontend/pages/roles.html";
         }, 1000);
 
       } else {

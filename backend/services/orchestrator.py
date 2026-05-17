@@ -648,6 +648,19 @@ class SimulationOrchestrator:
         if isinstance(skills, list) and skills:
             task["requirements"] = [str(skill) for skill in skills if str(skill).strip()]
 
+        workspace_files = context.get("workspaceFiles") or context.get("workspace_files")
+        if isinstance(workspace_files, list):
+            file_names = []
+            for item in workspace_files:
+                if isinstance(item, dict):
+                    name = item.get("name") or item.get("path")
+                else:
+                    name = item
+                if name and str(name).strip():
+                    file_names.append(str(name).strip())
+            if file_names:
+                task["files"] = file_names
+
         deadline = self._deadline_from_text(context.get("time"))
         if deadline:
             task["deadline"] = deadline
@@ -906,22 +919,22 @@ class SimulationOrchestrator:
                 "role": "Product Manager",
                 "avatar": "A",
                 "message": (
-                    f"Hi, I am Asha, PM for {task['company']}. "
-                    f"#{task['channel']} is live, {room.get('severity', 'active')} pressure, deadline {task['deadline']} mins."
+                    f"Hey, I am Asha, PM for {task['company']}. "
+                    f"We are in #{task['channel']} and it is already moving: {room.get('severity', 'active')} pressure, {task['deadline']} mins."
                 ),
             },
             {
                 "name": "Ravi",
                 "role": "Engineering Lead",
                 "avatar": "R",
-                "message": f"I am Ravi, engineering. I am watching the failure path in {self._first_workspace_file(task, 'code')}.",
+                "message": f"I am Ravi on engineering. I am looking at {self._first_workspace_file(task, 'code')} first because that is where the risky path shows up.",
             },
             {
                 "name": "Kenji",
                 "role": "QA Engineer",
                 "avatar": "K",
                 "message": (
-                    "I am Kenji, QA. I need proof before anyone says this is safe. "
+                    "Kenji from QA here. I am fine moving fast, but I need proof before we call this safe. "
                     f"Blocker: {first_blocker}"
                 ),
             },
@@ -934,7 +947,7 @@ class SimulationOrchestrator:
                     "name": "Mira",
                     "role": "Product Designer",
                     "avatar": "M",
-                    "message": f"I am Mira, design. I am watching what users see in {self._first_workspace_file(task, 'brief')}.",
+                    "message": f"Mira from design. I am watching what the user actually sees in {self._first_workspace_file(task, 'brief')}.",
                 },
             )
 
@@ -945,7 +958,7 @@ class SimulationOrchestrator:
                     "name": "Leah",
                     "role": "Data Analyst",
                     "avatar": "L",
-                    "message": f"I am Leah, data. I am checking whether {self._first_workspace_file(task, 'data')} is trustworthy enough to cite.",
+                    "message": f"Leah on data. I am checking whether {self._first_workspace_file(task, 'data')} is clean enough to cite out loud.",
                 },
             )
 
@@ -954,7 +967,7 @@ class SimulationOrchestrator:
                 "name": "Asha",
                 "role": "Product Manager",
                 "avatar": "A",
-                "message": "Before we jump in, give us your quick intro and the first decision you want to make.",
+                "message": "Before we jump in, give us a quick intro and the first call you want the room to make.",
             }
         )
 

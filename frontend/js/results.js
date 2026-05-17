@@ -122,6 +122,16 @@ function reportScore(report, key) {
   if (report.scores && Number.isFinite(Number(report.scores[key]))) {
     return Number(report.scores[key]);
   }
+  const fallbackScores = report.scores || {};
+  if (key === "technicalReasoning" && Number.isFinite(Number(fallbackScores.technicalDepth))) {
+    return Number(fallbackScores.technicalDepth);
+  }
+  if (key === "collaboration" && Number.isFinite(Number(fallbackScores.communication))) {
+    return Math.round((Number(fallbackScores.communication) + Number(fallbackScores.leadership || fallbackScores.communication)) / 2);
+  }
+  if (key === "stakeholderManagement" && Number.isFinite(Number(fallbackScores.prioritization))) {
+    return Math.round((Number(fallbackScores.prioritization) + Number(fallbackScores.communication || fallbackScores.prioritization)) / 2);
+  }
   if (Number.isFinite(Number(report[key]))) {
     return Number(report[key]);
   }
@@ -144,10 +154,11 @@ function reportMetricEntries(report) {
   return [
     ["Leadership", reportScore(report, "leadership")],
     ["Communication", reportScore(report, "communication")],
-    ["Ownership", reportScore(report, "ownership")],
     ["Prioritization", reportScore(report, "prioritization")],
     ["Adaptability", reportScore(report, "adaptability")],
-    ["Technical Depth", reportScore(report, "technicalDepth")],
+    ["Collaboration", reportScore(report, "collaboration")],
+    ["Technical Reasoning", reportScore(report, "technicalReasoning")],
+    ["Stakeholder Management", reportScore(report, "stakeholderManagement")],
   ];
 }
 

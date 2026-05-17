@@ -1,5 +1,54 @@
 const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
+const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
+let workspaceFilesModulePromise = null;
+
+function refreshLucideIcons() {
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  }
+}
+
+function normalizeDashboardPanelTree() {
+  const centerPanel = document.querySelector(".center-panel");
+  if (!centerPanel) return;
+
+  document.querySelectorAll(".view-panel").forEach((panel) => {
+    if (panel.parentElement !== centerPanel) {
+      centerPanel.appendChild(panel);
+    }
+  });
+}
+
+function activateDashboardPanel(targetId) {
+  if (!targetId) return;
+  normalizeDashboardPanelTree();
+
+  document.querySelectorAll(".view-panel").forEach((panel) => {
+    const isTarget = panel.id === targetId;
+    panel.classList.toggle("hidden", !isTarget);
+    panel.classList.toggle("active", isTarget);
+  });
+
+  document.querySelectorAll(".menu-item").forEach((item) => {
+    item.classList.toggle("active", item.getAttribute("data-target") === targetId);
+  });
+}
+
+document.addEventListener("click", (event) => {
+  const menuItem = event.target.closest(".menu-item[data-target]");
+  if (!menuItem) return;
+
+  event.preventDefault();
+  activateDashboardPanel(menuItem.getAttribute("data-target"));
+
+  const sidebarEl = document.getElementById("sidebar");
+  if (sidebarEl && window.innerWidth <= 960) {
+    sidebarEl.classList.remove("show");
+  }
+}, true);
+
+document.addEventListener("DOMContentLoaded", normalizeDashboardPanelTree);
 
 const TASKS = {
   "Frontend": {
@@ -434,9 +483,144 @@ const TASKS = {
   }
 };
 
-if (typeof lucide !== 'undefined') {
-  lucide.createIcons();
+function loadWorkspaceFilesModule() {
+  if (window.getWorkspaceFiles || window.WORKSPACE_FILES) {
+    return Promise.resolve({
+      default: window.WORKSPACE_FILES || {},
+      WORKSPACE_FILES: window.WORKSPACE_FILES || {},
+      getWorkspaceFiles: window.getWorkspaceFiles,
+    });
+  }
+
+  if (!workspaceFilesModulePromise) {
+    workspaceFilesModulePromise = import(WORKSPACE_FILES_MODULE_PATH).catch((error) => {
+      console.warn("Could not load workspaceFiles.js", error);
+      workspaceFilesModulePromise = null;
+      return null;
+    });
+  }
+  return workspaceFilesModulePromise;
 }
+
+function workspaceFileId(name, index) {
+  const slug = String(name || `workspace-file-${index + 1}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return `${index + 1}-${slug || "workspace-file"}`;
+}
+
+function normalizeWorkspaceFiles(files) {
+  return (Array.isArray(files) ? files : [])
+    .filter((file) => file && typeof file === "object")
+    .map((file, index) => {
+      const name = String(file.name || file.path || `workspace_file_${index + 1}.md`);
+      return {
+        id: file.id || workspaceFileId(name, index),
+        name,
+        kind: file.kind || file.type || "brief",
+        type: file.type || file.kind || "brief",
+        language: file.language || "",
+        content: String(file.content || ""),
+      };
+    });
+}
+
+function attachWorkspaceFilesToTaskDefinitions(fileMap) {
+  if (!fileMap || typeof fileMap !== "object") {
+    return false;
+  }
+
+  let attached = false;
+  Object.values(TASKS).forEach((levels) => {
+    Object.values(levels).forEach((tasks) => {
+      tasks.forEach((task) => {
+        const workspaceFiles = normalizeWorkspaceFiles(fileMap[task.id]);
+        if (workspaceFiles.length) {
+          task.workspaceFiles = workspaceFiles;
+          task.files = workspaceFiles.map((file) => file.name);
+          attached = true;
+        }
+      });
+    });
+  });
+  return attached;
+}
+
+async function hydrateDashboardWorkspaceFiles() {
+  const mod = await loadWorkspaceFilesModule();
+  const fileMap = (mod && (mod.default || mod.WORKSPACE_FILES)) || window.WORKSPACE_FILES || null;
+  if (attachWorkspaceFilesToTaskDefinitions(fileMap)) {
+    renderTaskGrid();
+  }
+}
+
+async function taskPayloadWithWorkspaceFiles(task) {
+  if (!task) {
+    return null;
+  }
+
+  if (Array.isArray(task.workspaceFiles) && task.workspaceFiles.length) {
+    return task;
+  }
+
+  const mod = await loadWorkspaceFilesModule();
+  const getter = (mod && mod.getWorkspaceFiles) || window.getWorkspaceFiles;
+  const workspaceFiles = normalizeWorkspaceFiles(getter ? getter(task.id) : []);
+  if (!workspaceFiles.length) {
+    return task;
+  }
+
+  return {
+    ...task,
+    files: workspaceFiles.map((file) => file.name),
+    workspaceFiles,
+  };
+}
+
+const DEFAULT_CANDIDATE_ROLE = "Frontend";
+const ROLE_ALIASES = {
+  frontend: "Frontend",
+  "frontend developer": "Frontend",
+  backend: "Backend",
+  "backend developer": "Backend",
+  pm: "Product Manager",
+  product: "Product Manager",
+  "product manager": "Product Manager",
+  data: "Data Analyst",
+  analyst: "Data Analyst",
+  "data analyst": "Data Analyst",
+  design: "Designer",
+  designer: "Designer"
+};
+
+function normalizeCandidateRole(value) {
+  const key = String(value || "").trim().toLowerCase();
+  return ROLE_ALIASES[key] || (TASKS[String(value || "").trim()] ? String(value).trim() : DEFAULT_CANDIDATE_ROLE);
+}
+
+function getCandidateRole() {
+  const role = normalizeCandidateRole(localStorage.getItem("userRole"));
+  localStorage.setItem("userRole", role);
+  return role;
+}
+
+function setCandidateRole(role) {
+  const normalizedRole = normalizeCandidateRole(role);
+  localStorage.setItem("userRole", normalizedRole);
+  localStorage.setItem("candidateSetupComplete", "true");
+  return normalizedRole;
+}
+
+function clearCandidateSimulationState() {
+  localStorage.removeItem(ORCHESTRATOR_STATE_KEY);
+  localStorage.removeItem("dayzero_task_id");
+  localStorage.removeItem("selectedTaskId");
+  localStorage.removeItem("dayzero_selected_task_details");
+}
+
+refreshLucideIcons();
 
 const focusToggle = document.getElementById("focusToggle");
 const collapseBtn = document.getElementById("collapseBtn");
@@ -451,7 +635,7 @@ const toast = document.getElementById("toast");
 const submitBtn = document.getElementById("submitBtn");
 if (submitBtn) {
   submitBtn.addEventListener("click", () => {
-    const role = localStorage.getItem("userRole") || "Frontend";
+    const role = getCandidateRole();
     const orchestratorState = loadOrchestratorState();
 
     // Get submission text (adjust selector if needed)
@@ -505,41 +689,27 @@ if (mobileMenu) {
 tabButtons.forEach(button => {
   button.addEventListener("click", () => {
     const target = button.getAttribute("data-tab");
+    const targetContent = target ? document.getElementById(target) : null;
 
     tabButtons.forEach(btn => btn.classList.remove("active"));
     tabContents.forEach(content => content.classList.remove("active"));
 
     button.classList.add("active");
-    document.getElementById(target).classList.add("active");
+    if (targetContent) targetContent.classList.add("active");
   });
 });
 
 // Sidebar Menu Interaction
 const menuItems = document.querySelectorAll(".menu-item");
-const viewPanels = document.querySelectorAll(".view-panel");
 
 menuItems.forEach(item => {
   item.addEventListener("click", (e) => {
     e.preventDefault();
-    menuItems.forEach(btn => btn.classList.remove("active"));
-    item.classList.add("active");
-    
-    // Show correct panel
-    const targetId = item.getAttribute("data-target");
-    if (targetId) {
-      viewPanels.forEach(panel => {
-        panel.classList.add("hidden");
-        panel.classList.remove("active");
-      });
-      const targetPanel = document.getElementById(targetId);
-      if (targetPanel) {
-        targetPanel.classList.remove("hidden");
-        targetPanel.classList.add("active");
-      }
-    }
+    e.stopPropagation();
+    activateDashboardPanel(item.getAttribute("data-target"));
     
     // Optional: On mobile, close sidebar after clicking a link
-    if (window.innerWidth <= 960) {
+    if (sidebar && window.innerWidth <= 960) {
       sidebar.classList.remove("show");
     }
   });
@@ -568,9 +738,13 @@ const crisisEvents = [
 ];
 
 function showRandomCrisis() {
+  const crisisTitle = document.getElementById("crisisTitle");
+  const crisisDesc = document.getElementById("crisisDesc");
+  if (!crisisTitle || !crisisDesc) return;
+
   const randomEvent = crisisEvents[Math.floor(Math.random() * crisisEvents.length)];
-  document.getElementById("crisisTitle").textContent = randomEvent.title;
-  document.getElementById("crisisDesc").textContent = randomEvent.desc;
+  crisisTitle.textContent = randomEvent.title;
+  crisisDesc.textContent = randomEvent.desc;
   
   // Show the alert button in the corner instead of forcing the popup
   const alertBtn = document.getElementById("crisisAlertBtn");
@@ -586,14 +760,14 @@ setInterval(showRandomCrisis, 35000);
 const crisisAlertBtn = document.getElementById("crisisAlertBtn");
 if (crisisAlertBtn) {
   crisisAlertBtn.addEventListener("click", () => {
-    crisisPopup.classList.remove("hidden");
+    if (crisisPopup) crisisPopup.classList.remove("hidden");
     crisisAlertBtn.classList.add("hidden");
   });
 }
 
 if (closePopup) {
   closePopup.addEventListener("click", () => {
-    crisisPopup.classList.add("hidden");
+    if (crisisPopup) crisisPopup.classList.add("hidden");
   });
 }
 
@@ -630,6 +804,7 @@ crisisOptions.forEach(option => {
         task: data.task || orchestratorState.task || null,
         memory: data.memory || {},
         scores: data.scores || {},
+        role: getCandidateRole(),
         phase: data.phase || "crisis"
       });
       appendTeamChatMessage(
@@ -653,6 +828,7 @@ if (submitBtn) {
 }
 
 function showToast(message) {
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.remove("hidden");
 
@@ -662,7 +838,7 @@ function showToast(message) {
 }
 
 function updateCandidateSummary() {
-  const role = localStorage.getItem("userRole") || "Frontend";
+  const role = getCandidateRole();
   const level = localStorage.getItem("userExperience") || "Intermediate";
   const simType = localStorage.getItem("simulationType") || "1-hour Task";
   const summary = document.getElementById("candidateSummary");
@@ -687,13 +863,14 @@ function updateCandidateSummary() {
   const topbarBadge = document.getElementById("topbarRoleBadge");
   if (topbarBadge) {
     topbarBadge.innerText = `${role} · ${level}`;
+    topbarBadge.innerText = `${role} - ${level}`;
   }
 
   renderTaskGrid();
 }
 
 function getTasksForCurrentProfile() {
-  const role = localStorage.getItem("userRole") || "Frontend";
+  const role = getCandidateRole();
   const level = localStorage.getItem("userExperience") || "Intermediate";
   return (TASKS[role] && TASKS[role][level]) || [];
 }
@@ -751,11 +928,30 @@ function renderTaskGrid() {
   });
 
   taskGrid.querySelectorAll('.start-sim').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const taskId = btn.dataset.taskId;
+      const selectedTask = tasks.find((task) => task.id === taskId);
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Preparing Room...";
       localStorage.setItem('dayzero_task_id', taskId);
       localStorage.setItem('selectedTaskId', taskId);
-      window.location.href = 'simulation.html';
+      try {
+        const taskPayload = await taskPayloadWithWorkspaceFiles(selectedTask);
+        if (taskPayload) {
+          localStorage.setItem('dayzero_selected_task_details', JSON.stringify(taskPayload));
+        }
+        window.location.href = 'simulation.html';
+      } catch (error) {
+        console.warn("Could not attach workspace files to selected task", error);
+        if (selectedTask) {
+          localStorage.setItem('dayzero_selected_task_details', JSON.stringify(selectedTask));
+        }
+        window.location.href = 'simulation.html';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
     });
   });
 }
@@ -763,7 +959,11 @@ function renderTaskGrid() {
 function bindCandidateProfileSelections() {
   document.querySelectorAll(".candidate-role-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      localStorage.setItem("userRole", btn.dataset.role || "Frontend");
+      const previousRole = getCandidateRole();
+      const nextRole = setCandidateRole(btn.dataset.role);
+      if (nextRole !== previousRole) {
+        clearCandidateSimulationState();
+      }
       updateCandidateSummary();
       showToast(`Role set to ${btn.dataset.role}`);
     });
@@ -771,7 +971,11 @@ function bindCandidateProfileSelections() {
 
   document.querySelectorAll(".candidate-level-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      const previousLevel = localStorage.getItem("userExperience") || "Intermediate";
       localStorage.setItem("userExperience", btn.dataset.level || "Intermediate");
+      if ((btn.dataset.level || "Intermediate") !== previousLevel) {
+        clearCandidateSimulationState();
+      }
       updateCandidateSummary();
       showToast(`Experience set to ${btn.dataset.level}`);
     });
@@ -779,7 +983,11 @@ function bindCandidateProfileSelections() {
 
   document.querySelectorAll(".candidate-simtype-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      const previousType = localStorage.getItem("simulationType") || "1-hour Task";
       localStorage.setItem("simulationType", btn.dataset.simtype || "1-hour Task");
+      if ((btn.dataset.simtype || "1-hour Task") !== previousType) {
+        clearCandidateSimulationState();
+      }
       updateCandidateSummary();
       showToast(`Simulation type set to ${btn.dataset.simtype}`);
     });
@@ -787,9 +995,7 @@ function bindCandidateProfileSelections() {
 }
 
 function initializeCandidateProfile() {
-  if (!localStorage.getItem("userRole")) {
-    localStorage.setItem("userRole", "Frontend");
-  }
+  setCandidateRole(localStorage.getItem("userRole"));
   if (!localStorage.getItem("userExperience")) {
     localStorage.setItem("userExperience", "Intermediate");
   }
@@ -801,16 +1007,16 @@ function initializeCandidateProfile() {
   }
   bindCandidateProfileSelections();
   updateCandidateSummary();
-  renderTaskGrid();
+  hydrateDashboardWorkspaceFiles();
 }
 
-// Fake live teammate messages
+// Live-feeling teammate nudges for the dashboard feed.
 const teamFeed = document.querySelector(".team-feed");
 const feedMessages = [
-  { role: `<i data-lucide="code" class="icon-sm"></i> Engineer`, text: "Can you freeze feature priority now?" },
-  { role: `<i data-lucide="pen-tool" class="icon-sm"></i> Designer`, text: "Need user pain point clarity for final screens." },
-  { role: `<i data-lucide="bar-chart" class="icon-sm"></i> Analyst`, text: "The retention metric is trending better than expected." },
-  { role: `<i data-lucide="megaphone" class="icon-sm"></i> Marketing`, text: "We need one-line launch positioning ASAP." }
+  { role: `<i data-lucide="code" class="icon-sm"></i> Ravi`, text: "Quick gut check: are we fixing the risky path first, or still trying to polish the whole flow?" },
+  { role: `<i data-lucide="pen-tool" class="icon-sm"></i> Mira`, text: "I can simplify the screen today, but I need to know which user state we are protecting." },
+  { role: `<i data-lucide="bar-chart" class="icon-sm"></i> Leah`, text: "The metric looks better after cleanup. I still would not quote it without one caveat." },
+  { role: `<i data-lucide="megaphone" class="icon-sm"></i> Asha`, text: "Leadership will ask for a crisp call. Give me the tradeoff in one sentence when you can." }
 ];
 
 setInterval(() => {
@@ -834,7 +1040,7 @@ setInterval(() => {
     </div>
   `;
   teamFeed.prepend(item);
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+  refreshLucideIcons();
 
   const actionsDiv = item.querySelector('.feed-actions');
   const replyBtn = item.querySelector('.reply-feed-btn');
@@ -904,19 +1110,20 @@ setInterval(() => {
 
 // AI Conflict Engine
 setTimeout(() => {
+  if (!teamFeed) return;
   const item = document.createElement("div");
   item.className = "feed-item";
   item.style.borderColor = "var(--amber)";
   item.innerHTML = `
-    <span><i data-lucide="code" class="icon-sm"></i> Engineer</span>
-    <p>This feature takes 3 weeks to build. Should we delay the launch?</p>
+    <span><i data-lucide="code" class="icon-sm"></i> Ravi</span>
+    <p>I can make the core fix today. The broader cleanup is more like three weeks. Do we scope down or move the date?</p>
     <div style="margin-top: 12px; display: flex; gap: 8px;">
       <button class="primary-btn small" onclick="this.parentElement.innerHTML='<i>Accepted delay.</i>'; showToast('Adaptability +2');">Delay Launch</button>
       <button class="secondary-btn small" onclick="this.parentElement.innerHTML='<i>Negotiating scope...</i>'; showToast('Leadership +5');">Negotiate Scope</button>
     </div>
   `;
   teamFeed.prepend(item);
-  lucide.createIcons();
+  refreshLucideIcons();
   if (teamFeed.children.length > 5) {
     teamFeed.removeChild(teamFeed.lastElementChild);
   }
@@ -929,19 +1136,19 @@ const exitBtn = document.querySelector(".exit-btn");
 
 if (closeInterview) {
   closeInterview.addEventListener("click", () => {
-    interviewPopup.classList.add("hidden");
+    if (interviewPopup) interviewPopup.classList.add("hidden");
   });
 }
 
 if (exitBtn) {
   exitBtn.addEventListener("click", () => {
     // Show the Live Interview overlay instead of exiting
-    interviewPopup.classList.remove("hidden");
+    if (interviewPopup) interviewPopup.classList.remove("hidden");
   });
 }
 
 // Re-initialize icons just in case new html needs it
-lucide.createIcons();
+refreshLucideIcons();
 
 // AI Manager Interactive Logic & API Integration
 const GROQ_API_KEY = ""; // Your Groq API key (Loaded from .env in production)
@@ -954,13 +1161,37 @@ const managerInput = document.getElementById("aiManagerInput");
 const managerSendBtn = document.getElementById("aiManagerSendBtn");
 
 const systemPrompts = {
-  "Strict": "You are a strict, no-nonsense AI manager in a tech company. Give very short, direct answers. Demand results and KPIs.",
-  "Supportive": "You are a supportive, helpful AI manager in a tech company. Offer guidance, encouragement, and thoughtful advice. Keep it concise.",
-  "Startup Founder": "You are an intense, fast-paced startup founder. Use words like 'pivot', '10x', and 'ship it'. Be highly energetic and brief.",
-  "Corporate VP": "You are a corporate VP. Use corporate buzzwords like 'synergy', 'alignment', and 'deliverables'. Be formal and professional."
+  "Strict": "You are Nova, a direct but human engineering manager in a live work simulation. Speak like a busy teammate on Slack: concise, specific, and practical. Ask for the next decision, owner, or proof. Do not use corporate filler.",
+  "Supportive": "You are Nova, a supportive manager in a live work simulation. Sound like a real coworker: warm, concise, and specific. Acknowledge the user's move, then suggest the next practical step.",
+  "Startup Founder": "You are Nova, a startup founder in a tense sprint. Sound energetic but real, like someone in the room trying to make a call. Be brief, concrete, and avoid buzzword parody.",
+  "Corporate VP": "You are Nova, a senior VP in a product review. Sound polished but still human. Keep it brief, name the business risk, and ask for one clear next step."
 };
 
+function localHumanManagerReply(userMessage, style) {
+  const text = String(userMessage || "").toLowerCase();
+  if (text.includes("hint") || text.includes("help")) {
+    return "Start with the smallest decision the team can act on. Name the risky path, the file or metric you checked, and what you would validate next.";
+  }
+  if (text.includes("pressure") || text.includes("urgent") || text.includes("crisis")) {
+    return "Okay, then make it smaller. Tell the room what we are protecting right now, what we are deliberately not fixing, and who owns the next check.";
+  }
+  if (text.includes("review") || text.includes("feedback")) {
+    return "You are close, but make the evidence sharper. I would add one line on the tradeoff and one line on how QA knows this is safe.";
+  }
+  if (style === "Strict") {
+    return "Good, but make the call explicit. What ships now, what waits, and what proof closes the risk?";
+  }
+  if (style === "Startup Founder") {
+    return "I like the direction. Cut it down to the move that changes the outcome today, then tell the team exactly what to do next.";
+  }
+  if (style === "Corporate VP") {
+    return "This is useful. Tie it back to customer impact and give me a clear owner for the next milestone.";
+  }
+  return "That is a reasonable start. I would make the tradeoff explicit, then ask Ravi or QA for the one check that proves the plan is safe.";
+}
+
 function addManagerMessage(text, isUser = false) {
+  if (!managerMsgs) return;
   const msg = document.createElement("div");
   msg.className = "nova-msg-card " + (isUser ? "user" : "default");
   
@@ -981,7 +1212,7 @@ function addManagerMessage(text, isUser = false) {
   } else {
     managerMsgs.appendChild(msg);
   }
-  lucide.createIcons();
+  refreshLucideIcons();
   managerMsgs.scrollTop = managerMsgs.scrollHeight; // Scroll to bottom
 }
 
@@ -1094,12 +1325,12 @@ async function simulateAiResponse(userMessage) {
 
   if (typingIndicator) {
     typingIndicator.classList.remove("hidden");
-    managerMsgs.scrollTop = managerMsgs.scrollHeight;
+    if (managerMsgs) managerMsgs.scrollTop = managerMsgs.scrollHeight;
   }
   
   const style = managerStyleSelect ? managerStyleSelect.value : "Supportive";
   const basePrompt = systemPrompts[style] || systemPrompts["Supportive"];
-  const systemPrompt = basePrompt + " IMPORTANT: At the very end of your response, provide exactly 2 short quick-reply suggestions for the user. Format them exactly like this: [Suggestion: Yes, I will do that] [Suggestion: I need more time]";
+  const systemPrompt = basePrompt + " Reply in 1-2 short sentences. Use contractions naturally. Avoid phrases like 'action logged', 'as an AI', 'I will continue to evaluate', 'synergy', or 'deliverables'. IMPORTANT: At the very end of your response, provide exactly 2 short quick-reply suggestions for the user. Format them exactly like this: [Suggestion: I will name the owner] [Suggestion: I need one more signal]";
 
   try {
     const controller = new AbortController();
@@ -1141,12 +1372,12 @@ async function simulateAiResponse(userMessage) {
       }
     } else {
       console.error("API Error:", data);
-      addManagerMessage("Action logged. I will continue to evaluate your decisions as the simulation progresses.", false);
+      addManagerMessage(localHumanManagerReply(userMessage, style), false);
     }
   } catch (err) {
     if (typingIndicator) typingIndicator.classList.add("hidden");
     console.error("Network Error:", err);
-    addManagerMessage("Action logged. I will continue to evaluate your decisions as the simulation progresses.", false);
+    addManagerMessage(localHumanManagerReply(userMessage, style), false);
   }
 }
 
@@ -1392,7 +1623,7 @@ if (startVoiceBtn && recordingState) {
       // Human verified state
       if(analysisIcon) {
         analysisIcon.innerHTML = '<i data-lucide="shield-check" class="icon-lg" style="color: var(--green);"></i>';
-        lucide.createIcons();
+        refreshLucideIcons();
       }
       analysisStatus.textContent = "Voice signature verified: 100% Human.";
       analysisStatus.style.color = "var(--green)";
@@ -2565,7 +2796,7 @@ document.querySelectorAll(".task-card").forEach(card => {
 
       setTimeout(() => {
         secondaryBtn.textContent = originalText;
-      }, 2000);c
+      }, 2000);
     });
   }
 });
@@ -2834,11 +3065,45 @@ function predictTypingName(userText, phase) {
   return "Asha";
 }
 
+function localTeamReply(userText, phase) {
+  const name = predictTypingName(userText, phase);
+  const lowered = String(userText || "").toLowerCase();
+  if (name === "Rohan" || name === "Ravi") {
+    return {
+      name: "Ravi",
+      role: "Engineering Lead",
+      message: lowered.includes("file")
+        ? "Yep, start with the file you touched and the failure path it changes. I can sanity-check the edge case after that."
+        : "I would keep the fix narrow. Tell me the path we trust, and I will call out anything that breaks the contract.",
+    };
+  }
+  if (name === "Mira") {
+    return {
+      name: "Mira",
+      role: "Product Designer",
+      message: "That direction works if the user gets a clear state. Please name the one screen or message we are changing first.",
+    };
+  }
+  if (name === "Dev") {
+    return {
+      name: "Kenji",
+      role: "QA Engineer",
+      message: "I can test that. Give me the exact happy path and one edge case you want me to try before we call it safe.",
+    };
+  }
+  return {
+    name: "Asha",
+    role: "Product Manager",
+    message: "Good, that gives us a path. I still need the tradeoff and who owns the next check.",
+  };
+}
+
 async function initializeLiveSimulation(forceRefresh = false) {
   if (!teamChatHistory) return loadOrchestratorState();
 
+  const role = getCandidateRole();
   const cached = loadOrchestratorState();
-  if (cached.session_id && !forceRefresh) {
+  if (cached.session_id && !forceRefresh && cached.role === role) {
     if (cached.task) {
       updateTaskFromSimulation(cached.task);
     }
@@ -2851,7 +3116,6 @@ async function initializeLiveSimulation(forceRefresh = false) {
     return cached;
   }
 
-  const role = localStorage.getItem("userRole") || "Frontend";
   const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -2865,6 +3129,7 @@ async function initializeLiveSimulation(forceRefresh = false) {
     memory: data.memory || {},
     scores: data.scores || {},
     phase: data.phase || "intro",
+    role,
     initial_messages: data.initial_messages || []
   });
 
@@ -2918,7 +3183,7 @@ async function handleTeamChatSend() {
           memory: orchestratorState.memory || {},
           scores: orchestratorState.scores || {},
           phase: orchestratorState.phase || "intro",
-          role: localStorage.getItem("userRole") || "Frontend"
+          role: getCandidateRole()
         })
       });
 
@@ -2929,6 +3194,7 @@ async function handleTeamChatSend() {
         task: data.task || orchestratorState.task || null,
         memory: data.memory || {},
         scores: data.scores || {},
+        role: getCandidateRole(),
         phase: data.phase || "intro"
       });
       updateTaskFromSimulation(data.task);
@@ -2941,7 +3207,8 @@ async function handleTeamChatSend() {
   } catch (error) {
     console.error("Team Chat Error:", error);
     typingMsg.remove();
-    appendTeamChatMessage("System", "", "The live team connection dropped for a moment. Try again.");
+    const fallback = localTeamReply(userText, orchestratorState.phase);
+    appendTeamChatMessage(fallback.name, fallback.role, fallback.message);
   }
 }
 
