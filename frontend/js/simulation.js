@@ -13,2417 +13,757 @@ const STORAGE_KEYS = {
 
 let workspaceFilesModulePromise = null;
 
-const TEAMS = {
-  northstar: [
-    { name: "Asha", title: "Product Manager", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Product Designer", kind: "design" },
-    { name: "Kenji", title: "QA Engineer", kind: "qa" },
-  ],
-  incident: [
-    { name: "Asha", title: "Incident Commander", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Customer Experience", kind: "design" },
-    { name: "Kenji", title: "Security QA", kind: "qa" },
-  ],
-  ops: [
-    { name: "Asha", title: "Product Manager", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Product Designer", kind: "design" },
-    { name: "Kenji", title: "QA Engineer", kind: "qa" },
-  ],
-  ai: [
-    { name: "Asha", title: "AI Product Lead", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Trust Designer", kind: "design" },
-    { name: "Kenji", title: "Safety QA", kind: "qa" },
-  ],
-  netflix: [
-    { name: "Asha", title: "Incident Commander", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Customer Experience", kind: "design" },
-    { name: "Kenji", title: "QA Engineer", kind: "qa" },
-  ],
-  linkedin: [
-    { name: "Asha", title: "Product Manager", kind: "pm" },
-    { name: "Ravi", title: "Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Product Designer", kind: "design" },
-    { name: "Kenji", title: "QA Engineer", kind: "qa" },
-  ],
-  spotify: [
-    { name: "Asha", title: "Product Manager", kind: "pm" },
-    { name: "Ravi", title: "Data Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Product Designer", kind: "design" },
-    { name: "Kenji", title: "QA Engineer", kind: "qa" },
-  ],
-  openai: [
-    { name: "Asha", title: "Incident Commander", kind: "pm" },
-    { name: "Ravi", title: "Security Engineering Lead", kind: "eng" },
-    { name: "Mira", title: "Trust Designer", kind: "design" },
-    { name: "Kenji", title: "Security QA", kind: "qa" },
-  ],
-};
+function loadWorkspaceFilesModule() {
+  if (window.getWorkspaceFiles || window.WORKSPACE_FILES) {
+    return Promise.resolve({
+      default: window.WORKSPACE_FILES || {},
+      WORKSPACE_FILES: window.WORKSPACE_FILES || {},
+      getWorkspaceFiles: window.getWorkspaceFiles,
+    });
+  }
 
-const MISSIONS = {
-  mobile: {
-    key: "mobile",
-    taskId: "mobile-onboarding",
-    channel: "launch-otp",
-    company: "Northstar Pay",
-    sprint: "Sprint - Demo Day -2",
-    role: "Product + Full Stack",
-    priority: "Critical",
-    deadlineMinutes: 30,
-    headline: "Ship the OTP onboarding before the investor demo.",
-    summary: "A broken resend path, unclear loading states, and mismatched OTP validation are putting the demo at risk.",
-    output: "Ship-ready response plan",
-    crisisStatus: "OTP failures active",
-    latestChange: "OTP API now returns success, message, and retryAfter, but resend still behaves inconsistently under load.",
-    workspaceTitle: "Northstar Pay shared workspace",
-    workspaceHelper: "Edit the OTP flow, tighten the plan, and tell the room exactly what you changed.",
-    workspaceTip: "Tip: update the file, then tell Asha or Ravi exactly what changed before you submit.",
-    requirements: [
-      "Prevent invalid OTP submissions",
-      "Add deliberate loading and retry states",
-      "Keep the first demo path stable on mobile",
-    ],
-    acceptance: [
-      "The resend flow survives a slow connection",
-      "The user always sees a clear state after tapping",
-      "The demo path feels stable on the first try",
-    ],
-    teammates: TEAMS.northstar,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "Product Manager", message: "Demo is in 30 minutes. We need OTP stable before leadership jumps in." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Verify returns success, message, and retryAfter now, but resend still gets weird under load." },
-      { speaker_name: "Mira", speaker_title: "Product Designer", message: "The loading state still looks stuck. If the UI hesitates, the demo feels broken." },
-      { speaker_name: "Kenji", speaker_title: "QA Engineer", message: "Wrong OTP length still gets through on one resend path. I would not call this safe yet." },
-    ],
-    quickPrompts: [
-      "Asha, what decision do you need from me right now?",
-      "Ravi, what exactly is failing in resend?",
-      "Kenji, what path is still broken on mobile?",
-      "Mira, what is the minimum UI fix for the demo?",
-    ],
-    crisisPrompt: "Leadership just moved the rehearsal earlier. Do you want the room to absorb that pressure spike now?",
-    pressureBeats: [
-      {
-        id: "mobile-scope",
-        trigger: "first-message",
-        crisis: "Scope decision needed",
-        update: "Asha wants a clear call: reliability first, or visual polish first?",
-        messages: [
-          { speaker_name: "Asha", speaker_title: "Product Manager", message: "We do not have time for broad fixes. Are we protecting reliability first or still chasing polish?" },
-          { speaker_name: "Leo", speaker_title: "Executive Sponsor", message: "I only care that the first-run path looks stable in front of the room." },
-        ],
-      },
-      {
-        id: "mobile-crisis",
-        trigger: "manual-crisis",
-        crisis: "Demo window tightened",
-        update: "The rehearsal moved up. The room now needs the smallest stable path instead of a broad cleanup.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "Executive Sponsor", message: "Demo starts sooner than planned. Cut anything non-essential and give me the stable path." },
-          { speaker_name: "Kenji", speaker_title: "QA Engineer", message: "Fine, then tell me the exact path we trust and the path we are punting." },
-        ],
-      },
-      {
-        id: "mobile-critique",
-        trigger: "critique",
-        crisis: "Final answer needs sharper tradeoffs",
-        update: "The team wants a more explicit statement of what is fixed now versus intentionally deferred.",
-        messages: [
-          { speaker_name: "Asha", speaker_title: "Product Manager", message: "Your draft is close. I still want one line on what we are not fixing before demo." },
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "If you defer something, say it clearly so I do not build the wrong thing." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "validate",
-        name: "otp/validateOtp.ts",
-        kind: "code",
-        content: [
-          "// Northstar Pay - OTP validation",
-          "// FIXME: resend flow still trips this rule on the first retry.",
-          "export function validateOtp(input: string): boolean {",
-          "  const value = input.replace(/\\s+/g, \"\");",
-          "  return /^\\d{4}$/.test(value);",
-          "}",
-        ].join("\n"),
-      },
-      {
-        id: "resend",
-        name: "otp/useResendTimer.ts",
-        kind: "code",
-        content: [
-          "type ResendState = {",
-          "  disabled: boolean;",
-          "  secondsRemaining: number;",
-          "};",
-          "",
-          "export function getResendState(retryAfter?: number): ResendState {",
-          "  if (!retryAfter) {",
-          "    return { disabled: false, secondsRemaining: 0 };",
-          "  }",
-          "",
-          "  return {",
-          "    disabled: retryAfter > 0,",
-          "    secondsRemaining: retryAfter,",
-          "  };",
-          "}",
-        ].join("\n"),
-      },
-      {
-        id: "screen",
-        name: "otp/OtpScreen.tsx",
-        kind: "code",
-        content: [
-          "export const otpStates = {",
-          "  idle: \"Enter the verification code\",",
-          "  loading: \"Verifying...\",",
-          "  retry: \"Resend code\",",
-          "  error: \"Code failed. Try again.\",",
-          "};",
-          "",
-          "// TODO: disable resend while loading and while retryAfter is active.",
-          "// TODO: show a clearer inline message when the code is the wrong length.",
-        ].join("\n"),
-      },
-    ],
-  },
-  security: {
-    key: "security",
-    taskId: "security-control-center",
-    channel: "security-bridge",
-    company: "Acme Cloud",
-    sprint: "Incident - Release Window",
-    role: "Backend + Incident Response",
-    priority: "Critical",
-    deadlineMinutes: 20,
-    headline: "Make the patch call before the security review starts.",
-    summary: "The exploit path is real, audit confidence is thin, and the room needs a precise go or no-go recommendation.",
-    output: "Incident decision brief",
-    crisisStatus: "Exploit path confirmed",
-    latestChange: "Compliance now wants rollback language and audit proof before approving the release recommendation.",
-    workspaceTitle: "Acme Cloud incident workspace",
-    workspaceHelper: "Narrow the patch, define rollback, and write language the room can actually ship with confidence.",
-    workspaceTip: "Tip: if you change the patch path, tell Ravi and Kenji what evidence closes the risk.",
-    requirements: [
-      "Constrain the patch scope",
-      "Define rollback and monitoring",
-      "Prepare a customer-safe update",
-    ],
-    acceptance: [
-      "Patch recommendation feels safe enough to ship",
-      "Rollback trigger is explicit",
-      "The room can explain audit confidence",
-    ],
-    teammates: TEAMS.incident,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Security review starts in a few minutes. Keep this room sharp." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "I can patch fast, but I need the smallest safe change before we touch prod." },
-      { speaker_name: "Mira", speaker_title: "Customer Experience", message: "If our customer message sounds slippery, people will think we are hiding something." },
-      { speaker_name: "Kenji", speaker_title: "Security QA", message: "Audit proof is still thin. I am pushing back if verification stays vague." },
-    ],
-    quickPrompts: [
-      "Asha, what is the safest decision path right now?",
-      "Ravi, what is the minimum patch we can trust?",
-      "Kenji, what evidence is missing before ship?",
-      "Mira, how careful does the customer update need to be?",
-    ],
-    crisisPrompt: "Customer success just asked for a public-facing update before the review. Do you want that pressure in the room now?",
-    pressureBeats: [
-      {
-        id: "security-first",
-        trigger: "first-message",
-        crisis: "Customer pressure rising",
-        update: "Customer success wants language now, even though the patch path is still being debated.",
-        messages: [
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "I need language we can send without overpromising. Keep it tight." },
-          { speaker_name: "Leo", speaker_title: "VP Security", message: "If you say we are shipping, I want rollback and monitoring in the same sentence." },
-        ],
-      },
-      {
-        id: "security-crisis",
-        trigger: "manual-crisis",
-        crisis: "Executive review starting",
-        update: "Leadership is entering the bridge now. The room needs a firm go or no-go recommendation.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "VP Security", message: "No hedging. I need a clear recommendation with business impact." },
-          { speaker_name: "Kenji", speaker_title: "Security QA", message: "Then the proof needs to be just as clear. A vague rollback story is still a no from me." },
-        ],
-      },
-      {
-        id: "security-critique",
-        trigger: "critique",
-        crisis: "Recommendation still too broad",
-        update: "The room wants the patch scope and rollback trigger expressed more precisely.",
-        messages: [
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Tell me what behavior changes and what stays untouched. That is the line between a safe patch and a rewrite." },
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Good. Now make the recommendation sharp enough that leadership can repeat it." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "patch",
-        name: "patch/applyHotfix.ts",
-        kind: "code",
-        content: [
-          "export async function applyHotfix(userId: string, token: string) {",
-          "  // TODO: narrow the patch to the exploit path only.",
-          "  return fetch(\"/api/security/hotfix\", {",
-          "    method: \"POST\",",
-          "    headers: { \"Content-Type\": \"application/json\" },",
-          "    body: JSON.stringify({ userId, token }),",
-          "  });",
-          "}",
-        ].join("\n"),
-      },
-      {
-        id: "rollback",
-        name: "patch/rollbackPlan.md",
-        kind: "brief",
-        content: [
-          "# Rollback plan",
-          "",
-          "1. Trigger rollback when:",
-          "-",
-          "",
-          "2. Data or logging checks:",
-          "-",
-          "",
-          "3. Customer-safe status line:",
-          "-",
-        ].join("\n"),
-      },
-      {
-        id: "status",
-        name: "patch/customerStatus.ts",
-        kind: "code",
-        content: [
-          "export const customerStatus = {",
-          "  headline: \"We are investigating a security issue.\",",
-          "  detail: \"Some customers may see temporary restrictions while we validate the fix.\",",
-          "  nextUpdateMins: 30,",
-          "};",
-        ].join("\n"),
-      },
-    ],
-  },
-  ops: {
-    key: "ops",
-    taskId: "ops-analytics-dashboard",
-    channel: "ops-v1",
-    company: "Orbit Ops",
-    sprint: "Board Review - Sprint 1",
-    role: "Product Delivery Lead",
-    priority: "High",
-    deadlineMinutes: 40,
-    headline: "Pick a believable V1 dashboard before the board review.",
-    summary: "Leadership keeps pushing for one dashboard for everyone, but the team needs a narrow launch story tied to a real operator.",
-    output: "Dashboard launch brief",
-    crisisStatus: "Scope drifting",
-    latestChange: "One core exception metric updates slower than leadership expects, so trust and freshness need to be explicit.",
-    workspaceTitle: "Orbit Ops product workspace",
-    workspaceHelper: "Choose the first user, protect trust around stale data, and keep the launch painfully focused.",
-    workspaceTip: "Tip: if you narrow the V1, tell Asha and Mira which modules you are cutting on purpose.",
-    requirements: [
-      "Choose the first operator this serves",
-      "Define only essential V1 modules",
-      "Protect trust around stale or missing data",
-    ],
-    acceptance: [
-      "V1 feels actionable instead of broad",
-      "User and decision are explicit",
-      "Launch metric is believable",
-    ],
-    teammates: TEAMS.ops,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "Product Manager", message: "We only have one sprint. I need a V1 an ops lead would actually use every morning." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Before we promise insight, we need to be honest about stale and missing data." },
-      { speaker_name: "Mira", speaker_title: "Product Designer", message: "Do not turn this into generic BI. Exceptions should be obvious right away." },
-      { speaker_name: "Kenji", speaker_title: "QA Engineer", message: "If stale data looks authoritative, trust dies on day one." },
-    ],
-    quickPrompts: [
-      "Asha, who is the first operator we are serving?",
-      "Ravi, what data promise can we keep in V1?",
-      "Mira, what belongs above the fold?",
-      "Kenji, what trust failure worries you most?",
-    ],
-    crisisPrompt: "Leadership is still asking for one dashboard for operators and executives. Pull that conflict into the room now?",
-    pressureBeats: [
-      {
-        id: "ops-first",
-        trigger: "first-message",
-        crisis: "Scope fight live",
-        update: "Leadership is still trying to turn the launch into one dashboard for everyone.",
-        messages: [
-          { speaker_name: "Asha", speaker_title: "Product Manager", message: "If you do not narrow this now, we will build for everyone and help nobody." },
-          { speaker_name: "Leo", speaker_title: "Operations VP", message: "I want one screen that can survive the board review and the morning standup." },
-        ],
-      },
-      {
-        id: "ops-crisis",
-        trigger: "manual-crisis",
-        crisis: "Board review tightened",
-        update: "Leadership now wants only the first user, first modules, and first success metric.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "Operations VP", message: "Strip this down. First user, first modules, first success metric. Nothing extra." },
-          { speaker_name: "Mira", speaker_title: "Product Designer", message: "Good. If it still feels broad after that, it is not ready." },
-        ],
-      },
-      {
-        id: "ops-critique",
-        trigger: "critique",
-        crisis: "Data trust still fuzzy",
-        update: "The team wants clearer language about stale states and what the launch metric actually measures.",
-        messages: [
-          { speaker_name: "Kenji", speaker_title: "QA Engineer", message: "If the stale state is not obvious, the launch metric will look better than the real trust level." },
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Say exactly which metric is less fresh than the room expects. That honesty matters." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "user",
-        name: "dashboard/firstUser.md",
-        kind: "brief",
-        content: [
-          "# First user",
-          "",
-          "- Candidate user:",
-          "- Daily decision they need to make:",
-          "- What they should never need from V1:",
-        ].join("\n"),
-      },
-      {
-        id: "freshness",
-        name: "dashboard/freshness.ts",
-        kind: "code",
-        content: [
-          "export const freshnessPolicy = {",
-          "  criticalExceptions: \"real-time\",",
-          "  laborHealth: \"15 mins\",",
-          "  fulfillmentDrift: \"30 mins\",",
-          "  staleBannerRequired: false,",
-          "};",
-        ].join("\n"),
-      },
-      {
-        id: "layout",
-        name: "dashboard/OpsOverview.tsx",
-        kind: "code",
-        content: [
-          "export const modules = [",
-          "  \"volume summary\",",
-          "  \"exceptions board\",",
-          "  \"shift comparison\",",
-          "  \"executive KPI ribbon\",",
-          "];",
-          "",
-          "// TODO: reduce this to the smallest V1 for the first operator.",
-        ].join("\n"),
-      },
-    ],
-  },
-  wallet: {
-    key: "wallet",
-    taskId: "wallet-outage",
-    channel: "payout-war-room",
-    company: "Pulse Wallet",
-    sprint: "Incident - Payroll Cut-off",
-    role: "Platform Incident Lead",
-    priority: "Critical",
-    deadlineMinutes: 24,
-    headline: "Contain the payout outage before payroll cut-off.",
-    summary: "Duplicate retries are creating real customer risk, support needs language now, and reconciliation will get uglier if the fix is sloppy.",
-    output: "Incident containment plan",
-    crisisStatus: "Duplicate payouts detected",
-    latestChange: "The team confirmed the duplicate path is on retry, not initial payout, which changes where the guardrail belongs.",
-    workspaceTitle: "Pulse Wallet incident workspace",
-    workspaceHelper: "Stop the duplicate path, define the lockout behavior, and leave support with language they can trust.",
-    workspaceTip: "Tip: if you tighten retry behavior, tell Ravi and Kenji how reconciliation stays safe afterward.",
-    requirements: [
-      "Stop duplicate payout retries safely",
-      "Define the customer-facing fallback",
-      "Protect reconciliation after the cut-off window",
-    ],
-    acceptance: [
-      "Duplicate charge path is contained",
-      "Support has a clear script",
-      "Rollback and reconciliation are explicit",
-    ],
-    teammates: TEAMS.incident,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Payroll cut-off is in 24 minutes. We need a plan support can repeat word for word." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "The idempotency gap is on retry, not the first payout. If we touch the wrong layer, recon gets worse." },
-      { speaker_name: "Mira", speaker_title: "Customer Experience", message: "The current banner sounds like a delay, not a duplicate charge risk. It is too soft." },
-      { speaker_name: "Kenji", speaker_title: "Security QA", message: "I can still reproduce duplicates when someone retries after a timeout. We need a safer lockout plan." },
-    ],
-    quickPrompts: [
-      "Asha, what is the smallest safe containment plan?",
-      "Ravi, where should the retry guard actually live?",
-      "Kenji, what path still reproduces duplicates?",
-      "Mira, how honest does the banner need to be?",
-    ],
-    crisisPrompt: "Support just reported executive escalation from payroll customers. Bring that into the room now?",
-    pressureBeats: [
-      {
-        id: "wallet-first",
-        trigger: "first-message",
-        crisis: "Support escalation active",
-        update: "Support needs language immediately, even though engineering is still narrowing the retry fix.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "VP Security", message: "Support will not survive another vague update. Give me clear customer language now." },
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "And keep it tied to the real containment plan, not some future perfect fix." },
-        ],
-      },
-      {
-        id: "wallet-crisis",
-        trigger: "manual-crisis",
-        crisis: "Payroll cut-off pulled forward",
-        update: "The room now has even less time, so the containment path must be smaller and more operationally crisp.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "VP Security", message: "Cut-off moved up. No broad fix. Contain the duplicate path and protect the ledger." },
-          { speaker_name: "Kenji", speaker_title: "Security QA", message: "Then say exactly what users can still do safely after the lockout hits." },
-        ],
-      },
-      {
-        id: "wallet-critique",
-        trigger: "critique",
-        crisis: "Containment still too vague",
-        update: "The room wants a firmer line between immediate lockout behavior and later reconciliation cleanup.",
-        messages: [
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Separate the retry guard from the recon cleanup. If you blend them, ops will get confused." },
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Yes. One move for right now, one move for after payroll cut-off." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "guard",
-        name: "payout/retryGuard.ts",
-        kind: "code",
-        content: [
-          "export function allowRetry({",
-          "  timedOut,",
-          "  previousAttemptId,",
-          "}: {",
-          "  timedOut: boolean;",
-          "  previousAttemptId?: string;",
-          "}): boolean {",
-          "  if (!timedOut) return true;",
-          "  return !previousAttemptId;",
-          "}",
-        ].join("\n"),
-      },
-      {
-        id: "recon",
-        name: "payout/reconciliation.md",
-        kind: "brief",
-        content: [
-          "# Reconciliation notes",
-          "",
-          "- Immediate lockout behavior:",
-          "- Ledger verification after cut-off:",
-          "- Support callback rule:",
-        ].join("\n"),
-      },
-      {
-        id: "banner",
-        name: "payout/StatusBanner.tsx",
-        kind: "code",
-        content: [
-          "export const payoutBanner = {",
-          "  title: \"Payout may be delayed\",",
-          "  detail: \"If your transfer has not arrived, please retry in a moment.\",",
-          "};",
-        ].join("\n"),
-      },
-    ],
-  },
-  copilot: {
-    key: "copilot",
-    taskId: "copilot-trust",
-    channel: "copilot-trust",
-    company: "Helio Health",
-    sprint: "Pilot Launch - Safety Review",
-    role: "AI Product Lead",
-    priority: "High",
-    deadlineMinutes: 35,
-    headline: "Reduce hallucination risk before the pilot customer sees the copilot.",
-    summary: "The assistant still invents actions when retrieval is empty, and the team needs a narrower launch story that does not look reckless.",
-    output: "Trust recovery plan",
-    crisisStatus: "Hallucination risk active",
-    latestChange: "Retrieval sometimes returns nothing, but the current fallback still lets the assistant answer with confidence.",
-    workspaceTitle: "Helio Health AI workspace",
-    workspaceHelper: "Tighten guardrails, make confidence visible, and reduce the launch scope to something you can defend.",
-    workspaceTip: "Tip: if the model should refuse, tell Asha and Kenji exactly what the fallback experience becomes.",
-    requirements: [
-      "Reduce unsafe assistant behavior",
-      "Clarify confidence and fallback states",
-      "Define the smallest trustworthy launch scope",
-    ],
-    acceptance: [
-      "Unsafe suggestions are constrained",
-      "Users can tell what the assistant knows",
-      "The demo story stays credible",
-    ],
-    teammates: TEAMS.ai,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "AI Product Lead", message: "We cannot demo a copilot that sounds sure when it is wrong. I need the smallest trustworthy launch path." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Retrieval sometimes comes back empty, and the fallback still lets the model answer anyway." },
-      { speaker_name: "Mira", speaker_title: "Trust Designer", message: "The confidence cues are muddy. People cannot tell if the assistant knows or is guessing." },
-      { speaker_name: "Kenji", speaker_title: "Safety QA", message: "I can force the unsafe path with a vague prompt in under a minute. We need a stronger refusal flow." },
-    ],
-    quickPrompts: [
-      "Asha, what scope is still launch-safe?",
-      "Ravi, what happens when retrieval returns nothing?",
-      "Kenji, what unsafe path still reproduces?",
-      "Mira, how should confidence be shown to the user?",
-    ],
-    crisisPrompt: "The pilot sponsor wants to keep the flashy features even if confidence is low. Pull that tension into the room now?",
-    pressureBeats: [
-      {
-        id: "copilot-first",
-        trigger: "first-message",
-        crisis: "Trust versus ambition",
-        update: "The room is split between showing a broader feature set and shrinking to a safer launch story.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "Pilot Sponsor", message: "I do not want the pilot to feel watered down, but I also do not want a trust mess on day one." },
-          { speaker_name: "Asha", speaker_title: "AI Product Lead", message: "Then we need scope discipline, not optimism. Help me make that case." },
-        ],
-      },
-      {
-        id: "copilot-crisis",
-        trigger: "manual-crisis",
-        crisis: "Safety review starting",
-        update: "Leadership wants a crisp explanation of what the assistant will refuse, what it will answer, and what it will escalate to humans.",
-        messages: [
-          { speaker_name: "Kenji", speaker_title: "Safety QA", message: "Good. The refusal rule needs to be just as real as the happy path." },
-          { speaker_name: "Leo", speaker_title: "Pilot Sponsor", message: "And make sure the human fallback feels intentional, not broken." },
-        ],
-      },
-      {
-        id: "copilot-critique",
-        trigger: "critique",
-        crisis: "Guardrail path still underspecified",
-        update: "The team wants a sharper line between grounded answers, low-confidence answers, and refusal behavior.",
-        messages: [
-          { speaker_name: "Mira", speaker_title: "Trust Designer", message: "If the assistant is unsure, the UI should say that plainly and show the next safe step." },
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "And if retrieval is empty, do not give the model room to improvise." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "guardrails",
-        name: "copilot/guardrails.ts",
-        kind: "code",
-        content: [
-          "export function canAnswer(retrievalCount: number, confidence: number): boolean {",
-          "  if (confidence > 0.55) {",
-          "    return true;",
-          "  }",
-          "  return retrievalCount >= 0;",
-          "}",
-        ].join("\n"),
-      },
-      {
-        id: "policy",
-        name: "copilot/promptPolicy.md",
-        kind: "brief",
-        content: [
-          "# Prompt policy",
-          "",
-          "- When retrieval is empty:",
-          "- When confidence is low:",
-          "- When to escalate to a human:",
-        ].join("\n"),
-      },
-      {
-        id: "review",
-        name: "copilot/ReviewPanel.tsx",
-        kind: "code",
-        content: [
-          "export const assistantState = {",
-          "  grounded: \"Answer ready\",",
-          "  warning: \"Response may be incomplete\",",
-          "  fallback: \"Contact your care team\",",
-          "};",
-          "",
-          "// TODO: make the low-confidence state more explicit and safer.",
-        ].join("\n"),
-      },
-    ],
-  },
-  migration: {
-    key: "migration",
-    taskId: "data-migration-freeze",
-    channel: "cutover-freeze",
-    company: "Atlas Commerce",
-    sprint: "Release Freeze - Cutover Night",
-    role: "Release Manager",
-    priority: "Critical",
-    deadlineMinutes: 28,
-    headline: "Define the cutover and rollback path before the migration window closes.",
-    summary: "Ops is nervous about stale reads during the switch, and the room needs a cutover sequence that sounds executable, not theoretical.",
-    output: "Cutover decision brief",
-    crisisStatus: "Cutover freeze approaching",
-    latestChange: "Engineering confirmed the riskiest moment is stale reads during the switch, not the dual-write setup itself.",
-    workspaceTitle: "Atlas Commerce migration workspace",
-    workspaceHelper: "Clarify the cutover order, write the rollback trigger, and make customer impact easy to explain.",
-    workspaceTip: "Tip: if you adjust cutover order, tell Ravi and Kenji how you verify data integrity before opening traffic.",
-    requirements: [
-      "Define the cutover order",
-      "Protect rollback and data integrity",
-      "Explain customer impact clearly",
-    ],
-    acceptance: [
-      "Rollback path is believable",
-      "Data loss risk is named and bounded",
-      "Ops can execute the brief without guessing",
-    ],
-    teammates: TEAMS.incident,
-    introMessages: [
-      { speaker_name: "Asha", speaker_title: "Incident Commander", message: "We are too close to cutover for fuzzy language. I need the sequence, the freeze, and the rollback line." },
-      { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "Dual writes are not the scary part. The risky moment is stale reads during the switch." },
-      { speaker_name: "Mira", speaker_title: "Customer Experience", message: "If customers see a half-migrated state with no explanation, trust drops fast." },
-      { speaker_name: "Kenji", speaker_title: "Security QA", message: "I want the rollback trigger written before anyone calls this safe. We cannot improvise during cutover." },
-    ],
-    quickPrompts: [
-      "Asha, what must the final cutover brief include?",
-      "Ravi, what is the riskiest cutover moment?",
-      "Kenji, what validation must happen before traffic opens?",
-      "Mira, what customer-visible state is acceptable during the switch?",
-    ],
-    crisisPrompt: "The cutover window may close early if ops loses confidence. Pull that pressure into the room now?",
-    pressureBeats: [
-      {
-        id: "migration-first",
-        trigger: "first-message",
-        crisis: "Ops confidence dropping",
-        update: "The room needs a more operationally explicit cutover order before ops will approve the migration.",
-        messages: [
-          { speaker_name: "Leo", speaker_title: "VP Security", message: "Ops is not pushing back on the idea. They are pushing back on vague sequencing. Fix that." },
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Exactly. Give me the order, not a migration lecture." },
-        ],
-      },
-      {
-        id: "migration-crisis",
-        trigger: "manual-crisis",
-        crisis: "Window may close early",
-        update: "If the room cannot state rollback and reopen conditions clearly, the migration window will be cancelled.",
-        messages: [
-          { speaker_name: "Kenji", speaker_title: "Security QA", message: "Then the rollback trigger has to be painfully clear. This is not the moment for hopeful wording." },
-          { speaker_name: "Ravi", speaker_title: "Engineering Lead", message: "And make the reopen condition just as clear or ops will hold the gate all night." },
-        ],
-      },
-      {
-        id: "migration-critique",
-        trigger: "critique",
-        crisis: "Cutover brief still missing reopen logic",
-        update: "The team wants a clearer definition of when traffic reopens after the switch and what data integrity checks prove it.",
-        messages: [
-          { speaker_name: "Asha", speaker_title: "Incident Commander", message: "Good start. Now tell me what must be true before traffic reopens." },
-          { speaker_name: "Kenji", speaker_title: "Security QA", message: "And if any one of those checks fails, say who calls rollback and how fast it happens." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      {
-        id: "cutover",
-        name: "migration/cutoverPlan.md",
-        kind: "brief",
-        content: [
-          "# Cutover sequence",
-          "",
-          "1. Freeze writes:",
-          "2. Validate replication:",
-          "3. Switch reads:",
-          "4. Reopen traffic when:",
-        ].join("\n"),
-      },
-      {
-        id: "rollback",
-        name: "migration/rollback.sql",
-        kind: "code",
-        content: [
-          "-- TODO: define the rollback order and integrity checks",
-          "BEGIN;",
-          "UPDATE rollout_state SET traffic_mode = 'legacy';",
-          "-- validate read pointers before commit",
-          "COMMIT;",
-        ].join("\n"),
-      },
-      {
-        id: "status",
-        name: "migration/StatusPage.tsx",
-        kind: "code",
-        content: [
-          "export const migrationStatus = {",
-          "  headline: \"Scheduled maintenance in progress\",",
-          "  detail: \"You may notice brief delays while we complete the data migration.\",",
-          "};",
-        ].join("\n"),
-      },
-    ],
-  },
-  netflix: {
-    key: "netflix",
-    taskId: "netflix-reco-outage",
-    channel: "streaming-war-room",
-    company: "Netflix",
-    sprint: "Peak Traffic Incident",
-    role: "Backend Engineer / Incident Commander",
-    priority: "P0 Critical",
-    deadlineMinutes: 30,
-    headline: "Contain recommendation deployment failures during peak streaming traffic.",
-    summary: "A recommendation engine deployment caused streaming failures, partial rollback failure, rising complaints, and overloaded servers.",
-    output: "Incident command plan with code and rollback decision",
-    crisisStatus: "Streaming failures increasing",
-    latestChange: "Rollback is only 41% complete in EU-West, cache misses are spiking, and leadership wants a credible ETA.",
-    workspaceTitle: "Netflix incident workspace",
-    workspaceHelper: "Investigate logs, edit the recommendation service or cache layer, coordinate the room, and make the rollback decision.",
-    workspaceTip: "Tip: combine code changes with a short war-room update: impact, decision, owner, ETA, and risk.",
-    requirements: [
-      "Investigate logs and metrics before declaring root cause",
-      "Prioritize rollback or mitigation under peak traffic",
-      "Coordinate engineering, QA, product, and leadership updates",
-      "Patch risky retry/cache behavior in production-style code",
-    ],
-    acceptance: [
-      "ETA and customer impact are explicit",
-      "Rollback failure in EU is addressed",
-      "Code or config change reduces overload risk",
-      "Teammates understand owners and next checks",
-    ],
-    teammates: TEAMS.netflix,
-    introMessages: [
-      { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "We are at peak traffic, failures are rising, and socials are already turning. I need impact, ETA, and what we are doing in the next five minutes." },
-      { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Rollback is not clean. EU-West is stuck on mixed pods and the recommendation service is hammering cache on retries. Do not say rollback is done." },
-      { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "I am blocking any all-clear until we prove playback success recovered by region and cache eviction stopped thrashing." },
-      { speaker_name: "Elena", speaker_title: "Detail-focused Playback UX Lead", message: "Customer messaging needs to be honest. People are seeing titles load, then playback fail. That feels worse than a clean outage banner." },
-      { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "I joined because the complaint curve is now visible externally. Give me a decision and a real ETA, not optimism." },
-    ],
-    quickPrompts: [
-      "Dante, what evidence points to recommendation_service versus playback?",
-      "Priya, what check would unblock rollback confidence?",
-      "Maya, what update does leadership need in one sentence?",
-      "Elena, what should customer-facing messaging say right now?",
-    ],
-    crisisPrompt: "CEO joined war room and asks why rollback is failing in EU. Bring that pressure into the room now?",
-    pressureBeats: [
-      {
-        id: "netflix-first-message",
-        trigger: "first-message",
-        crisis: "Customer complaints increased 28%",
-        update: "Social media complaints jumped while rollback remains partial in EU-West.",
-        messages: [
-          { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "Complaints are up 28% in ten minutes. If we do not give leadership an ETA now, they will make the call for us." },
-          { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Then make the call based on data: cache failure rate, rollback completion, playback starts. Not vibes." },
-        ],
-      },
-      {
-        id: "netflix-manual-crisis",
-        trigger: "manual-crisis",
-        crisis: "Rollback failed in EU region",
-        update: "EU-West deployment controller reports mixed recommendation pods and overloaded cache shards.",
-        messages: [
-          { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "CEO is in the war room. Why is EU rollback failing, and who owns the next action?" },
-          { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "Do not call it mitigated until EU playback success and cache error rate recover together." },
-        ],
-      },
-      {
-        id: "netflix-draft",
-        trigger: "draft-80",
-        crisis: "Servers overloaded",
-        update: "Autoscaling is lagging because retry storms are increasing load faster than capacity is coming online.",
-        messages: [
-          { speaker_name: "Dante", speaker_title: "Blunt Streaming Platform Lead", message: "Your draft is moving, but retries are still too aggressive. We need circuit breaking or cache backoff, not another paragraph." },
-          { speaker_name: "Maya", speaker_title: "Stressed Incident PM", message: "Translate the technical fix into a customer ETA. Leadership will ask again in two minutes." },
-        ],
-      },
-      {
-        id: "netflix-critique",
-        trigger: "critique",
-        crisis: "ETA still not credible",
-        update: "The room needs a region-by-region recovery check and a clear rollback owner.",
-        messages: [
-          { speaker_name: "Priya", speaker_title: "Risk-averse QA Lead", message: "Name the validation gates: playback starts, cache hit rate, error budget burn, and affected regions." },
-          { speaker_name: "Reed", speaker_title: "Executive Sponsor", message: "I can carry bad news. I cannot carry a vague ETA." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      { id: "incident-report", name: "incident_report.md", kind: "brief", content: buildNetflixIncidentReport() },
-      { id: "server-logs", name: "server_logs.txt", kind: "logs", content: buildNetflixServerLogs() },
-      { id: "recommendation-service", name: "recommendation_service.py", kind: "code", content: buildNetflixRecommendationService() },
-      { id: "cache-layer", name: "cache_layer.py", kind: "code", content: buildNetflixCacheLayer() },
-      { id: "deployment-changes", name: "deployment_changes.md", kind: "brief", content: buildNetflixDeploymentChanges() },
-      { id: "leadership-chat", name: "leadership_chat.json", kind: "json", content: buildNetflixLeadershipChat() },
-      { id: "live-metrics", name: "live_metrics.png", kind: "image", content: buildNetflixLiveMetricsPreview() },
-    ],
-  },
-  linkedin: {
-    key: "linkedin",
-    taskId: "linkedin-ai-resume-launch",
-    channel: "resume-assistant-launch",
-    company: "LinkedIn",
-    sprint: "Launch Readiness - T-1 Day",
-    role: "Product Manager / Full Stack Engineer",
-    priority: "P0 Launch Risk",
-    deadlineMinutes: 35,
-    headline: "Decide whether the AI Resume Assistant can launch tomorrow.",
-    summary: "Leadership publicly promised the launch before engineering completed development; AI quality, onboarding, mobile UI, and QA blockers remain unresolved.",
-    output: "Launch readiness decision with product and code changes",
-    crisisStatus: "QA blockers unresolved",
-    latestChange: "Marketing scheduled press for tomorrow morning while mobile preview and AI consistency remain unstable.",
-    workspaceTitle: "LinkedIn launch workspace",
-    workspaceHelper: "Triage launch blockers, edit the AI service or preview component, and coordinate a go/no-go recommendation.",
-    workspaceTip: "Tip: make a launch call, then tell engineering, QA, and leadership what ships, what is blocked, and what gets cut.",
-    requirements: [
-      "Investigate inconsistent AI output and onboarding gaps",
-      "Fix or scope mobile UI and accessibility issues",
-      "Prioritize launch blockers against public commitment",
-      "Communicate a credible go/no-go path to leadership",
-    ],
-    acceptance: [
-      "Launch decision is explicit",
-      "Blocked tasks and dependencies are named",
-      "Code changes reduce a real launch risk",
-      "Stakeholder update is honest and actionable",
-    ],
-    teammates: TEAMS.linkedin,
-    introMessages: [
-      { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Leadership already promised AI Resume Assistant publicly. Launch is tomorrow, but the readiness board is ugly." },
-      { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "The service still caches weak prompts, mobile preview layout breaks, and we have partial implementations in prod branch." },
-      { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "I have P0 QA blockers with repro steps. If we launch as-is, support will inherit the mess." },
-      { speaker_name: "Jules", speaker_title: "Detail-focused Product Designer", message: "Onboarding is incomplete, especially on mobile. Users will not understand what the AI changed in their resume." },
-      { speaker_name: "Vikram", speaker_title: "VP Product", message: "Marketing wants a decision today. If we slip, I need the public narrative. If we ship, I need risk containment." },
-    ],
-    quickPrompts: [
-      "Nora, which QA blocker should stop launch?",
-      "Marcus, what code path is causing inconsistent AI responses?",
-      "Anika, what launch promise can we safely keep?",
-      "Jules, what mobile issue hurts trust the most?",
-    ],
-    crisisPrompt: "QA blocked deployment while marketing asks for final launch copy. Bring that conflict into the room now?",
-    pressureBeats: [
-      {
-        id: "linkedin-first-message",
-        trigger: "first-message",
-        crisis: "Launch scheduled tomorrow",
-        update: "Marketing is asking for final copy while QA still lists mobile and AI blockers as unresolved.",
-        messages: [
-          { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Marketing just asked for final launch copy. I need to know whether we are shipping full launch, limited beta, or slipping." },
-          { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "A limited beta is defensible. A full launch with this mobile preview is not." },
-        ],
-      },
-      {
-        id: "linkedin-manual-crisis",
-        trigger: "manual-crisis",
-        crisis: "QA blocked deployment",
-        update: "QA moved mobile preview overlap and inconsistent AI rewrites to launch-blocking severity.",
-        messages: [
-          { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "I am officially blocking full launch. Give me a scoped release or a fix that passes the repro steps." },
-          { speaker_name: "Vikram", speaker_title: "VP Product", message: "If QA blocks, we need a leadership-ready explanation in the next standup." },
-        ],
-      },
-      {
-        id: "linkedin-draft",
-        trigger: "draft-80",
-        crisis: "Enterprise client requesting update",
-        update: "A flagship customer asked whether the assistant will be available in tomorrow's admin rollout.",
-        messages: [
-          { speaker_name: "Anika", speaker_title: "Stressed Launch PM", message: "Enterprise client wants an answer. Be precise: who gets access tomorrow and what is disabled?" },
-          { speaker_name: "Jules", speaker_title: "Detail-focused Product Designer", message: "Please do not bury the mobile limitation. Users will find it immediately." },
-        ],
-      },
-      {
-        id: "linkedin-critique",
-        trigger: "critique",
-        crisis: "Launch call still hedging",
-        update: "The room wants the recommendation expressed as ship, limited beta, or delay, with exact blockers.",
-        messages: [
-          { speaker_name: "Marcus", speaker_title: "Blunt Full Stack Lead", message: "This still reads like a status update. Make the call." },
-          { speaker_name: "Nora", speaker_title: "Risk-averse QA Lead", message: "And tie the call to the blockers. Otherwise I cannot sign off." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      { id: "launch-plan", name: "launch_plan.md", kind: "brief", content: buildLinkedInLaunchPlan() },
-      { id: "jira-board", name: "jira_board.json", kind: "json", content: buildLinkedInJiraBoard() },
-      { id: "resume-service", name: "resumeAssistant.ts", kind: "code", content: buildLinkedInResumeAssistant() },
-      { id: "resume-preview", name: "ResumePreview.jsx", kind: "code", content: buildLinkedInResumePreview() },
-      { id: "analytics", name: "analytics_dashboard.csv", kind: "data", content: buildLinkedInAnalyticsCsv() },
-      { id: "qa-report", name: "qa_report.md", kind: "brief", content: buildLinkedInQaReport() },
-      { id: "leadership-notes", name: "leadership_notes.txt", kind: "brief", content: buildLinkedInLeadershipNotes() },
-    ],
-  },
-  spotify: {
-    key: "spotify",
-    taskId: "spotify-creator-retention",
-    channel: "creator-growth-recovery",
-    company: "Spotify",
-    sprint: "Creator Redesign Recovery",
-    role: "Data Analyst / Product Strategist",
-    priority: "High",
-    deadlineMinutes: 40,
-    headline: "Diagnose why creator engagement dropped after redesign.",
-    summary: "A redesign caused creator engagement and retention to drop sharply while experiments and user feedback point in conflicting directions.",
-    output: "Creator retention recovery plan",
-    crisisStatus: "Creator engagement dropping",
-    latestChange: "Early heatmaps show creators missing the new analytics entry point, but model notes suggest recommendation changes also reduced repeat actions.",
-    workspaceTitle: "Spotify creator strategy workspace",
-    workspaceHelper: "Analyze metrics, feedback, model notes, and onboarding code to prioritize a recovery plan.",
-    workspaceTip: "Tip: ground your recommendation in data, then tell Sofia and Gabe what to reverse, test, or monitor first.",
-    requirements: [
-      "Analyze funnel and retention data",
-      "Weigh conflicting experiment outcomes",
-      "Prioritize product changes under leadership pressure",
-      "Coordinate analytics, design, and strategy decisions",
-    ],
-    acceptance: [
-      "Primary retention driver is named",
-      "Conflicting evidence is handled explicitly",
-      "Recovery plan has metrics and owners",
-      "Code or tracking issue is improved",
-    ],
-    teammates: TEAMS.spotify,
-    introMessages: [
-      { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "Creator retention dropped after redesign. Leadership wants a recovery plan before the weekly business review." },
-      { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "The funnel says onboarding completion fell, but model notes show recommendation quality also shifted. Do not oversimplify this." },
-      { speaker_name: "Mina", speaker_title: "Detail-focused Onboarding Designer", message: "The new flow hides analytics setup behind a second screen. Creators are not finding the thing they came for." },
-      { speaker_name: "Leah", speaker_title: "Risk-averse Research Ops", message: "User feedback is angry but noisy. We need to separate creator trust issues from normal redesign dislike." },
-      { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "I need an urgent recovery plan with a metric we can defend." },
-    ],
-    quickPrompts: [
-      "Oskar, what does the retention data really prove?",
-      "Mina, where is the onboarding friction highest?",
-      "Leah, what feedback pattern should we trust?",
-      "Sofia, what recovery decision does leadership need?",
-    ],
-    crisisPrompt: "Creator complaints spiked and leadership wants a rollback recommendation. Bring that pressure into the room now?",
-    pressureBeats: [
-      {
-        id: "spotify-first-message",
-        trigger: "first-message",
-        crisis: "Creator complaints increased 31%",
-        update: "Feedback volume jumped after a creator newsletter called out the redesign.",
-        messages: [
-          { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "Complaints are up 31% since the newsletter. Are we rolling back, hotfixing onboarding, or changing recommendations?" },
-          { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "Do not let volume alone decide. Look at cohort retention and feature discovery." },
-        ],
-      },
-      {
-        id: "spotify-manual-crisis",
-        trigger: "manual-crisis",
-        crisis: "Executive review moved up",
-        update: "Leadership wants a recovery recommendation today, not after another full experiment cycle.",
-        messages: [
-          { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "We need a decision that is reversible and measurable. A pure wait-and-see answer will not survive review." },
-          { speaker_name: "Leah", speaker_title: "Risk-averse Research Ops", message: "If we rollback, name what evidence justifies it. If we hotfix, name what remains uncertain." },
-        ],
-      },
-      {
-        id: "spotify-draft",
-        trigger: "draft-80",
-        crisis: "AB results conflict",
-        update: "One experiment improves short sessions while another worsens seven-day creator return rate.",
-        messages: [
-          { speaker_name: "Oskar", speaker_title: "Data Science Lead", message: "Your analysis needs to explain why activation and retention disagree. That conflict is the whole problem." },
-          { speaker_name: "Mina", speaker_title: "Detail-focused Onboarding Designer", message: "And if tracking is broken in onboarding, call it out before we blame the wrong screen." },
-        ],
-      },
-      {
-        id: "spotify-critique",
-        trigger: "critique",
-        crisis: "Recovery plan missing owner",
-        update: "The room wants owner, metric, and next check for each recovery action.",
-        messages: [
-          { speaker_name: "Gabe", speaker_title: "Head of Creator Growth", message: "I can take a hard plan upstairs. I cannot take a list of observations." },
-          { speaker_name: "Sofia", speaker_title: "Creator Product Strategist", message: "Turn this into owner, action, metric, and deadline." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      { id: "retention-metrics", name: "retention_metrics.csv", kind: "data", content: buildSpotifyRetentionMetrics() },
-      { id: "user-feedback", name: "user_feedback.txt", kind: "brief", content: buildSpotifyUserFeedback() },
-      { id: "model-notes", name: "recommendation_model_notes.md", kind: "brief", content: buildSpotifyRecommendationNotes() },
-      { id: "onboarding-flow", name: "onboardingFlow.jsx", kind: "code", content: buildSpotifyOnboardingFlow() },
-      { id: "ab-results", name: "ab_test_results.md", kind: "brief", content: buildSpotifyAbResults() },
-      { id: "executive-email", name: "executive_email.txt", kind: "brief", content: buildSpotifyExecutiveEmail() },
-      { id: "heatmap", name: "heatmap.png", kind: "image", content: buildSpotifyHeatmapPreview() },
-    ],
-  },
-  openai: {
-    key: "openai",
-    taskId: "openai-prompt-leakage",
-    channel: "enterprise-demo-security",
-    company: "OpenAI",
-    sprint: "Enterprise Demo - T-4 Hours",
-    role: "Security Engineer / Tech Lead",
-    priority: "P0 Security",
-    deadlineMinutes: 25,
-    headline: "Mitigate prompt leakage before the enterprise demo.",
-    summary: "A prompt leakage vulnerability was discovered hours before an enterprise demo, with unsafe memory references and debate across security, product, and leadership.",
-    output: "Security mitigation and demo go/no-go recommendation",
-    crisisStatus: "Prompt leakage confirmed",
-    latestChange: "Red team reproduced leakage through stale session memory after a tool retry path reused unsafe memory references.",
-    workspaceTitle: "OpenAI security workspace",
-    workspaceHelper: "Patch memory handling or gateway validation, analyze red-team notes, and make the demo risk call.",
-    workspaceTip: "Tip: state exploit scope, mitigation, residual risk, owner, and go/no-go decision clearly.",
-    requirements: [
-      "Investigate leakage source and exploit path",
-      "Patch unsafe memory or gateway handling",
-      "Coordinate security, product, engineering, and leadership",
-      "Make a defensible enterprise demo decision",
-    ],
-    acceptance: [
-      "Leakage source is named",
-      "Mitigation includes rollback or guardrail",
-      "Residual risk is explicit",
-      "Stakeholder update is demo-ready",
-    ],
-    teammates: TEAMS.openai,
-    introMessages: [
-      { speaker_name: "Iris", speaker_title: "Security Incident PM", message: "Enterprise demo is in four hours. Red team reproduced prompt leakage through stale session memory." },
-      { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "The gateway retry path is passing unsafe memory references. We need code mitigation, not a nicer demo script." },
-      { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "I am not signing off until memory isolation and sanitization survive the exploit steps." },
-      { speaker_name: "Tessa", speaker_title: "Detail-focused Enterprise UX Lead", message: "If we add refusal or degraded memory behavior, enterprise users need clear language. Silent failure looks like instability." },
-      { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "Tell me whether we demo, delay, or demo with a restricted configuration. I need the decision soon." },
-    ],
-    quickPrompts: [
-      "Farah, what exact exploit path still works?",
-      "Noah, where is the unsafe memory reference?",
-      "Iris, what does leadership need for go/no-go?",
-      "Tessa, how should degraded memory behavior be explained?",
-    ],
-    crisisPrompt: "Enterprise client requested a security update before the demo. Bring that pressure into the room now?",
-    pressureBeats: [
-      {
-        id: "openai-first-message",
-        trigger: "first-message",
-        crisis: "Enterprise client requesting update",
-        update: "A strategic customer asked whether memory isolation risk affects the demo environment.",
-        messages: [
-          { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "The customer is asking for a security update. Can we say the demo environment is contained?" },
-          { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "Only if the exploit path is actually closed. Do not let customer pressure outrun evidence." },
-        ],
-      },
-      {
-        id: "openai-manual-crisis",
-        trigger: "manual-crisis",
-        crisis: "CEO joined war room",
-        update: "Leadership wants a go/no-go decision and exact mitigation scope within minutes.",
-        messages: [
-          { speaker_name: "Iris", speaker_title: "Security Incident PM", message: "CEO joined. We need exploit scope, mitigation, residual risk, and demo recommendation in plain language." },
-          { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "Then patch the unsafe reference or disable memory. Anything else is theater." },
-        ],
-      },
-      {
-        id: "openai-draft",
-        trigger: "draft-80",
-        crisis: "Unsafe memory reference persists",
-        update: "Static review still sees one gateway branch forwarding raw memory ids into inference context.",
-        messages: [
-          { speaker_name: "Noah", speaker_title: "Blunt Platform Security Lead", message: "Your draft names the risk, but the gateway still has a raw memory reference branch. Close it or restrict the demo." },
-          { speaker_name: "Tessa", speaker_title: "Detail-focused Enterprise UX Lead", message: "If memory is disabled, say what the user sees. Enterprise demos cannot look mysteriously broken." },
-        ],
-      },
-      {
-        id: "openai-critique",
-        trigger: "critique",
-        crisis: "Go/no-go still unclear",
-        update: "The room wants a clear demo recommendation tied to mitigation evidence and rollback instructions.",
-        messages: [
-          { speaker_name: "Farah", speaker_title: "Risk-averse Red Team Lead", message: "I need a hard line: demo blocked, restricted demo, or safe after mitigation. Pick one and prove it." },
-          { speaker_name: "Sam", speaker_title: "Enterprise Demo Sponsor", message: "I can handle a restricted demo. I cannot handle uncertainty disguised as confidence." },
-        ],
-      },
-    ],
-    workspaceFiles: [
-      { id: "security-report", name: "security_report.md", kind: "brief", content: buildOpenAISecurityReport() },
-      { id: "memory-manager", name: "memory_manager.py", kind: "code", content: buildOpenAIMemoryManager() },
-      { id: "gateway", name: "inference_gateway.ts", kind: "code", content: buildOpenAIInferenceGateway() },
-      { id: "red-team", name: "red_team_notes.txt", kind: "brief", content: buildOpenAIRedTeamNotes() },
-      { id: "engineering-chat", name: "engineering_chat.json", kind: "json", content: buildOpenAIEngineeringChat() },
-      { id: "architecture", name: "system_architecture.png", kind: "image", content: buildOpenAIArchitecturePreview() },
-      { id: "rollback-guide", name: "rollback_guide.md", kind: "brief", content: buildOpenAIRollbackGuide() },
-    ],
-  },
-};
-
-const TASK_TO_MISSION_KEY = {
-  "netflix-reco-outage": "security",
-  "linkedin-ai-resume-launch": "mobile",
-  "spotify-creator-retention": "ops",
-  "openai-prompt-leakage": "security",
-  "mobile-growth": "mobile",
-  "security-patch": "security",
-  "docs-update": "mobile",
-  "fraud-dashboard": "ops",
-  "search-infra": "data-migration",
-  "ai-copilot": "ai",
-  "search-ranking": "ops",
-  "surge-api": "wallet",
-  "video-encoding": "security",
-  "playlist-generator": "ops",
-  "vr-marketplace": "mobile",
-  "backend-api-health": "security",
-  "backend-cache": "ops",
-  "backend-auth": "security",
-  "backend-queue": "security",
-  "backend-migration": "data-migration",
-  "backend-scaling": "security",
-  "pm-priority": "mobile",
-  "pm-metrics": "ops",
-  "pm-goals": "mobile",
-  "pm-feedback": "mobile",
-  "pm-strategy": "ops",
-  "pm-launch": "mobile",
-  "data-adhoc": "ops",
-  "data-dashboard": "ops",
-  "data-model": "ops",
-  "data-experiment": "mobile",
-  "data-forecast": "ops",
-  "data-scaling": "ops",
-  "frontend-homeflow": "mobile",
-  "frontend-dashboard": "ops",
-  "frontend-product": "ai",
-  "frontend-accessibility": "mobile",
-  "frontend-spa": "data-migration",
-  "frontend-visual": "mobile",
-  "design-prototype": "mobile",
-  "design-style": "mobile",
-  "design-research": "mobile",
-  "design-dashboard-prototype": "ops",
-  "design-system": "mobile",
-  "design-ops": "ops",
-};
-
-const TASK_TO_BACKEND_TASK_ID = {
-  "frontend-homeflow": "mobile-growth",
-  "frontend-dashboard": "fraud-dashboard",
-  "frontend-product": "ai-copilot",
-  "frontend-accessibility": "docs-update",
-  "frontend-spa": "search-infra",
-  "frontend-visual": "mobile-growth",
-  "backend-api-health": "security-patch",
-  "backend-cache": "search-infra",
-  "backend-auth": "security-patch",
-  "backend-queue": "video-encoding",
-  "backend-migration": "search-infra",
-  "backend-scaling": "search-infra",
-  "pm-priority": "mobile-growth",
-  "pm-metrics": "fraud-dashboard",
-  "pm-goals": "mobile-growth",
-  "pm-feedback": "mobile-growth",
-  "pm-strategy": "fraud-dashboard",
-  "pm-launch": "mobile-growth",
-  "data-adhoc": "fraud-dashboard",
-  "data-dashboard": "fraud-dashboard",
-  "data-model": "fraud-dashboard",
-  "data-experiment": "search-ranking",
-  "data-forecast": "fraud-dashboard",
-  "data-scaling": "search-infra",
-  "design-prototype": "mobile-growth",
-  "design-style": "mobile-growth",
-  "design-research": "mobile-growth",
-  "design-dashboard-prototype": "fraud-dashboard",
-  "design-system": "mobile-growth",
-  "design-ops": "docs-update",
-  "mobile-onboarding": "mobile-growth",
-  "security-control-center": "security-patch",
-  "ops-analytics-dashboard": "fraud-dashboard",
-  "wallet-outage": "surge-api",
-  "copilot-trust": "ai-copilot",
-  "data-migration-freeze": "search-infra",
-};
-
-function buildNetflixIncidentReport() {
-  return [
-    "# Netflix P0 Incident Report - Recommendation Deployment",
-    "",
-    "## Situation",
-    "Peak-traffic deployment `reco-ranker-2026.05.15.1742` introduced elevated playback start failures after the recommendation service began issuing slower candidate-set responses. The incident appears tied to a retry storm, cache invalidation pressure, and partial rollback failure in EU-West.",
-    "",
-    "## Candidate responsibilities",
-    "- Investigate service logs and live metrics before declaring root cause.",
-    "- Communicate impact and ETA to leadership without overstating certainty.",
-    "- Decide whether to continue rollback, isolate traffic, or patch forward.",
-    "- Coordinate backend, QA, product, UX messaging, and executive updates.",
-    "",
-    "## Detailed timeline",
-    "| Time UTC | Event | Failure rate | Regions | Severity | Notes |",
-    "| --- | --- | ---: | --- | --- | --- |",
-    "| 17:42 | Recommendation deployment started at 5% canary | 0.8% | us-east, eu-west | SEV3 | Initial metrics normal. |",
-    "| 17:47 | Canary expanded to 25% | 1.9% | us-east, eu-west | SEV3 | Cache hit rate fell from 94% to 83%. |",
-    "| 17:51 | Playback start failures crossed alert threshold | 4.7% | eu-west | SEV2 | Timeout errors concentrated on personalized rows. |",
-    "| 17:55 | Auto rollback triggered | 6.4% | eu-west, ap-south | SEV2 | Rollback controller stalled on mixed pod set. |",
-    "| 18:02 | Social complaints visible | 8.1% | global | SEV1 | Support tagged top complaint: title loads, playback fails. |",
-    "| 18:08 | Servers overloaded | 10.6% | eu-west | SEV1 | Retry traffic saturated cache shards 12, 14, 19. |",
-    "| 18:12 | Leadership joined bridge | 11.8% | global | SEV1 | ETA requested. No confirmed root cause yet. |",
-    "",
-    "## Current hypotheses",
-    "1. Recommendation service retry policy is creating a thundering herd against cache and ranking backends.",
-    "2. Cache invalidation now runs async but does not dedupe keys per profile batch, causing memory growth and stale hot rows.",
-    "3. Rollback is partial because EU-West deployment controller is waiting for long-running warmup pods to drain.",
-    "4. Playback failures are secondary: playback service is healthy but blocks while waiting for personalized rows.",
-    "",
-    "## Open decisions",
-    "- Continue rollback and hard-disable personalized rows in EU until cache stabilizes.",
-    "- Patch retry/circuit breaker behavior and keep canary active only in stable regions.",
-    "- Send customer-facing status copy acknowledging streaming failures without overexplaining internals.",
-    "",
-    "## Required next update format",
-    "Impact: affected regions and failure rate.",
-    "Decision: rollback, isolate, or patch-forward.",
-    "Owner: Dante for service mitigation, Priya for validation, Maya for leadership update.",
-    "ETA: give confidence level and next checkpoint.",
-  ].join("\n");
+  if (!workspaceFilesModulePromise) {
+    workspaceFilesModulePromise = import(WORKSPACE_FILES_MODULE_PATH).catch((error) => {
+      console.warn("Could not load workspaceFiles.js", error);
+      workspaceFilesModulePromise = null;
+      return null;
+    });
+  }
+  return workspaceFilesModulePromise;
 }
 
-function buildNetflixServerLogs() {
-  const lines = [
-    "timestamp level region host trace_id component message",
-    "2026-05-15T17:42:11.432Z INFO us-east-1 reco-api-0 a19f deploy canary=reco-ranker-2026.05.15.1742 weight=5%",
-    "2026-05-15T17:47:03.012Z INFO eu-west-1 reco-api-4 b83a deploy canary_expanded weight=25%",
-  ];
-  const regions = ["eu-west-1", "us-east-1", "ap-south-1", "sa-east-1"];
-  const hosts = ["reco-api-4", "reco-api-7", "playback-gw-2", "cache-shard-12", "ranking-worker-5"];
-  const failures = [
-    "WARN retry attempt=2 route=/v3/recommendations/home timeout_ms=850 budget_remaining_ms=120",
-    "ERROR timeout downstream=ranking-v2 elapsed_ms=1900 circuit=open:false",
-    "WARN cache_miss key=user_profile:v3:{profile} hot_key=true ttl=0 invalidation_pending=true",
-    "ERROR playback_start_failed reason=reco_timeout stream_state=manifest_ready personalization_wait=true",
-    "WARN rollback controller_state=mixed_pods desired=reco-ranker-prev observed=reco-ranker-2026.05.15.1742",
-    "ERROR cache write failed shard={shard} err=ConnectionResetError retries=3",
-    "WARN distributed_trace gap parent_span=reco_request child_span=cache_fill missing=true",
-  ];
-  for (let i = 0; i < 72; i += 1) {
-    const minute = String(48 + Math.floor(i / 4)).padStart(2, "0");
-    const second = String((i * 7) % 60).padStart(2, "0");
-    const region = regions[i % regions.length];
-    const host = hosts[i % hosts.length];
-    const level = i % 5 === 0 ? "ERROR" : i % 3 === 0 ? "WARN" : "INFO";
-    const raw = failures[i % failures.length]
-      .replace("{profile}", String(880000 + i * 17))
-      .replace("{shard}", String(10 + (i % 12)));
-    lines.push(`2026-05-15T17:${minute}:${second}.0${i % 9}Z ${level} ${region} ${host} trace-${8000 + i} ${raw}`);
-    if (i % 11 === 0) {
-      lines.push("Traceback (most recent call last):");
-      lines.push("  File \"/srv/reco/recommendation_service.py\", line 188, in fetch_ranked_titles");
-      lines.push("    ranked = await self._ranking_client.rank(candidate_set, timeout_ms=budget.remaining())");
-      lines.push("  File \"/srv/reco/cache_layer.py\", line 96, in get_or_fill");
-      lines.push("    await self._pending_invalidations[user_key].wait()");
-      lines.push("TimeoutError: ranking-v2 exceeded remaining request budget while cache invalidation lock was held");
+function normalizeWorkspaceFiles(files) {
+  return (Array.isArray(files) ? files : [])
+    .filter((file) => file && typeof file === "object")
+    .map((file, index) => ({
+      id: file.id || `file-${index}`,
+      name: file.name || "Untitled",
+      kind: file.type || file.kind || "code",
+      content: file.content || "",
+      language: file.language || "text",
+    }));
+}
+
+function attachWorkspaceFilesToTaskDefinitions(fileMap) {
+  if (!fileMap || typeof fileMap !== "object") {
+    return false;
+  }
+
+  let attached = false;
+  Object.values(TASKS).forEach((levels) => {
+    Object.values(levels).forEach((tasks) => {
+      tasks.forEach((task) => {
+        const workspaceFiles = normalizeWorkspaceFiles(fileMap[task.id]);
+        if (workspaceFiles.length) {
+          task.workspaceFiles = workspaceFiles;
+          task.files = workspaceFiles.map((file) => file.name);
+          attached = true;
+        }
+      });
+    });
+  });
+  return attached;
+}
+
+async function hydrateSimulationWorkspaceFiles() {
+  const mod = await loadWorkspaceFilesModule();
+  const fileMap = (mod && (mod.default || mod.WORKSPACE_FILES)) || window.WORKSPACE_FILES || null;
+  attachWorkspaceFilesToTaskDefinitions(fileMap);
+}
+
+async function taskPayloadWithWorkspaceFiles(task) {
+  if (!task) {
+    return null;
+  }
+
+  if (Array.isArray(task.workspaceFiles) && task.workspaceFiles.length) {
+    return task;
+  }
+
+  const mod = await loadWorkspaceFilesModule();
+  const getter = (mod && mod.getWorkspaceFiles) || window.getWorkspaceFiles;
+  const workspaceFiles = normalizeWorkspaceFiles(getter ? getter(task.id) : []);
+  if (!workspaceFiles.length) {
+    return task;
+  }
+
+  return {
+    ...task,
+    files: workspaceFiles.map((file) => file.name),
+    workspaceFiles,
+  };
+}
+
+const TASKS = {
+  "Frontend": {
+    "Beginner": [
+      {
+        id: "frontend-homeflow",
+        company: "Shoply",
+        logo: "S",
+        label: "Shoply Onboarding UI",
+        title: "Checkout Flow Improvements",
+        description: "Optimize the checkout screen for faster conversions and smoother input validation.",
+        role: "Frontend",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["React UI", "Accessibility", "Form validation"]
+      },
+      {
+        id: "frontend-dashboard",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Analytics Panel",
+        title: "Dashboard Performance Fix",
+        description: "Find the slow rendering issue in the analytics widget and make it fast for mobile users.",
+        role: "Frontend",
+        time: "35 mins",
+        difficulty: "Beginner",
+        teamSize: "2",
+        skills: ["Performance", "CSS", "Debugging"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "frontend-product",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Product Launch",
+        title: "Interactive Feature Banner",
+        description: "Build a launch banner that updates dynamically based on user segment and AB test status.",
+        role: "Frontend",
+        time: "55 mins",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Component design", "State management", "A/B testing"]
+      },
+      {
+        id: "frontend-accessibility",
+        company: "Nexa",
+        logo: "N",
+        label: "Nexa Accessibility Audit",
+        title: "Upgrade Keyboard Navigation",
+        description: "Improve the app's keyboard and screen reader support for the main content flow.",
+        role: "Frontend",
+        time: "1 hour",
+        difficulty: "Intermediate",
+        teamSize: "3",
+        skills: ["Accessibility", "UI/UX", "Documentation"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "frontend-spa",
+        company: "Astra",
+        logo: "A",
+        label: "Astra SPA Migration",
+        title: "Migrate Widget to Single Page App",
+        description: "Lead the frontend migration of a legacy widget into the new SPA shell without interrupting users.",
+        role: "Frontend",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Architecture", "Performance", "Release planning"]
+      },
+      {
+        id: "frontend-visual",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Visual Refresh",
+        title: "Revamp the Design System",
+        description: "Execute a polished refresh of core UI components while preserving existing branding.",
+        role: "Frontend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Design system", "Component library", "Cross-team alignment"]
+      }
+    ]
+  },
+  "Backend": {
+    "Beginner": [
+      {
+        id: "backend-api-health",
+        company: "Orbit",
+        logo: "O",
+        label: "Orbit API Health",
+        title: "Debug the API timeout path",
+        description: "Investigate the outage in the public API and restore healthy responses fast.",
+        role: "Backend",
+        time: "40 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Debugging", "Metrics", "API stability"]
+      },
+      {
+        id: "backend-cache",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Cache Fix",
+        title: "Stabilize the cache layer",
+        description: "Resolve stale read issues with the cache invalidation strategy and document the behavior.",
+        role: "Backend",
+        time: "50 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Caching", "Data consistency", "Logging"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "backend-auth",
+        company: "Forge",
+        logo: "F",
+        label: "Forge Auth Harden",
+        title: "Stabilize the Login Service",
+        description: "Fix the login retry flow so valid users can recover without getting blocked.",
+        role: "Backend",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Session handling", "API design", "Reliability"]
+      },
+      {
+        id: "backend-queue",
+        company: "Altitude",
+        logo: "A",
+        label: "Altitude Queue Repair",
+        title: "Recover the job queue",
+        description: "Fix message ordering and retry behavior for the background worker pipeline.",
+        role: "Backend",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Queueing", "Resiliency", "Testing"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "backend-migration",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson DB Migration",
+        title: "Plan a safe schema change",
+        description: "Plan a database change that preserves user flows while the team updates the schema.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Database", "Release planning", "Rollback planning"]
+      },
+      {
+        id: "backend-scaling",
+        company: "Nimbus",
+        logo: "N",
+        label: "Nimbus Scale Event",
+        title: "Build automatic scaling safeguards",
+        description: "Create backend spike-handling rules that protect users during traffic surges.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Scalability", "Queue pressure", "Incident readiness"]
+      }
+    ]
+  },
+  "Product Manager": {
+    "Beginner": [
+      {
+        id: "pm-priority",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Feature Prioritization",
+        title: "Define the next sprint scope",
+        description: "Review customer feedback and decide which features must ship first for the upcoming release.",
+        role: "Product Manager",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Prioritization", "Stakeholder alignment", "Roadmapping"]
+      },
+      {
+        id: "pm-metrics",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Metrics Review",
+        title: "Validate launch KPIs",
+        description: "Audit the product metrics dashboard and confirm the leading indicators for success.",
+        role: "Product Manager",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Metrics", "Analysis", "Communication"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "pm-goals",
+        company: "Nexa",
+        logo: "N",
+        label: "Nexa GTM Plan",
+        title: "Create a go-to-market brief",
+        description: "Draft the launch plan and stakeholder messaging for a new mobile product.",
+        role: "Product Manager",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Launch planning", "User research", "Communication"]
+      },
+      {
+        id: "pm-feedback",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Feedback Loop",
+        title: "Turn customer insights into action",
+        description: "Translate qualitative user feedback into clear product changes and a follow-up plan.",
+        role: "Product Manager",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Customer insight", "Prioritization", "Roadmap"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "pm-strategy",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Strategy Sprint",
+        title: "Set the next quarter strategy",
+        description: "Define a compelling product strategy and leadership narrative for the upcoming quarter.",
+        role: "Product Manager",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Strategy", "Leadership", "Narrative"]
+      },
+      {
+        id: "pm-launch",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Launch Execution",
+        title: "Lead cross-functional launch readiness",
+        description: "Ensure engineering, design, and marketing are aligned for a successful feature release.",
+        role: "Product Manager",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Coordination", "Execution", "Risk management"]
+      }
+    ]
+  },
+  "Data Analyst": {
+    "Beginner": [
+      {
+        id: "data-adhoc",
+        company: "Orbit",
+        logo: "O",
+        label: "Orbit Ad-hoc Analysis",
+        title: "Answer a growth question",
+        description: "Produce a quick analysis of conversion and retention for the latest campaign.",
+        role: "Data Analyst",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["SQL", "Data storytelling", "Reporting"]
+      },
+      {
+        id: "data-dashboard",
+        company: "Forge",
+        logo: "F",
+        label: "Forge Reporting Update",
+        title: "Clean up the metrics dashboard",
+        description: "Fix metric definitions and clarify the dashboard for product and growth stakeholders.",
+        role: "Data Analyst",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["Dashboarding", "Metrics", "Documentation"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "data-model",
+        company: "Nimbus",
+        logo: "N",
+        label: "Nimbus Data Model",
+        title: "Validate the reporting pipeline",
+        description: "Audit the event model and ensure analytics are accurate for the product dashboard.",
+        role: "Data Analyst",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Data modeling", "Validation", "Stakeholder sync"]
+      },
+      {
+        id: "data-experiment",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Experiment",
+        title: "Design a measurement plan",
+        description: "Define the success metrics for a new retention experiment and present the analysis approach.",
+        role: "Data Analyst",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Experimentation", "Analysis", "Communication"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "data-forecast",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson Forecast",
+        title: "Build the next quarter forecast",
+        description: "Develop a data-driven plan for revenue and retention that the executive team can trust.",
+        role: "Data Analyst",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Forecasting", "Executive reporting", "Scenario analysis"]
+      },
+      {
+        id: "data-scaling",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Data Scale",
+        title: "Scale analytics for growth",
+        description: "Design the analytics controls needed to support a platform scaling from 100k to 1M users.",
+        role: "Data Analyst",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Scale", "Data governance", "Architecture"]
+      }
+    ]
+  },
+  "Designer": {
+    "Beginner": [
+      {
+        id: "design-prototype",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Microcopy Audit",
+        title: "Improve the mobile signup flow",
+        description: "Refine the screens and microcopy for a smoother onboarding experience.",
+        role: "Product Designer",
+        time: "45 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["UX", "Copy", "Visual polish"]
+      },
+      {
+        id: "design-style",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Style Update",
+        title: "Refresh the product card library",
+        description: "Align the existing cards with the brand system and improve legibility.",
+        role: "Product Designer",
+        time: "40 mins",
+        difficulty: "Medium",
+        teamSize: "3",
+        skills: ["Design systems", "Brand", "UI"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "design-research",
+        company: "Nexa",
+        logo: "N",
+        label: "Nexa User Research",
+        title: "Synthesize feedback into design changes",
+        description: "Collect user insights and turn them into actionable UI improvements.",
+        role: "Product Designer",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Research", "Synthesis", "Wireframing"]
+      },
+      {
+        id: "design-dashboard-prototype",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Prototype",
+        title: "Prototype a new dashboard interaction",
+        description: "Design and prototype a richer interaction for the metrics dashboard.",
+        role: "Product Designer",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Interaction", "Prototyping", "Testing"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "design-system",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Design System",
+        title: "Lead the component library overhaul",
+        description: "Drive a brand-consistent system upgrade across web and mobile interfaces.",
+        role: "Product Designer",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Design systems", "Leadership", "Cross-platform"]
+      },
+      {
+        id: "design-ops",
+        company: "Crimson",
+        logo: "C",
+        label: "Crimson Design Ops",
+        title: "Create a design delivery framework",
+        description: "Establish the process and tooling for faster, higher quality design handoffs.",
+        role: "Product Designer",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Process", "Collaboration", "Quality"]
+      }
+    ]
+  },
+  "QA Engineer": {
+    "Beginner": [
+      {
+        id: "qa-checkout-regression",
+        company: "Shoply",
+        logo: "S",
+        label: "Shoply Regression Room",
+        title: "Validate checkout recovery",
+        description: "Find the riskiest checkout edge cases and decide what blocks release.",
+        role: "QA Engineer",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "4",
+        skills: ["Regression testing", "Bug triage", "Release safety"]
+      },
+      {
+        id: "qa-onboarding-mobile",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Mobile QA",
+        title: "Test mobile onboarding under pressure",
+        description: "Validate confusing onboarding states before a same-day product review.",
+        role: "QA Engineer",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Mobile QA", "Edge cases", "Communication"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "qa-release-blocker",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Release Gate",
+        title: "Investigate a release blocker",
+        description: "QA found inconsistent recovery behavior. Work with the team to decide ship, hold, or narrow.",
+        role: "QA Engineer",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "5",
+        skills: ["Release blocking", "Validation strategy", "Risk communication"]
+      },
+      {
+        id: "qa-analytics-mismatch",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Metrics QA",
+        title: "Validate analytics mismatch",
+        description: "Events are firing inconsistently and product needs confidence before quoting the numbers.",
+        role: "QA Engineer",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Data QA", "Reproduction", "Stakeholder updates"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "qa-sprint-signoff",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Signoff Sprint",
+        title: "Lead release signoff under pressure",
+        description: "Coordinate QA evidence, open risks, and team tradeoffs before a high-visibility release.",
+        role: "QA Engineer",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Release judgment", "Risk ownership", "Cross-functional collaboration"]
+      },
+      {
+        id: "qa-support-spike",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Support Spike",
+        title: "Triage customer-reported failures",
+        description: "Support tickets are rising after a rollout. Separate real regressions from noise and guide the room.",
+        role: "QA Engineer",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Bug triage", "Customer impact", "Escalation handling"]
+      }
+    ]
+  }
+};
+
+TASKS["Frontend Engineer"] = TASKS.Frontend;
+TASKS["Backend Engineer"] = TASKS.Backend;
+TASKS["Product Designer"] = TASKS.Designer;
+
+const AGENT_PROFILES = [
+  {
+    id: "pm",
+    dmKey: "asha",
+    name: "Asha",
+    title: "Product Manager",
+    kind: "pm",
+    avatar: "A",
+    lane: "product scope, priority, user impact, business impact, and stakeholder updates",
+  },
+  {
+    id: "backend",
+    dmKey: "ravi",
+    name: "Ravi",
+    title: "Engineering Lead",
+    kind: "eng",
+    avatar: "R",
+    lane: "backend logic, APIs, feasibility, data flow, scaling risk, and rollback",
+  },
+  {
+    id: "designer",
+    dmKey: "mira",
+    name: "Mira",
+    title: "Product Designer",
+    kind: "design",
+    avatar: "M",
+    lane: "UX clarity, onboarding friction, accessibility, visual consistency, and customer confusion",
+  },
+  {
+    id: "qa",
+    dmKey: "kenji",
+    name: "Kenji",
+    title: "QA Engineer",
+    kind: "qa",
+    avatar: "K",
+    lane: "bugs, edge cases, testing, rollback risk, and release proof",
+  },
+  {
+    id: "data",
+    dmKey: "leah",
+    name: "Leah",
+    title: "Data Analyst",
+    kind: "data",
+    avatar: "L",
+    lane: "metrics, trends, conversion drops, retention analysis, and experiment insight",
+  },
+];
+
+const DM_MESSAGE_KEYS = ["asha", "ravi", "mira", "kenji", "leah"];
+
+const TEAM_ORDER_BY_DOMAIN = {
+  frontend: ["pm", "designer", "backend", "qa", "data"],
+  backend: ["pm", "backend", "qa", "designer", "data"],
+  data: ["pm", "data", "backend", "qa", "designer"],
+  design: ["pm", "designer", "qa", "backend", "data"],
+  qa: ["pm", "qa", "backend", "designer", "data"],
+  pm: ["pm", "designer", "data", "backend", "qa"],
+};
+
+function roleDomain(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(qa|quality|tester|testing|test engineer)\b/.test(text)) return "qa";
+  if (/\b(data|analyst|analytics|metric|forecast|experiment|sql|dashboard)\b/.test(text)) return "data";
+  if (/\b(design|designer|ux|ui|accessibility|prototype|microcopy)\b/.test(text)) return "design";
+  if (/\b(frontend|front-end|react|component|mobile|css|keyboard|screen)\b/.test(text)) return "frontend";
+  if (/\b(backend|api|server|cache|queue|database|migration|scaling|worker)\b/.test(text)) return "backend";
+  if (/\b(product|pm|launch|priority|roadmap|stakeholder|go-to-market|strategy)\b/.test(text)) return "pm";
+  return "pm";
+}
+
+function agentIdForRoleDomain(domain) {
+  return {
+    frontend: "designer",
+    design: "designer",
+    backend: "backend",
+    data: "data",
+    qa: "qa",
+    pm: "pm",
+  }[domain] || null;
+}
+
+function candidateAgentIdForMission(mission) {
+  const explicitRole = localStorage.getItem("userRole") || "";
+  const fallbackRole = mission && (mission.candidateRole || mission.role || mission.headline || mission.summary);
+  return agentIdForRoleDomain(roleDomain(explicitRole || fallbackRole || ""));
+}
+
+function backendTaskIdForTask(task) {
+  const combined = [
+    task && task.role,
+    task && task.title,
+    task && task.description,
+    task && task.label,
+    ...(Array.isArray(task && task.skills) ? task.skills : []),
+  ].join(" ");
+  const domain = roleDomain(combined);
+  if (domain === "backend") return "login-recovery";
+  if (domain === "qa") return "qa-release";
+  if (domain === "data") return "fraud-dashboard";
+  if (domain === "design") return "docs-update";
+  return "mobile-growth";
+}
+
+const TASK_TO_BACKEND_TASK_ID = Object.values(TASKS).reduce((acc, levels) => {
+  Object.values(levels).forEach((tasks) => {
+    tasks.forEach((task) => {
+      acc[task.id] = backendTaskIdForTask(task);
+    });
+  });
+  return acc;
+}, {});
+
+function findTaskDefinitionById(taskId) {
+  if (!taskId) return null;
+  for (const role of Object.values(TASKS)) {
+    for (const level of Object.values(role)) {
+      const task = level.find((entry) => entry.id === taskId);
+      if (task) return task;
     }
   }
-  lines.push("2026-05-15T18:12:44.993Z CRITICAL global incident-bridge sev=1 complaints=18422 active_users_delta=-12.7% eta=unknown");
-  return lines.join("\n");
+  return null;
 }
 
-function buildNetflixRecommendationService() {
-  return [
-    "import asyncio",
-    "import logging",
-    "import random",
-    "import time",
-    "from dataclasses import dataclass",
-    "from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple",
-    "",
-    "from cache_layer import AsyncProfileCache, CacheUnavailable",
-    "",
-    "logger = logging.getLogger(\"reco.service\")",
-    "",
-    "class RecommendationError(Exception):",
-    "    pass",
-    "",
-    "@dataclass",
-    "class RequestBudget:",
-    "    started_at: float",
-    "    max_ms: int",
-    "",
-    "    def remaining(self) -> int:",
-    "        elapsed = int((time.monotonic() - self.started_at) * 1000)",
-    "        return max(0, self.max_ms - elapsed)",
-    "",
-    "@dataclass",
-    "class RecommendationRequest:",
-    "    profile_id: str",
-    "    region: str",
-    "    device_type: str",
-    "    row_count: int = 12",
-    "    include_experiments: bool = True",
-    "",
-    "class RecommendationService:",
-    "    def __init__(self, ranking_client: Any, playback_client: Any, cache: AsyncProfileCache, metrics: Any) -> None:",
-    "        self._ranking_client = ranking_client",
-    "        self._playback_client = playback_client",
-    "        self._cache = cache",
-    "        self._metrics = metrics",
-    "        self._inflight_profiles: Dict[str, asyncio.Task] = {}",
-    "        self._circuit_open_until = 0.0",
-    "        self._max_retries = 3",
-    "",
-    "    async def handle_home_request(self, request: RecommendationRequest) -> Dict[str, Any]:",
-    "        budget = RequestBudget(started_at=time.monotonic(), max_ms=1200)",
-    "        self._metrics.increment(\"reco.request\", tags={\"region\": request.region})",
-    "        if self._is_circuit_open():",
-    "            logger.warning(\"circuit_open fallback profile_id=%s region=%s\", request.profile_id, request.region)",
-    "            return await self._fallback_rows(request, reason=\"circuit_open\")",
-    "",
-    "        try:",
-    "            profile = await self._load_profile(request, budget)",
-    "            candidates = await self._candidate_set(profile, request, budget)",
-    "            ranked = await self._rank_with_retry(candidates, request, budget)",
-    "            playable = await self._filter_unplayable(ranked, request, budget)",
-    "            return {\"profileId\": request.profile_id, \"rows\": playable[: request.row_count], \"fallback\": False}",
-    "        except asyncio.TimeoutError as exc:",
-    "            self._metrics.increment(\"reco.timeout\", tags={\"region\": request.region})",
-    "            logger.exception(\"recommendation timeout profile_id=%s remaining=%s\", request.profile_id, budget.remaining())",
-    "            self._trip_circuit_if_needed(request.region)",
-    "            return await self._fallback_rows(request, reason=\"timeout\")",
-    "        except CacheUnavailable:",
-    "            self._metrics.increment(\"reco.cache_unavailable\", tags={\"region\": request.region})",
-    "            # TODO: This fallback still calls ranking on some paths. During incidents it should avoid ranking entirely.",
-    "            return await self._fallback_rows(request, reason=\"cache_unavailable\")",
-    "",
-    "    async def _load_profile(self, request: RecommendationRequest, budget: RequestBudget) -> Dict[str, Any]:",
-    "        cache_key = f\"profile:v3:{request.profile_id}:{request.region}\"",
-    "        if cache_key in self._inflight_profiles:",
-    "            # Possible race condition: a cancelled task can remain here and every caller awaits stale work.",
-    "            return await self._inflight_profiles[cache_key]",
-    "        task = asyncio.create_task(self._cache.get_or_fill(cache_key, lambda: self._fetch_profile(request), ttl_seconds=180))",
-    "        self._inflight_profiles[cache_key] = task",
-    "        try:",
-    "            return await asyncio.wait_for(task, timeout=budget.remaining() / 1000)",
-    "        finally:",
-    "            # TODO: use task.add_done_callback cleanup; current cleanup is skipped if wait_for cancellation propagates.",
-    "            if task.done():",
-    "                self._inflight_profiles.pop(cache_key, None)",
-    "",
-    "    async def _fetch_profile(self, request: RecommendationRequest) -> Dict[str, Any]:",
-    "        await asyncio.sleep(0.012)",
-    "        return {\"profile_id\": request.profile_id, \"taste_vectors\": [random.random() for _ in range(32)]}",
-    "",
-    "    async def _candidate_set(self, profile: Dict[str, Any], request: RecommendationRequest, budget: RequestBudget) -> List[str]:",
-    "        if budget.remaining() < 200:",
-    "            raise asyncio.TimeoutError(\"budget exhausted before candidate set\")",
-    "        rows = [f\"title-{request.region}-{idx}\" for idx in range(180)]",
-    "        if request.include_experiments:",
-    "            rows.extend([f\"exp-ranker-{idx}\" for idx in range(40)])",
-    "        return rows",
-    "",
-    "    async def _rank_with_retry(self, candidates: Sequence[str], request: RecommendationRequest, budget: RequestBudget) -> List[str]:",
-    "        last_error: Optional[BaseException] = None",
-    "        for attempt in range(self._max_retries):",
-    "            try:",
-    "                timeout = max(0.05, min(0.55, budget.remaining() / 1000))",
-    "                return await asyncio.wait_for(self._ranking_client.rank(candidates, request.profile_id), timeout=timeout)",
-    "            except Exception as exc:",
-    "                last_error = exc",
-    "                self._metrics.increment(\"reco.rank_retry\", tags={\"attempt\": str(attempt), \"region\": request.region})",
-    "                # Scalability problem: jitter can still align thousands of retries during cache misses.",
-    "                await asyncio.sleep(0.03 * (attempt + 1))",
-    "        raise RecommendationError(f\"ranking failed after retries: {last_error}\")",
-    "",
-    "    async def _filter_unplayable(self, ranked: Iterable[str], request: RecommendationRequest, budget: RequestBudget) -> List[Dict[str, Any]]:",
-    "        playable: List[Dict[str, Any]] = []",
-    "        for title_id in list(ranked)[:120]:",
-    "            if budget.remaining() <= 0:",
-    "                break",
-    "            is_playable = await self._playback_client.is_playable(title_id, region=request.region)",
-    "            if is_playable:",
-    "                playable.append({\"titleId\": title_id, \"reason\": \"personalized\"})",
-    "        return playable",
-    "",
-    "    async def _fallback_rows(self, request: RecommendationRequest, reason: str) -> Dict[str, Any]:",
-    "        self._metrics.increment(\"reco.fallback\", tags={\"reason\": reason, \"region\": request.region})",
-    "        return {",
-    "            \"profileId\": request.profile_id,",
-    "            \"rows\": [{\"titleId\": f\"safe-popular-{i}\", \"reason\": reason} for i in range(request.row_count)],",
-    "            \"fallback\": True,",
-    "        }",
-    "",
-    "    def _is_circuit_open(self) -> bool:",
-    "        return time.monotonic() < self._circuit_open_until",
-    "",
-    "    def _trip_circuit_if_needed(self, region: str) -> None:",
-    "        # TODO: make this per-region. Global circuit is too blunt but safer than a retry storm.",
-    "        self._circuit_open_until = time.monotonic() + 45",
-    "        logger.error(\"recommendation circuit opened region=%s seconds=45\", region)",
-  ].join("\n");
-}
-
-function buildNetflixCacheLayer() {
-  return [
-    "import asyncio",
-    "import logging",
-    "import time",
-    "from collections import defaultdict",
-    "from dataclasses import dataclass",
-    "from typing import Any, Awaitable, Callable, Dict, Optional",
-    "",
-    "logger = logging.getLogger(\"reco.cache\")",
-    "",
-    "class CacheUnavailable(Exception):",
-    "    pass",
-    "",
-    "@dataclass",
-    "class CacheEntry:",
-    "    value: Any",
-    "    expires_at: float",
-    "    version: int",
-    "",
-    "class AsyncProfileCache:",
-    "    def __init__(self, redis_client: Any, metrics: Any) -> None:",
-    "        self._redis = redis_client",
-    "        self._metrics = metrics",
-    "        self._local: Dict[str, CacheEntry] = {}",
-    "        self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)",
-    "        self._pending_invalidations: Dict[str, asyncio.Event] = {}",
-    "        self._background_tasks = set()",
-    "",
-    "    async def get_or_fill(self, key: str, loader: Callable[[], Awaitable[Any]], ttl_seconds: int) -> Any:",
-    "        local = self._local.get(key)",
-    "        if local and local.expires_at > time.time():",
-    "            self._metrics.increment(\"cache.local_hit\")",
-    "            return local.value",
-    "",
-    "        invalidation = self._pending_invalidations.get(key)",
-    "        if invalidation and not invalidation.is_set():",
-    "            await asyncio.wait_for(invalidation.wait(), timeout=0.2)",
-    "",
-    "        async with self._locks[key]:",
-    "            local = self._local.get(key)",
-    "            if local and local.expires_at > time.time():",
-    "                return local.value",
-    "            try:",
-    "                packed = await self._redis.get(key)",
-    "            except Exception as exc:",
-    "                logger.warning(\"redis get failed key=%s err=%r\", key, exc)",
-    "                raise CacheUnavailable() from exc",
-    "            if packed:",
-    "                value = self._deserialize(packed)",
-    "                self._local[key] = CacheEntry(value=value, expires_at=time.time() + min(ttl_seconds, 30), version=1)",
-    "                return value",
-    "",
-    "            value = await loader()",
-    "            await self.set_async(key, value, ttl_seconds)",
-    "            return value",
-    "",
-    "    async def set_async(self, key: str, value: Any, ttl_seconds: int) -> None:",
-    "        self._local[key] = CacheEntry(value=value, expires_at=time.time() + min(ttl_seconds, 30), version=1)",
-    "        task = asyncio.create_task(self._write_behind(key, value, ttl_seconds))",
-    "        self._background_tasks.add(task)",
-    "        # Potential memory leak: completed tasks are only cleaned up on writes, not when traffic stops.",
-    "        task.add_done_callback(lambda done: self._background_tasks.discard(done))",
-    "",
-    "    async def invalidate_profile(self, profile_id: str, region: str) -> None:",
-    "        keys = [",
-    "            f\"profile:v3:{profile_id}:{region}\",",
-    "            f\"profile:v3:{profile_id}:global\",",
-    "            f\"rows:v2:{profile_id}:{region}\",",
-    "        ]",
-    "        for key in keys:",
-    "            event = asyncio.Event()",
-    "            self._pending_invalidations[key] = event",
-    "            self._local.pop(key, None)",
-    "            try:",
-    "                await self._redis.delete(key)",
-    "            finally:",
-    "                event.set()",
-    "                # TODO: remove pending event after a short delay. Current map grows with every profile invalidation.",
-    "",
-    "    async def bulk_invalidate_region(self, region: str, profile_ids: list[str]) -> None:",
-    "        # Scalability problem: this launches one task per profile and can flood Redis during deploy rollback.",
-    "        tasks = [asyncio.create_task(self.invalidate_profile(profile_id, region)) for profile_id in profile_ids]",
-    "        await asyncio.gather(*tasks, return_exceptions=True)",
-    "",
-    "    async def _write_behind(self, key: str, value: Any, ttl_seconds: int) -> None:",
-    "        try:",
-    "            await self._redis.set(key, self._serialize(value), ex=ttl_seconds)",
-    "        except Exception:",
-    "            logger.exception(\"cache write behind failed key=%s\", key)",
-    "            self._metrics.increment(\"cache.write_failed\")",
-    "",
-    "    def _serialize(self, value: Any) -> bytes:",
-    "        return repr(value).encode(\"utf-8\")",
-    "",
-    "    def _deserialize(self, packed: bytes) -> Any:",
-    "        # Technical debt: repr/eval compatibility from legacy service. Replace with typed msgpack.",
-    "        return eval(packed.decode(\"utf-8\"), {\"__builtins__\": {}})",
-  ].join("\n");
-}
-
-function buildNetflixDeploymentChanges() {
-  return [
-    "# Recent Infrastructure Updates",
-    "",
-    "- Deployed `reco-ranker-2026.05.15.1742` to 25% global traffic.",
-    "- Enabled async cache invalidation for profile rows.",
-    "- Increased ranking candidate set from 120 to 220 titles for premium accounts.",
-    "- Changed rollback controller to wait for warmup pod drain before switching traffic.",
-    "- Added experiment flag `personalized_row_blend_v4` in EU-West and AP-South.",
-    "",
-    "## Suspect changes",
-    "1. Candidate expansion increases ranking latency under peak load.",
-    "2. Async invalidation does not dedupe hot profile keys.",
-    "3. Rollback waits for pods that are stuck with long-running warmup work.",
-    "",
-    "## Candidate action",
-    "Decide whether to disable `personalized_row_blend_v4`, open a per-region circuit, or patch retry/cache behavior before continuing rollback.",
-  ].join("\n");
-}
-
-function buildNetflixLeadershipChat() {
-  return JSON.stringify({
-    room: "streaming-war-room",
-    messages: [
-      { from: "Maya", role: "Incident PM", stress: "high", text: "Leadership wants ETA. We need impact and decision before the next update." },
-      { from: "Dante", role: "Streaming Platform", stress: "critical", text: "Rollback is partially failing. Stop repeating rollback as if it is a completed mitigation." },
-      { from: "Priya", role: "QA", stress: "high", text: "Validation must be per region. Global average hides EU-West." },
-      { from: "Reed", role: "Executive", stress: "critical", text: "CEO joined war room. Customer complaints are visible externally." },
-      { from: "Elena", role: "Playback UX", stress: "medium", text: "If we show a status message, say streaming may fail after title selection. That is what users see." },
-      { from: "Dante", role: "Streaming Platform", stress: "critical", text: "I disagree with patch-forward unless we add circuit breaking. Ranking retries are multiplying load." },
-      { from: "Maya", role: "Incident PM", stress: "high", text: "Candidate needs to make the call: isolate EU, disable personalization, or continue rollback." }
-    ]
-  }, null, 2);
-}
-
-function buildNetflixLiveMetricsPreview() {
-  return [
-    "PNG_PREVIEW: live_metrics.png",
-    "Dashboard panels:",
-    "- Active users: 92.4M -> 80.6M over 18 minutes, steepest drop in EU-West.",
-    "- Playback start failure rate: 0.8% baseline, 11.8% current, 16.2% EU-West.",
-    "- CPU: recommendation pods 91%, ranking workers 88%, cache shards 12/14/19 above 94%.",
-    "- Request latency p95: home recommendations 1840ms, playback gateway 620ms.",
-    "- Customer complaints: +28% in ten minutes, top terms: buffering, title loads then fails, app retry.",
-    "",
-    "Suggested candidate interpretation: playback is downstream symptom; recommendation/cache instability is primary incident driver.",
-  ].join("\n");
-}
-
-function buildLinkedInLaunchPlan() {
-  return [
-    "# LinkedIn AI Resume Assistant - Launch Plan",
-    "",
-    "## Public promise",
-    "Leadership announced that AI Resume Assistant will be available to selected premium members tomorrow. Marketing assets are staged. Engineering has not completed every launch blocker.",
-    "",
-    "## Launch objectives",
-    "- Help members rewrite resume bullets using role-specific suggestions.",
-    "- Improve onboarding completion for first-time job seekers.",
-    "- Keep AI output explainable, consistent, and editable.",
-    "- Protect mobile users from broken preview and inaccessible controls.",
-    "",
-    "## Deadline",
-    "- T-24h: QA signoff decision.",
-    "- T-18h: Enterprise and support messaging.",
-    "- T-12h: Final mobile smoke tests.",
-    "- T-4h: Executive go/no-go review.",
-    "",
-    "## Decision options",
-    "1. Full launch: highest marketing value, highest risk.",
-    "2. Limited beta: premium desktop only, mobile preview disabled, AI responses guarded.",
-    "3. Delay launch: safest for trust, requires public narrative from leadership.",
-    "",
-    "## Candidate task",
-    "Make a launch recommendation. Edit code if needed, identify blockers, and communicate tradeoffs to PM, engineering, QA, design, and executives.",
-  ].join("\n");
-}
-
-function buildLinkedInJiraBoard() {
-  const tasks = [
-    ["LRA-101", "BLOCKED", "P0", "Mobile preview overlaps action buttons", "ResumePreview.jsx", "Nora", "Depends on responsive layout fix"],
-    ["LRA-102", "BLOCKED", "P0", "AI rewrite returns inconsistent tone for same resume", "resumeAssistant.ts", "Marcus", "Depends on prompt cache fix"],
-    ["LRA-103", "IN_PROGRESS", "P1", "Onboarding does not explain AI edits", "launch_plan.md", "Jules", "Needs copy review"],
-    ["LRA-104", "DELAYED", "P1", "Analytics event resume_ai_accept missing on mobile", "analytics_dashboard.csv", "Anika", "Schema review pending"],
-    ["LRA-105", "OPEN", "P2", "Keyboard focus lost after preview regenerate", "ResumePreview.jsx", "Jules", "Accessibility issue"],
-    ["LRA-106", "BLOCKED", "P0", "QA signoff blocked by hallucinated credential wording", "qa_report.md", "Nora", "Needs guardrail"],
-    ["LRA-107", "IN_REVIEW", "P1", "Support macro for limited beta", "leadership_notes.txt", "Anika", "Needs VP approval"],
-    ["LRA-108", "DELAYED", "P2", "Resume import spinner lacks timeout state", "ResumePreview.jsx", "Marcus", "Low confidence estimate"],
-  ];
-  return JSON.stringify({
-    project: "AI Resume Assistant",
-    launchDate: "2026-05-16",
-    boardHealth: "red",
-    tasks: tasks.map(([key, status, priority, summary, component, owner, dependency]) => ({
-      key,
-      status,
-      priority,
-      summary,
-      component,
-      owner,
-      dependency,
-      labels: ["launch", priority === "P0" ? "launch-blocker" : "readiness"],
-    })),
-  }, null, 2);
-}
-
-function buildLinkedInResumeAssistant() {
-  return [
-    "import { createHash } from \"crypto\";",
-    "import { fetchWithTimeout } from \"./network/fetchWithTimeout\";",
-    "import { recordEvent } from \"./analytics\";",
-    "import { redactPII, normalizeResumeText } from \"./resumeSanitizer\";",
-    "",
-    "type ResumeAssistantRequest = {",
-    "  memberId: string;",
-    "  resumeText: string;",
-    "  targetRole?: string;",
-    "  locale: string;",
-    "  device: \"desktop\" | \"mobile\";",
-    "};",
-    "",
-    "type AssistantResult = {",
-    "  bullets: string[];",
-    "  confidence: number;",
-    "  source: \"cache\" | \"model\" | \"fallback\";",
-    "  warnings: string[];",
-    "};",
-    "",
-    "const responseCache = new Map<string, AssistantResult>();",
-    "const MAX_CACHE_SIZE = 5000;",
-    "",
-    "export class ResumeAssistantService {",
-    "  constructor(private readonly endpoint: string, private readonly apiKey: string) {}",
-    "",
-    "  async rewriteBullets(request: ResumeAssistantRequest): Promise<AssistantResult> {",
-    "    const normalized = normalizeResumeText(request.resumeText);",
-    "    const cacheKey = this.cacheKey(request.memberId, normalized, request.targetRole);",
-    "    const cached = responseCache.get(cacheKey);",
-    "    if (cached) {",
-    "      recordEvent(\"resume_ai_cache_hit\", { memberId: request.memberId, device: request.device });",
-    "      return cached;",
-    "    }",
-    "",
-    "    if (!normalized || normalized.length < 120) {",
-    "      return this.fallback(\"Resume text is too short for a reliable rewrite.\");",
-    "    }",
-    "",
-    "    const prompt = this.buildPrompt(normalized, request.targetRole, request.locale);",
-    "    try {",
-    "      const response = await fetchWithTimeout(this.endpoint, {",
-    "        method: \"POST\",",
-    "        headers: {",
-    "          \"Authorization\": `Bearer ${this.apiKey}`,",
-    "          \"Content-Type\": \"application/json\",",
-    "        },",
-    "        body: JSON.stringify({ prompt, temperature: 0.7, max_tokens: 650 }),",
-    "      }, 4200);",
-    "",
-    "      const payload = await response.json();",
-    "      const result = this.parseModelResponse(payload, request);",
-    "      if (result.confidence < 0.64) {",
-    "        result.warnings.push(\"Low confidence output requires member review before accepting.\");",
-    "      }",
-    "      this.remember(cacheKey, result);",
-    "      return result;",
-    "    } catch (error) {",
-    "      recordEvent(\"resume_ai_error\", { memberId: request.memberId, message: String(error) });",
-    "      return this.fallback(\"AI rewrite is temporarily unavailable. Keep original bullets editable.\");",
-    "    }",
-    "  }",
-    "",
-    "  private buildPrompt(resumeText: string, targetRole = \"\", locale: string): string {",
-    "    const safeText = redactPII(resumeText);",
-    "    // TODO: Add stronger instruction to avoid inventing employers, degrees, or metrics.",
-    "    return [",
-    "      \"Rewrite resume bullets for clarity and measurable impact.\",",
-    "      `Locale: ${locale}`.",
-    "      `Target role: ${targetRole || \"not specified\"}`.",
-    "      \"Never invent credentials. Preserve factual claims.\",",
-    "      safeText,",
-    "    ].join(\"\\n\\n\");",
-    "  }",
-    "",
-    "  private parseModelResponse(payload: any, request: ResumeAssistantRequest): AssistantResult {",
-    "    const rawBullets = Array.isArray(payload?.bullets) ? payload.bullets : String(payload?.text || \"\").split(\"\\n\");",
-    "    const bullets = rawBullets.map((line: string) => line.replace(/^[-*]\\s*/, \"\").trim()).filter(Boolean).slice(0, 8);",
-    "    const warnings: string[] = [];",
-    "    if (bullets.some((bullet) => /certified|phd|patent|fortune 500/i.test(bullet))) {",
-    "      warnings.push(\"Potential unsupported credential claim detected.\");",
-    "    }",
-    "    if (request.device === \"mobile\" && bullets.join(\" \").length > 1400) {",
-    "      warnings.push(\"Output may overflow mobile preview.\");",
-    "    }",
-    "    return { bullets, confidence: Number(payload?.confidence || 0.58), source: \"model\", warnings };",
-    "  }",
-    "",
-    "  private remember(key: string, result: AssistantResult): void {",
-    "    if (responseCache.size > MAX_CACHE_SIZE) {",
-    "      // Technical debt: deletes oldest insertion by Map order but ignores member/session boundaries.",
-    "      const oldest = responseCache.keys().next().value;",
-    "      responseCache.delete(oldest);",
-    "    }",
-    "    responseCache.set(key, result);",
-    "  }",
-    "",
-    "  private cacheKey(memberId: string, resumeText: string, targetRole?: string): string {",
-    "    // Edge case: target role changes should invalidate cache, but locale currently does not.",
-    "    return createHash(\"sha256\").update(`${memberId}:${targetRole || \"\"}:${resumeText}`).digest(\"hex\");",
-    "  }",
-    "",
-    "  private fallback(message: string): AssistantResult {",
-    "    return { bullets: [], confidence: 0, source: \"fallback\", warnings: [message] };",
-    "  }",
-    "}",
-  ].join("\n").replace("`Locale: ${locale}`.", "`Locale: ${locale}`,").replace("`Target role: ${targetRole || \"not specified\"}`.", "`Target role: ${targetRole || \"not specified\"}`,");
-}
-
-function buildLinkedInResumePreview() {
-  return [
-    "import React, { useEffect, useMemo, useRef, useState } from \"react\";",
-    "import { track } from \"../analytics/track\";",
-    "import { ResumeAssistantService } from \"../services/resumeAssistant\";",
-    "",
-    "export default function ResumePreview({ memberId, resumeText, targetRole, service }) {",
-    "  const [bullets, setBullets] = useState([]);",
-    "  const [warnings, setWarnings] = useState([]);",
-    "  const [isLoading, setIsLoading] = useState(false);",
-    "  const [selected, setSelected] = useState(new Set());",
-    "  const [error, setError] = useState(null);",
-    "  const previewRef = useRef(null);",
-    "",
-    "  const canGenerate = useMemo(() => resumeText && resumeText.length > 120 && !isLoading, [resumeText, isLoading]);",
-    "",
-    "  useEffect(() => {",
-    "    track(\"resume_preview_view\", { memberId, hasText: Boolean(resumeText) });",
-    "  }, [memberId, resumeText]);",
-    "",
-    "  async function handleGenerate() {",
-    "    if (!canGenerate) return;",
-    "    setIsLoading(true);",
-    "    setError(null);",
-    "    try {",
-    "      const result = await service.rewriteBullets({",
-    "        memberId,",
-    "        resumeText,",
-    "        targetRole,",
-    "        locale: navigator.language || \"en-US\",",
-    "        device: window.innerWidth < 720 ? \"mobile\" : \"desktop\",",
-    "      });",
-    "      setBullets(result.bullets);",
-    "      setWarnings(result.warnings);",
-    "      track(\"resume_ai_generate\", { source: result.source, confidence: result.confidence });",
-    "    } catch (err) {",
-    "      setError(\"We could not generate suggestions. Keep editing your original resume.\");",
-    "    } finally {",
-    "      setIsLoading(false);",
-    "    }",
-    "  }",
-    "",
-    "  function toggleBullet(index) {",
-    "    const next = selected;",
-    "    if (next.has(index)) next.delete(index);",
-    "    else next.add(index);",
-    "    // BUG: mutates state Set in place, so React may not re-render consistently.",
-    "    setSelected(next);",
-    "  }",
-    "",
-    "  function acceptSelected() {",
-    "    track(\"resume_ai_accept\", { count: selected.size, surface: \"preview\" });",
-    "    // TODO: mobile event is missing member plan and onboarding step.",
-    "  }",
-    "",
-    "  return (",
-    "    <section className=\"resume-preview\" ref={previewRef} aria-live=\"polite\">",
-    "      <header className=\"preview-header\">",
-    "        <h2>AI Resume Assistant</h2>",
-    "        <button onClick={handleGenerate} disabled={!canGenerate} aria-busy={isLoading}>",
-    "          {isLoading ? \"Generating\" : \"Generate suggestions\"}",
-    "        </button>",
-    "      </header>",
-    "      {error && <div role=\"alert\" className=\"error-banner\">{error}</div>}",
-    "      {warnings.map((warning) => <p className=\"warning\" key={warning}>{warning}</p>)}",
-    "      <ol className=\"bullet-list\">",
-    "        {bullets.map((bullet, index) => (",
-    "          <li key={`${index}-${bullet.slice(0, 18)}`} className={selected.has(index) ? \"selected\" : \"\"}>",
-    "            <label>",
-    "              <input type=\"checkbox\" checked={selected.has(index)} onChange={() => toggleBullet(index)} />",
-    "              <span>{bullet}</span>",
-    "            </label>",
-    "          </li>",
-    "        ))}",
-    "      </ol>",
-    "      <footer className=\"preview-actions\">",
-    "        <button onClick={acceptSelected} disabled={!selected.size}>Accept selected</button>",
-    "        <button>Regenerate</button>",
-    "      </footer>",
-    "    </section>",
-    "  );",
-    "}",
-    "",
-    "/* Known mobile CSS issue:",
-    ".resume-preview { min-width: 680px; }",
-    ".preview-actions { position: sticky; bottom: -12px; }",
-    "This overflows small screens and hides the accept button under the nav bar.",
-    "*/",
-  ].join("\n");
-}
-
-function buildLinkedInAnalyticsCsv() {
-  const rows = ["date,segment,onboarding_completion,ai_generate_rate,ai_accept_rate,mobile_dropoff,qa_blockers"];
-  const segments = ["desktop_premium", "mobile_premium", "new_job_seekers", "enterprise_beta"];
-  for (let day = 1; day <= 28; day += 1) {
-    segments.forEach((segment, index) => {
-      const completion = (72 - index * 5 - (segment.includes("mobile") ? day * 0.7 : day * 0.2)).toFixed(1);
-      const generate = (38 + index * 4 + day * 0.3).toFixed(1);
-      const accept = (18 + index * 2 - (segment.includes("mobile") ? day * 0.25 : 0)).toFixed(1);
-      const dropoff = (segment.includes("mobile") ? 29 + day * 0.8 : 11 + index).toFixed(1);
-      rows.push(`2026-04-${String(day).padStart(2, "0")},${segment},${completion},${generate},${accept},${dropoff},${day > 20 ? 6 : 3}`);
-    });
+function defaultTaskForCurrentRole() {
+  const role = localStorage.getItem("userRole") || "";
+  if (!role) {
+    return findTaskDefinitionById("frontend-homeflow") || TASKS.Frontend.Beginner[0];
   }
-  return rows.join("\n");
+  const domain = roleDomain(role);
+  const byDomain = {
+    frontend: "frontend-homeflow",
+    backend: "backend-api-health",
+    data: "data-adhoc",
+    design: "design-prototype",
+    qa: "qa-release-blocker",
+    pm: "pm-priority",
+  };
+  return findTaskDefinitionById(byDomain[domain] || "frontend-homeflow") || TASKS.Frontend.Beginner[0];
 }
 
-function buildLinkedInQaReport() {
-  return [
-    "# QA Report - AI Resume Assistant",
-    "",
-    "## P0 blockers",
-    "1. Mobile preview action buttons overlap with generated bullet list.",
-    "   - Repro: iPhone 14 Safari, import resume, generate suggestions, rotate once, tap Accept.",
-    "   - Actual: CTA hidden below nav; checkbox state is inconsistent.",
-    "   - Expected: CTA visible and selected bullets preserved.",
-    "2. AI response invents unsupported credential phrasing.",
-    "   - Repro: Resume without certifications, target role Product Analyst, generate 5 times.",
-    "   - Actual: one run suggests `certified analytics leader`.",
-    "   - Expected: no unsupported credential claims.",
-    "",
-    "## P1 issues",
-    "- Onboarding copy does not explain AI edits before first generation.",
-    "- Accessibility: keyboard focus is lost after regenerate.",
-    "- Screenshot evidence: /qa/screenshots/mobile-overlap-0515.png, /qa/screenshots/focus-loss-0515.png.",
-    "",
-    "## QA stance",
-    "Full launch is blocked. Limited beta can proceed only if mobile is disabled or fixed, AI guardrails are tightened, and support copy names limitations.",
-  ].join("\n");
+function createEmptyDmMessages() {
+  return DM_MESSAGE_KEYS.reduce((stores, key) => {
+    stores[key] = [];
+    return stores;
+  }, {});
 }
 
-function buildLinkedInLeadershipNotes() {
-  return [
-    "Leadership Notes",
-    "",
-    "Marketing: Public launch copy is scheduled for tomorrow at 09:00 PT.",
-    "VP Product: A limited beta is acceptable if the customer narrative is crisp.",
-    "Engineering: Full launch requires mobile preview fix and prompt cache guard.",
-    "QA: Full launch blocked until P0 repro steps pass.",
-    "Legal/Trust: Do not imply AI verifies credentials or employment history.",
-    "",
-    "Candidate expected update:",
-    "- Decision: full launch, limited beta, or delay.",
-    "- Why: tie to blockers and customer risk.",
-    "- Scope: desktop/mobile, cohorts, disabled features.",
-    "- ETA: next checkpoint and owners.",
-  ].join("\n");
-}
-
-function buildSpotifyRetentionMetrics() {
-  const rows = ["week,cohort,creator_segment,activated_setup,day1_return,day7_return,playlist_publish_rate,analytics_open_rate,creator_revenue_delta"];
-  const segments = ["new_creators", "podcasters", "indie_artists", "label_teams", "power_creators"];
-  for (let week = 1; week <= 16; week += 1) {
-    segments.forEach((segment, index) => {
-      const redesignPenalty = week >= 11 ? (week - 10) * (2.1 + index * 0.3) : 0;
-      const setup = (81 - index * 3 - redesignPenalty).toFixed(1);
-      const day1 = (64 - index * 2 - redesignPenalty * 0.8).toFixed(1);
-      const day7 = (42 - index * 2.4 - redesignPenalty * 1.15).toFixed(1);
-      const publish = (31 - index * 1.6 - redesignPenalty * 0.7).toFixed(1);
-      const analytics = (58 - index * 2.1 - redesignPenalty * 1.4).toFixed(1);
-      const revenue = (week >= 11 ? -1 * (3 + index + (week - 10) * 1.2) : 1.5 - index * 0.2).toFixed(1);
-      rows.push(`2026-W${String(week).padStart(2, "0")},redesign_${week >= 11 ? "post" : "pre"},${segment},${setup},${day1},${day7},${publish},${analytics},${revenue}`);
-    });
-  }
-  return rows.join("\n");
-}
-
-function buildSpotifyUserFeedback() {
-  const themes = [
-    "I cannot find the old audience analytics page after the redesign.",
-    "The new creator home looks cleaner but hides the daily listener trend.",
-    "I published less this week because I do not trust the new recommendation prompt.",
-    "The onboarding checklist keeps resetting after I connect social links.",
-    "I need revenue impact first, not a giant promo card.",
-    "The redesign feels built for new users, not working creators.",
-    "Analytics setup is buried behind a second screen on mobile.",
-    "I clicked create campaign and lost the draft.",
-    "Recommendations are pushing generic tips I already completed.",
-    "The old flow was ugly but I knew where everything was.",
-  ];
-  const lines = ["# Creator feedback snippets", ""];
-  for (let i = 1; i <= 180; i += 1) {
-    const severity = i % 13 === 0 ? "high" : i % 5 === 0 ? "medium" : "low";
-    const segment = ["indie_artist", "podcaster", "label_team", "new_creator", "power_creator"][i % 5];
-    lines.push(`${String(i).padStart(3, "0")} | severity=${severity} | segment=${segment} | ${themes[i % themes.length]}`);
-  }
-  lines.push("");
-  lines.push("Research read: complaints cluster around hidden analytics, onboarding reset, and reduced trust in recommendation prompts. Not every complaint supports a full rollback.");
-  return lines.join("\n");
-}
-
-function buildSpotifyRecommendationNotes() {
-  return [
-    "# Recommendation Model Notes",
-    "",
-    "Experiment: creator_next_best_action_v7",
-    "Owner: Oskar / Creator ML",
-    "",
-    "## Changes",
-    "- Reweighted educational prompts above analytics actions for creators with incomplete onboarding.",
-    "- Added exploration bucket for creators with fewer than three published assets.",
-    "- Reduced repeat exposure for revenue analytics cards to avoid dashboard fatigue.",
-    "- Introduced new feature embeddings from creator profile tags.",
-    "",
-    "## Observations",
-    "- Short session engagement improved by 4.2% for new creators.",
-    "- Seven-day return dropped 6.8% among power creators.",
-    "- Analytics open rate fell sharply when revenue cards were demoted.",
-    "- Model confidence is lower for podcasters because historical tags are sparse.",
-    "",
-    "## Conflicting read",
-    "The redesign created UX friction at the same time that the model changed ranking. It is unsafe to attribute all retention decline to one layer without a recovery experiment.",
-    "",
-    "## Candidate notes",
-    "- Decide whether to rollback design, hotfix onboarding, or rebalance recommendations.",
-    "- Name a leading indicator: analytics open rate, setup completion, day-7 return, or publish rate.",
-    "- Include owner and next checkpoint.",
-  ].join("\n");
-}
-
-function buildSpotifyOnboardingFlow() {
-  return [
-    "import React, { useEffect, useMemo, useReducer } from \"react\";",
-    "import { emitCreatorEvent } from \"../analytics/events\";",
-    "import { fetchCreatorProfile, saveOnboardingStep } from \"../api/creator\";",
-    "",
-    "const initialState = {",
-    "  step: \"welcome\",",
-    "  profile: null,",
-    "  completed: new Set(),",
-    "  loading: false,",
-    "  error: null,",
-    "  pendingAnalyticsConsent: false,",
-    "};",
-    "",
-    "function reducer(state, action) {",
-    "  switch (action.type) {",
-    "    case \"LOAD_START\":",
-    "      return { ...state, loading: true, error: null };",
-    "    case \"LOAD_SUCCESS\":",
-    "      return { ...state, loading: false, profile: action.profile };",
-    "    case \"LOAD_ERROR\":",
-    "      return { ...state, loading: false, error: action.error };",
-    "    case \"COMPLETE_STEP\": {",
-    "      const completed = state.completed;",
-    "      completed.add(action.step);",
-    "      // BUG: mutates Set in place. React may skip render and tracking may miss completion.",
-    "      return { ...state, completed, step: action.nextStep || state.step };",
-    "    }",
-    "    case \"GO_TO\":",
-    "      return { ...state, step: action.step };",
-    "    default:",
-    "      return state;",
-    "  }",
-    "}",
-    "",
-    "export default function OnboardingFlow({ creatorId, variant }) {",
-    "  const [state, dispatch] = useReducer(reducer, initialState);",
-    "",
-    "  useEffect(() => {",
-    "    let cancelled = false;",
-    "    async function load() {",
-    "      dispatch({ type: \"LOAD_START\" });",
-    "      try {",
-    "        const profile = await fetchCreatorProfile(creatorId);",
-    "        if (!cancelled) dispatch({ type: \"LOAD_SUCCESS\", profile });",
-    "      } catch (error) {",
-    "        if (!cancelled) dispatch({ type: \"LOAD_ERROR\", error: String(error) });",
-    "      }",
-    "    }",
-    "    load();",
-    "    return () => { cancelled = true; };",
-    "  }, [creatorId]);",
-    "",
-    "  const steps = useMemo(() => {",
-    "    const base = [\"welcome\", \"connect_social\", \"set_goal\", \"analytics_setup\", \"publish_prompt\"];\n",
-    "    if (variant === \"education_first\") return [\"welcome\", \"set_goal\", \"learn_growth\", \"connect_social\", \"publish_prompt\"];",
-    "    return base;",
-    "  }, [variant]);",
-    "",
-    "  async function completeCurrentStep() {",
-    "    const current = state.step;",
-    "    const nextStep = steps[Math.min(steps.indexOf(current) + 1, steps.length - 1)];",
-    "    emitCreatorEvent(\"creator_onboarding_step_complete\", { creatorId, step: current, variant });",
-    "    await saveOnboardingStep(creatorId, current);",
-    "    dispatch({ type: \"COMPLETE_STEP\", step: current, nextStep });",
-    "  }",
-    "",
-    "  function renderStep() {",
-    "    if (state.loading) return <div className=\"skeleton\">Loading creator workspace</div>;",
-    "    if (state.error) return <div role=\"alert\">We could not load setup. Try again.</div>;",
-    "    switch (state.step) {",
-    "      case \"analytics_setup\":",
-    "        return <AnalyticsSetup profile={state.profile} onComplete={completeCurrentStep} />;",
-    "      case \"connect_social\":",
-    "        return <ConnectSocial onComplete={completeCurrentStep} />;",
-    "      case \"set_goal\":",
-    "        return <SetGoal onComplete={completeCurrentStep} />;",
-    "      case \"publish_prompt\":",
-    "        return <PublishPrompt onComplete={completeCurrentStep} />;",
-    "      default:",
-    "        return <Welcome onComplete={completeCurrentStep} />;",
-    "    }",
-    "  }",
-    "",
-    "  return (",
-    "    <main className=\"creator-onboarding\" data-variant={variant}>",
-    "      <Progress steps={steps} current={state.step} completed={state.completed} />",
-    "      {renderStep()}",
-    "    </main>",
-    "  );",
-    "}",
-    "",
-    "function AnalyticsSetup({ profile, onComplete }) {",
-    "  return <section><h2>Understand your listeners</h2><button onClick={onComplete}>Continue</button></section>;",
-    "}",
-    "function ConnectSocial({ onComplete }) { return <section><h2>Connect socials</h2><button onClick={onComplete}>Continue</button></section>; }",
-    "function SetGoal({ onComplete }) { return <section><h2>Choose a goal</h2><button onClick={onComplete}>Continue</button></section>; }",
-    "function PublishPrompt({ onComplete }) { return <section><h2>Publish your next update</h2><button onClick={onComplete}>Finish</button></section>; }",
-    "function Welcome({ onComplete }) { return <section><h2>Welcome back</h2><button onClick={onComplete}>Start</button></section>; }",
-    "function Progress({ steps, current, completed }) { return <ol>{steps.map((step) => <li key={step} aria-current={step === current}>{step}</li>)}</ol>; }",
-  ].join("\n");
-}
-
-function buildSpotifyAbResults() {
-  return [
-    "# AB Test Results",
-    "",
-    "## Experiment A: education_first onboarding",
-    "- Activation +3.8%",
-    "- Analytics setup -9.4%",
-    "- Day-7 return -4.1%",
-    "- Strongest negative effect among power creators.",
-    "",
-    "## Experiment B: creator_home_simplified",
-    "- Session length +6.2%",
-    "- Publish rate -2.8%",
-    "- Analytics open rate -12.7%",
-    "- Qualitative feedback: simpler but less useful.",
-    "",
-    "## Experiment C: recommendation_rebalance",
-    "- New creator setup +2.4%",
-    "- Existing creator return -6.8%",
-    "- Revenue analytics clickthrough -14.3%",
-    "",
-    "## Interpretation",
-    "Activation and retention disagree. The recovery plan should not optimize only for short-session activation. Recommend a targeted hotfix and follow-up experiment rather than a blind full rollback.",
-  ].join("\n");
-}
-
-function buildSpotifyExecutiveEmail() {
-  return [
-    "From: Gabe <gabe.creator-growth@spotify.example>",
-    "To: Creator Recovery Room",
-    "Subject: Recovery plan needed before business review",
-    "",
-    "Team,",
-    "",
-    "Creator retention fell faster than expected after the redesign. I need a clear recommendation today: rollback, targeted hotfix, recommendation rebalance, or phased recovery plan.",
-    "",
-    "Please include:",
-    "- What changed and what evidence supports the diagnosis.",
-    "- What we do first and why.",
-    "- Owner, metric, and next checkpoint.",
-    "- What we will tell creator support if complaints keep rising.",
-    "",
-    "I do not want a dashboard tour. I want a decision.",
-    "",
-    "Gabe",
-  ].join("\n");
-}
-
-function buildSpotifyHeatmapPreview() {
-  return [
-    "PNG_PREVIEW: heatmap.png",
-    "Visualization summary:",
-    "- Pre-redesign hotspots: left rail analytics, revenue card, publish CTA.",
-    "- Post-redesign hotspots: hero education card, low interaction with analytics setup.",
-    "- Mobile heatmap: thumb taps cluster on back button and collapsed menu.",
-    "- Rage clicks: analytics setup, campaign draft, revenue trend module.",
-    "",
-    "Interpretation: discovery friction is real. Pair heatmap with retention metrics before recommending rollback.",
-  ].join("\n");
-}
-
-function buildOpenAISecurityReport() {
-  return [
-    "# Security Report - Prompt Leakage Vulnerability",
-    "",
-    "## Summary",
-    "Red team reproduced prompt leakage by forcing a tool retry path to reuse stale session memory. The issue appears in the boundary between memory_manager.py and inference_gateway.ts.",
-    "",
-    "## Severity",
-    "P0 for enterprise demo environment until mitigated. Potential exposure includes system prompt fragments, prior tool metadata, and stale memory snippets from same tenant if isolation fails.",
-    "",
-    "## Exploit path",
-    "1. Start enterprise demo session with memory enabled.",
-    "2. Trigger tool timeout with adversarial prompt requesting hidden policy.",
-    "3. Retry path reattaches memory ids without sanitization.",
-    "4. Gateway forwards unsafe memory reference into inference context.",
-    "5. Model produces partial prompt leakage in refusal-adjacent answer.",
-    "",
-    "## Required mitigation",
-    "- Sanitize memory before every retry.",
-    "- Bind memory references to tenant, session, and request id.",
-    "- Disable memory for demo if exploit cannot be closed.",
-    "- Prepare rollback guide and customer-safe explanation.",
-  ].join("\n");
-}
-
-function buildOpenAIMemoryManager() {
-  return [
-    "import asyncio",
-    "import logging",
-    "import time",
-    "from dataclasses import dataclass",
-    "from typing import Any, Dict, Iterable, List, Optional",
-    "",
-    "logger = logging.getLogger(\"enterprise.memory\")",
-    "",
-    "@dataclass",
-    "class MemoryRecord:",
-    "    tenant_id: str",
-    "    session_id: str",
-    "    request_id: str",
-    "    content: str",
-    "    labels: List[str]",
-    "    created_at: float",
-    "",
-    "class UnsafeMemoryReference(Exception):",
-    "    pass",
-    "",
-    "class MemoryManager:",
-    "    def __init__(self, store: Any, policy: Any, metrics: Any) -> None:",
-    "        self._store = store",
-    "        self._policy = policy",
-    "        self._metrics = metrics",
-    "        self._session_cache: Dict[str, List[MemoryRecord]] = {}",
-    "        self._cache_expiry: Dict[str, float] = {}",
-    "        self._lock = asyncio.Lock()",
-    "",
-    "    async def load_context(self, tenant_id: str, session_id: str, request_id: str, memory_ids: Iterable[str]) -> List[str]:",
-    "        cache_key = f\"{tenant_id}:{session_id}\"",
-    "        cached = self._session_cache.get(cache_key)",
-    "        if cached and self._cache_expiry.get(cache_key, 0) > time.time():",
-    "            # Vulnerability source: cached records are not rebound to request_id before reuse.",
-    "            records = cached",
-    "        else:",
-    "            records = await self._fetch_records(memory_ids)",
-    "            await self._remember(cache_key, records)",
-    "",
-    "        safe: List[str] = []",
-    "        for record in records:",
-    "            self._assert_scope(record, tenant_id, session_id)",
-    "            sanitized = self.sanitize(record.content)",
-    "            if self._policy.is_allowed(sanitized):",
-    "                safe.append(sanitized)",
-    "            else:",
-    "                self._metrics.increment(\"memory.policy_block\", tags={\"tenant\": tenant_id})",
-    "        return safe",
-    "",
-    "    async def attach_retry_memory(self, original_context: List[str], retry_metadata: Dict[str, Any]) -> List[str]:",
-    "        # TODO: This should call load_context with tenant/session/request binding. It currently trusts retry metadata.",
-    "        unsafe_refs = retry_metadata.get(\"memory_refs\", [])",
-    "        if unsafe_refs and retry_metadata.get(\"allow_raw_memory_refs\"):",
-    "            logger.warning(\"raw memory refs allowed on retry count=%s\", len(unsafe_refs))",
-    "            return original_context + list(unsafe_refs)",
-    "        return original_context",
-    "",
-    "    def sanitize(self, content: str) -> str:",
-    "        blocked_markers = [\"SYSTEM_PROMPT\", \"developer_message\", \"policy_override\", \"tool_secret\"]",
-    "        sanitized = content",
-    "        for marker in blocked_markers:",
-    "            sanitized = sanitized.replace(marker, \"[redacted]\")",
-    "        # Edge case: base64 or markdown fenced prompt fragments are not detected here.",
-    "        return sanitized[:4000]",
-    "",
-    "    def _assert_scope(self, record: MemoryRecord, tenant_id: str, session_id: str) -> None:",
-    "        if record.tenant_id != tenant_id or record.session_id != session_id:",
-    "            raise UnsafeMemoryReference(f\"memory scope mismatch tenant={tenant_id} session={session_id}\")",
-    "",
-    "    async def _fetch_records(self, memory_ids: Iterable[str]) -> List[MemoryRecord]:",
-    "        rows = await self._store.fetch_many(list(memory_ids))",
-    "        return [MemoryRecord(**row) for row in rows]",
-    "",
-    "    async def _remember(self, cache_key: str, records: List[MemoryRecord]) -> None:",
-    "        async with self._lock:",
-    "            self._session_cache[cache_key] = records",
-    "            self._cache_expiry[cache_key] = time.time() + 90",
-    "            if len(self._session_cache) > 10000:",
-    "                # Potential memory leak under enterprise load: evicts only one arbitrary key.",
-    "                oldest_key = next(iter(self._session_cache.keys()))",
-    "                self._session_cache.pop(oldest_key, None)",
-    "                self._cache_expiry.pop(oldest_key, None)",
-  ].join("\n");
-}
-
-function buildOpenAIInferenceGateway() {
-  return [
-    "import { Request, Response, NextFunction } from \"express\";",
-    "import { z } from \"zod\";",
-    "import { getMemoryManager } from \"./memory\";",
-    "import { runInference } from \"./runtime\";",
-    "import { auditLog } from \"./audit\";",
-    "",
-    "const InferenceRequest = z.object({",
-    "  tenantId: z.string().min(1),",
-    "  sessionId: z.string().min(1),",
-    "  requestId: z.string().min(1),",
-    "  prompt: z.string().min(1),",
-    "  memoryIds: z.array(z.string()).default([]),",
-    "  retry: z.object({",
-    "    attempt: z.number().default(0),",
-    "    memory_refs: z.array(z.string()).optional(),",
-    "    allow_raw_memory_refs: z.boolean().optional(),",
-    "  }).optional(),",
-    "});",
-    "",
-    "export async function inferenceGateway(req: Request, res: Response, next: NextFunction) {",
-    "  const started = Date.now();",
-    "  try {",
-    "    const parsed = InferenceRequest.parse(req.body);",
-    "    const memoryManager = getMemoryManager();",
-    "    const context = await memoryManager.loadContext({",
-    "      tenantId: parsed.tenantId,",
-    "      sessionId: parsed.sessionId,",
-    "      requestId: parsed.requestId,",
-    "      memoryIds: parsed.memoryIds,",
-    "    });",
-    "",
-    "    let finalContext = context;",
-    "    if (parsed.retry?.attempt && parsed.retry.attempt > 0) {",
-    "      // Vulnerability: retry metadata can reintroduce unsafe raw memory refs.",
-    "      finalContext = await memoryManager.attachRetryMemory(context, parsed.retry);",
-    "    }",
-    "",
-    "    const result = await runInference({",
-    "      tenantId: parsed.tenantId,",
-    "      sessionId: parsed.sessionId,",
-    "      requestId: parsed.requestId,",
-    "      prompt: parsed.prompt,",
-    "      context: finalContext,",
-    "      safetyMode: \"enterprise-demo\",",
-    "    });",
-    "",
-    "    auditLog(\"inference.complete\", {",
-    "      tenantId: parsed.tenantId,",
-    "      requestId: parsed.requestId,",
-    "      latencyMs: Date.now() - started,",
-    "      memoryCount: finalContext.length,",
-    "    });",
-    "",
-    "    res.json({ output: result.output, safety: result.safety, requestId: parsed.requestId });",
-    "  } catch (error) {",
-    "    auditLog(\"inference.error\", { message: String(error), latencyMs: Date.now() - started });",
-    "    next(error);",
-    "  }",
-    "}",
-    "",
-    "export function validateDemoMode(req: Request, res: Response, next: NextFunction) {",
-    "  const demoRestricted = process.env.ENTERPRISE_DEMO_RESTRICT_MEMORY === \"true\";",
-    "  if (demoRestricted && Array.isArray(req.body?.memoryIds) && req.body.memoryIds.length > 0) {",
-    "    req.body.memoryIds = [];",
-    "    req.body.retry = { attempt: 0 };",
-    "  }",
-    "  next();",
-    "}",
-  ].join("\n");
-}
-
-function buildOpenAIRedTeamNotes() {
-  return [
-    "Red Team Notes",
-    "",
-    "Exploit name: stale_retry_memory_leak",
-    "Status: reproduced 4/7 attempts in enterprise demo staging.",
-    "",
-    "Steps:",
-    "1. Seed session with benign doc containing hidden marker.",
-    "2. Trigger tool timeout and retry with adversarial prompt.",
-    "3. Observe gateway retry metadata includes raw memory_refs.",
-    "4. Ask model to summarize hidden setup and previous tool instruction.",
-    "",
-    "Observed leakage:",
-    "- partial system instruction phrasing",
-    "- tool routing metadata",
-    "- stale memory fragment from previous request",
-    "",
-    "Red team stance:",
-    "Restrict or disable memory for demo unless attachRetryMemory is patched and staging exploit repro passes 0/20 attempts.",
-  ].join("\n");
-}
-
-function buildOpenAIEngineeringChat() {
-  return JSON.stringify({
-    room: "enterprise-demo-security",
-    messages: [
-      { from: "Iris", role: "Security PM", stress: "critical", text: "We need a mitigation decision and customer-safe update before the demo prep call." },
-      { from: "Noah", role: "Platform Security", stress: "critical", text: "The raw memory refs branch is unacceptable. Disable memory or bind every ref to tenant/session/request." },
-      { from: "Farah", role: "Red Team", stress: "high", text: "I can still reproduce leakage when retry metadata is trusted." },
-      { from: "Tessa", role: "Enterprise UX", stress: "medium", text: "If memory is disabled, the demo script needs to explain why context is limited." },
-      { from: "Sam", role: "Demo Sponsor", stress: "critical", text: "I need go/no-go. Restricted demo is acceptable if we can explain it." },
-      { from: "Noah", role: "Platform Security", stress: "critical", text: "I disagree with demoing unrestricted memory. We are one retry away from an incident." }
-    ]
-  }, null, 2);
-}
-
-function buildOpenAIArchitecturePreview() {
-  return [
-    "PNG_PREVIEW: system_architecture.png",
-    "Diagram nodes:",
-    "Client -> Enterprise Gateway -> Policy Middleware -> Memory Manager -> Inference Runtime -> Tool Router",
-    "",
-    "Highlighted risk path:",
-    "Tool Router timeout -> Gateway retry -> raw memory_refs -> Memory Manager attachRetryMemory -> Inference context",
-    "",
-    "Mitigation overlay:",
-    "- Bind memory records to tenant/session/request.",
-    "- Sanitize on every retry.",
-    "- ENTERPRISE_DEMO_RESTRICT_MEMORY=true fallback.",
-    "- Audit all blocked memory references.",
-  ].join("\n");
-}
-
-function buildOpenAIRollbackGuide() {
-  return [
-    "# Emergency Rollback Guide",
-    "",
-    "## Option A: Restricted demo mode",
-    "1. Set ENTERPRISE_DEMO_RESTRICT_MEMORY=true.",
-    "2. Clear staging session memory ids.",
-    "3. Restart gateway pods.",
-    "4. Run red-team repro suite: expected 0/20 leakage.",
-    "",
-    "## Option B: Patch-forward",
-    "1. Remove raw retry memory branch.",
-    "2. Require tenant/session/request binding on all memory references.",
-    "3. Sanitize retrieved memory before retry context assembly.",
-    "4. Add audit event for blocked unsafe refs.",
-    "",
-    "## Rollback trigger",
-    "Any successful leakage repro, missing audit event, or cross-session memory mismatch blocks unrestricted demo.",
-    "",
-    "## Customer-safe language",
-    "We are demonstrating with memory isolation controls enabled. Some long-context personalization may be limited while we validate the newest security guardrails.",
-  ].join("\n");
-}
 
 const state = {
   missionKey: null,
@@ -2438,11 +778,17 @@ const state = {
   messageKeys: new Set(),
   timelineKeys: new Set(),
   triggeredBeats: new Set(),
+  dynamicTimers: [],
   userMessageCount: 0,
   usingLiveBackend: false,
   submissionInFlight: false,
   roomLocked: false,
   allowNavigationAway: false,
+  currentChannel: 'team',
+  agents: [],
+  teamMessages: [],
+  dmMessages: createEmptyDmMessages(),
+  messages: [],
 };
 
 const companyName = document.getElementById("companyName");
@@ -2483,6 +829,8 @@ const activeFileName = document.getElementById("activeFileName");
 const wordCount = document.getElementById("wordCount");
 const codeEditor = document.getElementById("codeEditor");
 const workspaceTip = document.getElementById("workspaceTip");
+const workspaceShareLabel = document.getElementById("workspaceShareLabel");
+const workspacePeopleAvatars = document.getElementById("workspacePeopleAvatars");
 const timelineList = document.getElementById("timelineList");
 const saveDraftBtn = document.getElementById("saveDraftBtn");
 const insertOutlineBtn = document.getElementById("insertOutlineBtn");
@@ -2503,16 +851,7 @@ const submitActionButtons = [submitBtn, submitSceneBtn, submitWorkspaceBtn].filt
 
 function channelItemsForMission(mission) {
   const defaults = {
-    netflix: ["streaming-war-room", "recommendations", "playback", "sre", "leadership"],
-    linkedin: ["resume-assistant-launch", "product", "engineering", "qa", "leadership"],
-    spotify: ["creator-growth-recovery", "analytics", "creator-feedback", "experiments", "leadership"],
-    openai: ["enterprise-demo-security", "security", "platform", "red-team", "leadership"],
-    mobile: ["launch-otp", "product", "engineering", "design"],
-    security: ["security-bridge", "product", "engineering", "qa"],
-    ops: ["ops-v1", "product", "engineering", "design"],
-    wallet: ["payout-war-room", "product", "engineering", "support"],
-    copilot: ["copilot-trust", "product", "engineering", "safety"],
-    migration: ["cutover-freeze", "product", "engineering", "ops"],
+
   };
 
   return defaults[mission.key] || [mission.channel, "product", "engineering", "design"];
@@ -2524,11 +863,39 @@ function clone(value) {
 
 function selectedDashboardTask() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.selectedTaskDetails);
+    const raw = sessionStorage.getItem(STORAGE_KEYS.selectedTaskDetails) || localStorage.getItem(STORAGE_KEYS.selectedTaskDetails);
     return raw ? JSON.parse(raw) : null;
   } catch (error) {
     return null;
   }
+}
+
+function getCurrentTaskFromSessionStorage() {
+  const dashboardTaskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  const storedTask = selectedDashboardTask();
+  const taskDefinition = (storedTask && storedTask.id ? storedTask : null)
+    || findTaskDefinitionById(dashboardTaskId)
+    || (state.mission ? findTaskDefinitionById(state.mission.taskId) : null)
+    || defaultTaskForCurrentRole();
+  const workspaceFiles = missionFiles().map((file) => file.name).filter(Boolean);
+  const declaredFiles = normalizeWorkspaceFiles(taskDefinition.workspaceFiles || taskDefinition.workspace_files)
+    .map((file) => file.name)
+    .filter(Boolean);
+  const rawFiles = Array.isArray(taskDefinition.files)
+    ? taskDefinition.files.map((file) => (typeof file === "string" ? file : file && (file.name || file.path))).filter(Boolean)
+    : [];
+  const files = Array.from(new Set([...(workspaceFiles.length ? workspaceFiles : []), ...declaredFiles, ...rawFiles]));
+
+  return {
+    ...taskDefinition,
+    id: state.mission ? state.mission.taskId : taskDefinition.id,
+    title: state.mission ? state.mission.headline : taskDefinition.title,
+    company: state.mission ? state.mission.company : taskDefinition.company,
+    role: state.mission ? state.mission.role : taskDefinition.role,
+    scenario: state.mission ? state.mission.summary : (taskDefinition.scenario || taskDefinition.description || ""),
+    skills: state.mission ? state.mission.requirements : (taskDefinition.skills || []),
+    files,
+  };
 }
 
 function loadWorkspaceFilesModule() {
@@ -2576,7 +943,7 @@ function normalizeWorkspaceFiles(files) {
 }
 
 async function hydrateSelectedDashboardTaskWorkspaceFiles() {
-  const taskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  const taskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask);
   const selectedTask = selectedDashboardTask() || (taskId ? { id: taskId } : null);
   if (!selectedTask || !selectedTask.id || (Array.isArray(selectedTask.workspaceFiles) && selectedTask.workspaceFiles.length)) {
     return;
@@ -2589,14 +956,13 @@ async function hydrateSelectedDashboardTaskWorkspaceFiles() {
     return;
   }
 
-  localStorage.setItem(
-    STORAGE_KEYS.selectedTaskDetails,
-    JSON.stringify({
+  const serialized = JSON.stringify({
       ...selectedTask,
       files: workspaceFiles.map((file) => file.name),
       workspaceFiles,
-    })
-  );
+    });
+  localStorage.setItem(STORAGE_KEYS.selectedTaskDetails, serialized);
+  sessionStorage.setItem(STORAGE_KEYS.selectedTaskDetails, serialized);
 }
 
 function slugifyTask(text) {
@@ -2607,49 +973,153 @@ function slugifyTask(text) {
     .slice(0, 36) || "simulation";
 }
 
-function personalizeMissionForDashboardTask(mission, task) {
-  if (!task || !task.id) {
-    return mission;
-  }
+function uniqueWorkspaceFiles(files) {
+  const seen = new Set();
+  return files.filter((file) => {
+    const key = String(file && file.name || "").trim().toLowerCase();
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
 
-  const skills = Array.isArray(task.skills) && task.skills.length ? task.skills : mission.requirements;
-  const taskWorkspaceFiles = normalizeWorkspaceFiles(task.workspaceFiles || task.workspace_files);
-  const channel = slugifyTask(task.label || task.title || task.id);
-  const timeMatch = String(task.time || "").match(/\d+/);
-  const timeText = String(task.time || "").toLowerCase();
+function simulationArtifactsForMission({ company, headline, summary, role, domain, channel, skills }) {
+  const slug = slugifyTask(headline || channel || "sprint");
+  const metricName = domain === "data"
+    ? "trusted_metric_rate"
+    : domain === "backend"
+      ? "p95_latency_ms"
+      : domain === "design" || domain === "frontend"
+        ? "flow_completion_rate"
+        : "customer_impact_score";
+  const primarySkill = Array.isArray(skills) && skills.length ? skills[0] : "prioritization";
+
+  return [
+    {
+      id: `${slug}-incident-brief`,
+      name: `${slug}_incident_brief.md`,
+      kind: "brief",
+      type: "brief",
+      language: "markdown",
+      content: [
+        `# ${company} Sprint Brief`,
+        "",
+        `Situation: ${summary}`,
+        `Candidate role: ${role}`,
+        `Room channel: #${channel}`,
+        "",
+        "## What the team needs",
+        "- A first decision that reduces user or business risk.",
+        "- A tradeoff: what ships now and what waits.",
+        "- A validation gate the room can trust.",
+        "- A short stakeholder update if pressure escalates.",
+        "",
+        "## Current tension",
+        `The team is testing ${primarySkill}, but the real signal is how well the room handles changing information.`,
+      ].join("\n"),
+    },
+    {
+      id: `${slug}-live-metrics`,
+      name: `${slug}_live_metrics.csv`,
+      kind: "data",
+      type: "data",
+      language: "csv",
+      content: [
+        "timestamp,segment,metric,value,notes",
+        `09:05,mobile,${metricName},72,baseline before sprint room opened`,
+        `09:18,mobile,${metricName},64,drop after latest rollout`,
+        `09:31,enterprise,${metricName},58,support mentions rising confusion`,
+        `09:44,all,${metricName},55,leadership asks for ETA and recovery confidence`,
+      ].join("\n"),
+    },
+    {
+      id: `${slug}-support-tickets`,
+      name: `${slug}_support_tickets.md`,
+      kind: "brief",
+      type: "brief",
+      language: "markdown",
+      content: [
+        `# Support Tickets - ${company}`,
+        "",
+        "## Ticket DZ-1041",
+        "Customer says the flow looks stuck after retrying. Support cannot tell if the action succeeded.",
+        "",
+        "## Ticket DZ-1047",
+        "Account team needs a customer-safe update before the next check-in.",
+        "",
+        "## Ticket DZ-1052",
+        "QA can reproduce the risky path on a slower network. Recovery behavior is unclear.",
+      ].join("\n"),
+    },
+    {
+      id: `${slug}-release-report`,
+      name: `${slug}_release_readiness_report.md`,
+      kind: "brief",
+      type: "brief",
+      language: "markdown",
+      content: [
+        `# Release Readiness Report - ${headline}`,
+        "",
+        "Release state: partial rollout",
+        "Rollback owner: unassigned",
+        "Known risk: validation evidence is incomplete",
+        "Watch window: next 30 minutes",
+        "",
+        "## Open Questions",
+        "- What is the smallest safe fix?",
+        "- What metric or test proves the fix works?",
+        "- What will the team intentionally defer?",
+      ].join("\n"),
+    },
+    {
+      id: `${slug}-screenshot-notes`,
+      name: `${slug}_screenshot_notes.png`,
+      kind: "image-note",
+      type: "image-note",
+      language: "text",
+      content: [
+        "Screenshot artifact notes",
+        "",
+        "Frame: mobile flow during the risky state",
+        "Visible issue: primary action and recovery message compete for attention",
+        "Customer confusion: user cannot tell whether retry is safe",
+        "Accessibility note: status change needs clearer text announcement",
+      ].join("\n"),
+    },
+  ];
+}
+
+function personalizeMissionForDashboardTask(mission, task) {
+  const sourceTask = (task && task.id ? task : null) || (mission && mission.id ? mission : null) || defaultTaskForCurrentRole();
+  const baseMission = mission && !mission.id ? mission : {};
+  const skills = Array.isArray(sourceTask.skills) && sourceTask.skills.length
+    ? sourceTask.skills
+    : Array.isArray(baseMission.requirements) && baseMission.requirements.length
+      ? baseMission.requirements
+      : ["Prioritization", "Communication", "Validation"];
+  const taskWorkspaceFiles = normalizeWorkspaceFiles(sourceTask.workspaceFiles || sourceTask.workspace_files);
+  const existingWorkspaceFiles = normalizeWorkspaceFiles(baseMission.workspaceFiles);
+  const role = sourceTask.role || baseMission.role || currentRole();
+  const headline = sourceTask.title || baseMission.headline || "Live work simulation";
+  const summary = sourceTask.description || baseMission.summary || "Work with the team to make a clear, evidence-backed decision.";
+  const company = sourceTask.company || baseMission.company || "DayZero";
+  const channel = slugifyTask(sourceTask.label || headline || sourceTask.id);
+  const timeMatch = String(sourceTask.time || "").match(/\d+/);
+  const timeText = String(sourceTask.time || "").toLowerCase();
   const deadlineMinutes = timeMatch
     ? Number(timeMatch[0]) * (timeText.includes("day") ? 24 * 60 : timeText.includes("hour") ? 60 : 1)
-    : mission.deadlineMinutes;
-
-  mission.taskId = task.id;
-  mission.company = task.company || mission.company;
-  mission.channel = channel;
-  mission.sprint = task.label || mission.sprint;
-  mission.role = task.role || mission.role;
-  mission.priority = task.difficulty || mission.priority;
-  mission.deadlineMinutes = Number.isFinite(deadlineMinutes) ? deadlineMinutes : mission.deadlineMinutes;
-  mission.headline = task.title || mission.headline;
-  mission.summary = task.description || mission.summary;
-  mission.output = `${task.role || mission.role} simulation handoff`;
-  mission.crisisStatus = "Interview room active";
-  mission.latestChange = "";
-  mission.workspaceTitle = `${mission.company} shared workspace`;
-  mission.workspaceHelper = taskWorkspaceFiles.length
-    ? "Use the task-specific files to show your thinking, then explain the decision and evidence to the team."
-    : "Use the workspace to show your thinking, then explain the decision and evidence to the team.";
-  mission.workspaceTip = taskWorkspaceFiles.length
-    ? "Tip: edit or reference the provided task files, then share the decision, tradeoff, and validation path with the room."
-    : "Tip: share a clear decision, the tradeoff, and the validation path with Asha, Ravi, Mira, and Kenji.";
-  mission.requirements = skills;
-  mission.acceptance = skills.map((skill) => `${skill} is demonstrated with a concrete decision or evidence.`);
-  mission.crisisPrompt = "The room is adding pressure to test adaptability. Do you want to handle the change now?";
+    : Number(baseMission.deadlineMinutes || 45);
+  const domain = roleDomain([role, headline, summary, ...skills].join(" "));
 
   const brief = [
-    `# ${task.title || mission.headline}`,
+    `# ${headline}`,
     "",
-    `Company: ${mission.company}`,
-    `Role: ${mission.role}`,
-    `Scenario: ${mission.summary}`,
+    `Company: ${company}`,
+    `Role: ${role}`,
+    `Channel: #${channel}`,
+    `Scenario: ${summary}`,
     "",
     "## Skills the room will test",
     ...skills.map((skill) => `- ${skill}`),
@@ -2661,27 +1131,62 @@ function personalizeMissionForDashboardTask(mission, task) {
     "- Assign the next owner or follow-up.",
   ].join("\n");
 
-  mission.workspaceFiles = [
-    { id: "task-brief", name: "task_brief.md", kind: "brief", content: brief },
-    ...(taskWorkspaceFiles.length ? taskWorkspaceFiles : mission.workspaceFiles || []),
-  ];
+  const providedWorkspaceFiles = taskWorkspaceFiles.length ? taskWorkspaceFiles : existingWorkspaceFiles;
+  const workspaceFiles = uniqueWorkspaceFiles([
+    { id: "task-brief", name: "task_brief.md", kind: "brief", type: "brief", language: "markdown", content: brief },
+    ...providedWorkspaceFiles,
+    ...simulationArtifactsForMission({ company, headline, summary, role, domain, channel, skills }),
+  ]);
 
-  return mission;
+  const nextMission = {
+    ...baseMission,
+    key: sourceTask.id || baseMission.key || channel,
+    taskId: sourceTask.id || baseMission.taskId || channel,
+    company,
+    channel,
+    sprint: sourceTask.label || baseMission.sprint || `${company} live simulation`,
+    role,
+    domain,
+    priority: sourceTask.difficulty || baseMission.priority || "Live",
+    deadlineMinutes: Number.isFinite(deadlineMinutes) && deadlineMinutes > 0 ? deadlineMinutes : 45,
+    headline,
+    summary,
+    output: `${role} simulation handoff`,
+    crisisStatus: baseMission.crisisStatus || "Interview room active",
+    latestChange: baseMission.latestChange || "",
+    workspaceTitle: `${company} shared workspace`,
+    workspaceHelper: workspaceFiles.length > 1
+      ? "Use the task-specific files to show your thinking, then explain the decision and evidence to the team."
+      : "Use the workspace to show your thinking, then explain the decision and evidence to the team.",
+    workspaceTip: "Tip: Team Channel is visible to everyone. DMs stay with the selected agent, but they still expect task-specific files and evidence.",
+    requirements: skills,
+    acceptance: skills.map((skill) => `${skill} is demonstrated with a concrete decision or evidence.`),
+    crisisPrompt: "The room is adding pressure to test adaptability. Do you want to handle the change now?",
+    workspaceFiles,
+  };
+
+  nextMission.teammates = agentsForMission(nextMission);
+  nextMission.pressureBeats = buildPressureBeats(nextMission);
+  return nextMission;
 }
 
 function getMissionConfigByKey(key) {
+  const selectedTask = selectedDashboardTask();
+  if (selectedTask && (!key || selectedTask.id === key)) {
+    return selectedTask;
+  }
+
   const legacyRedirects = {
-    netflix: "security",
-    linkedin: "mobile",
-    spotify: "ops",
-    openai: "security",
+    netflix: "backend-api-health",
+    linkedin: "frontend-homeflow",
+    spotify: "data-adhoc",
+    openai: "backend-auth",
+    mobile: "frontend-homeflow",
+    backend: "backend-api-health",
+    ops: "data-dashboard",
   };
   const normalizedKey = legacyRedirects[key] || key;
-  if (MISSIONS[normalizedKey]) {
-    return MISSIONS[normalizedKey];
-  }
-  const mappedKey = TASK_TO_MISSION_KEY[normalizedKey];
-  return mappedKey ? MISSIONS[mappedKey] : null;
+  return findTaskDefinitionById(normalizedKey) || selectedTask || defaultTaskForCurrentRole();
 }
 
 function candidateName() {
@@ -2694,33 +1199,32 @@ function currentRole() {
 
 function missionKeyFromRole() {
   const role = currentRole().toLowerCase();
-  if (role.includes("security") || role.includes("incident")) {
-    return "security";
-  }
   if (role.includes("backend")) {
-    return "security";
+    return "backend";
   }
   if (role.includes("data") || role.includes("analyst")) {
     return "ops";
   }
-  if (role.includes("product") || role.includes("full stack") || role.includes("frontend")) {
+  if (role.includes("product") || role.includes("frontend")) {
     return "mobile";
   }
   return "mobile";
 }
 
 function selectedMissionKey() {
-  const dashboardTaskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
-  if (dashboardTaskId && getMissionConfigByKey(dashboardTaskId)) {
+  const dashboardTaskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  const selectedTask = selectedDashboardTask();
+  if (dashboardTaskId && (findTaskDefinitionById(dashboardTaskId) || (selectedTask && selectedTask.id === dashboardTaskId))) {
     return dashboardTaskId;
   }
   const stored = localStorage.getItem(STORAGE_KEYS.selectedMission);
-  return stored && getMissionConfigByKey(stored) ? stored : missionKeyFromRole();
+  return stored && (findTaskDefinitionById(stored) || getMissionConfigByKey(stored)) ? stored : missionKeyFromRole();
 }
 
 function activeTaskId() {
-  const dashboardTaskId = localStorage.getItem(STORAGE_KEYS.dashboardTask);
-  if (dashboardTaskId && getMissionConfigByKey(dashboardTaskId)) {
+  const dashboardTaskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask);
+  const selectedTask = selectedDashboardTask();
+  if (dashboardTaskId && (findTaskDefinitionById(dashboardTaskId) || (selectedTask && selectedTask.id === dashboardTaskId))) {
     return dashboardTaskId;
   }
   return state.mission ? state.mission.taskId : "mobile-onboarding";
@@ -2849,7 +1353,8 @@ function setRoomLocked(locked, reason) {
     if (locked && reason) {
       candidateMessageInput.placeholder = reason;
     } else if (!locked && state.mission) {
-      candidateMessageInput.placeholder = `Message #${state.mission.channel}`;
+      const agent = agentForChannel(state.currentChannel);
+      candidateMessageInput.placeholder = agent ? `Message ${agent.name} privately...` : "Message Team Channel";
     }
   }
   if (sendMessageBtn) sendMessageBtn.disabled = locked;
@@ -2878,11 +1383,287 @@ function setRoomLocked(locked, reason) {
 function normalizeRoleKind(title) {
   const lowered = String(title || "").toLowerCase();
   if (lowered.includes("product") || lowered.includes("incident")) return "pm";
+  if (lowered.includes("frontend") || lowered.includes("ux") || lowered.includes("design")) return "design";
   if (lowered.includes("engineer") || lowered.includes("engineering")) return "eng";
-  if (lowered.includes("design")) return "design";
   if (lowered.includes("qa")) return "qa";
+  if (lowered.includes("data") || lowered.includes("analyst")) return "data";
   if (lowered.includes("executive") || lowered.includes("vp") || lowered.includes("sponsor")) return "exec";
   return "pm";
+}
+
+function isHiddenEvaluatorPayload(message) {
+  const role = String(message && message.role || "").trim().toLowerCase();
+  if (role === "system" || role === "user") {
+    return false;
+  }
+
+  const speaker = String(message && (message.speaker_name || message.name || "") || "").trim().toLowerCase();
+  const title = String(message && (message.speaker_title || message.title || message.agent_role || "") || "").trim().toLowerCase();
+  const looksLikeEvaluator = title.includes("evaluator") || title.includes("observer");
+  return looksLikeEvaluator || speaker === "evaluator" || speaker === "simulation evaluator" || speaker === "observer" || speaker === "quinn";
+}
+
+function agentDmKey(agent) {
+  const raw = agent && (agent.dmKey || agent.name || agent.id);
+  return String(raw || "asha").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "asha";
+}
+
+function agentById(agentId) {
+  const id = String(agentId || "").toLowerCase();
+  return AGENT_PROFILES.find((agent) => {
+    const name = String(agent.name || "").toLowerCase();
+    return agent.id === id || agentDmKey(agent) === id || name === id || slugifyTask(name) === id;
+  }) || null;
+}
+
+function agentsForMission(mission) {
+  const domain = mission && mission.domain
+    ? mission.domain
+    : roleDomain([mission && mission.role, mission && mission.headline, mission && mission.summary].join(" "));
+  const order = TEAM_ORDER_BY_DOMAIN[domain] || TEAM_ORDER_BY_DOMAIN.pm;
+  return order
+    .map((id) => agentById(id))
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((agent) => ({ ...agent }));
+}
+
+function isVisibleCoworker(agent) {
+  if (!agent || agent.hidden) {
+    return false;
+  }
+  const name = String(agent.name || agent.agent_name || "").trim();
+  const title = String(agent.title || agent.role || "").toLowerCase();
+  return Boolean(name) && !title.includes("evaluator") && !title.includes("observer");
+}
+
+function agentChannelId(agent) {
+  return `dm:${agentDmKey(agent)}`;
+}
+
+function normalizeChannelId(channelId) {
+  const raw = String(channelId || "team").trim();
+  if (!raw || raw === "team" || (state.mission && raw === state.mission.channel)) {
+    return "team";
+  }
+  if (raw.startsWith("dm:")) {
+    const agentId = raw.slice(3).toLowerCase();
+    const visibleAgents = state.agents || [];
+    const agent = visibleAgents.find((person) => {
+      const name = String(person.name || "").toLowerCase();
+      return person.id === agentId || agentDmKey(person) === agentId || name === agentId || slugifyTask(name) === agentId;
+    }) || (!visibleAgents.length ? agentById(agentId) : null);
+    return agent ? agentChannelId(agent) : raw;
+  }
+  if (raw.startsWith("dm-")) {
+    const legacy = raw.slice(3).toLowerCase();
+    const agent = (state.agents || []).find((person) => {
+      const name = String(person.name || "").toLowerCase();
+      return person.id === legacy || agentDmKey(person) === legacy || name === legacy || slugifyTask(name) === legacy;
+    });
+    return agent ? agentChannelId(agent) : `dm:${legacy}`;
+  }
+  return raw;
+}
+
+function isTeamChannel(channelId) {
+  return normalizeChannelId(channelId) === "team";
+}
+
+function agentForChannel(channelId) {
+  const normalized = normalizeChannelId(channelId);
+  if (!normalized.startsWith("dm:")) return null;
+  const agentId = normalized.slice(3);
+  return (state.agents || []).find((agent) => agent.id === agentId || agentDmKey(agent) === agentId) || null;
+}
+
+function agentForSpeakerName(name) {
+  const normalized = String(name || "").trim().toLowerCase();
+  return (state.agents || []).find((agent) => String(agent.name || "").toLowerCase() === normalized)
+    || agentById(normalized);
+}
+
+function dmKeyFromChannel(channelId) {
+  const normalized = normalizeChannelId(channelId);
+  if (!normalized.startsWith("dm:")) {
+    return null;
+  }
+  const agent = agentForChannel(normalized);
+  return agent ? agentDmKey(agent) : normalized.slice(3);
+}
+
+function ensureDmStore(dmKey) {
+  const key = DM_MESSAGE_KEYS.includes(dmKey) ? dmKey : agentDmKey(agentById(dmKey) || { dmKey });
+  if (!state.dmMessages[key]) {
+    state.dmMessages[key] = [];
+  }
+  return state.dmMessages[key];
+}
+
+function messageStoreForChannel(channelId) {
+  if (isTeamChannel(channelId)) {
+    return state.teamMessages;
+  }
+  return ensureDmStore(dmKeyFromChannel(channelId) || "asha");
+}
+
+function visibleMessageStore() {
+  return messageStoreForChannel(state.currentChannel || "team");
+}
+
+function agentMentionedIn(text) {
+  const lowered = String(text || "").toLowerCase();
+  return (state.agents || []).find((agent) => {
+    const name = String(agent.name || "").trim().toLowerCase();
+    return name && (lowered.includes(`@${name}`) || new RegExp(`\\b${name}\\b`, "i").test(lowered));
+  }) || null;
+}
+
+function missionFiles() {
+  return Array.isArray(state.workspace && state.workspace.files) && state.workspace.files.length
+    ? state.workspace.files
+    : Array.isArray(state.mission && state.mission.workspaceFiles)
+      ? state.mission.workspaceFiles
+      : [];
+}
+
+function allowedTaskFileNames() {
+  const currentTask = getCurrentTaskFromSessionStorage();
+  return Array.from(new Set((currentTask.files || [])
+    .map((name) => String(name || "").trim())
+    .filter(Boolean)));
+}
+
+function fileBaseName(path) {
+  return String(path || "").split(/[\\/]/).filter(Boolean).pop() || "";
+}
+
+function isAllowedFileReference(reference, allowedFiles) {
+  const normalized = String(reference || "").trim().replace(/[.,;:!?)]$/, "").toLowerCase();
+  if (!normalized) {
+    return true;
+  }
+  return allowedFiles.some((file) => {
+    const lowered = file.toLowerCase();
+    return normalized === lowered || normalized === fileBaseName(lowered);
+  });
+}
+
+function replaceUnavailableFileReferences(text) {
+  const allowedFiles = allowedTaskFileNames();
+  if (!allowedFiles.length) {
+    return String(text || "");
+  }
+
+  const fallbackFile = allowedFiles[0];
+  const filePattern = /\b(?:[\w.-]+[\\/])*[\w.-]+\.(?:js|jsx|ts|tsx|py|md|css|html|json|sql|csv|log|txt)\b/g;
+  return String(text || "").replace(filePattern, (match) => (
+    isAllowedFileReference(match, allowedFiles) ? match : fallbackFile
+  ));
+}
+
+function bestFileForAgent(agent) {
+  const files = missionFiles();
+  const active = state.workspace && Array.isArray(state.workspace.files) ? getActiveFile() : null;
+  const kind = agent && agent.kind;
+  const keywords = {
+    pm: ["brief", "risk", "plan", "roadmap", "stakeholder", "support"],
+    eng: ["api", "service", "server", "cache", "queue", "auth", "jsx", "js", "py", "sql", "log"],
+    design: ["ui", "screen", "flow", "copy", "style", "design", "component", "onboarding"],
+    qa: ["test", "qa", "risk", "release", "log", "bug", "check"],
+    data: ["metric", "analytics", "dashboard", "csv", "sql", "forecast", "report", "experiment"],
+  }[kind] || [];
+
+  const match = files.find((file) => {
+    const name = String(file.name || "").toLowerCase();
+    const type = String(file.kind || file.type || "").toLowerCase();
+    return keywords.some((keyword) => name.includes(keyword) || type.includes(keyword));
+  });
+
+  return match || active || files[0] || { name: "task_brief.md", content: "" };
+}
+
+function buildPressureBeats(mission) {
+  const team = agentsForMission(mission);
+  const byId = (id) => team.find((agent) => agent.id === id);
+  const pm = byId("pm") || team[0] || agentById("pm");
+  const anchor = byId(mission.domain === "data" ? "data" : mission.domain === "design" || mission.domain === "frontend" ? "designer" : "backend")
+    || team.find((agent) => agent.id !== (pm && pm.id))
+    || pm;
+  const qa = byId("qa") || team.find((agent) => agent.id !== (pm && pm.id) && agent.id !== (anchor && anchor.id)) || anchor;
+  const firstFile = (mission.workspaceFiles || [])[1] || (mission.workspaceFiles || [])[0] || { name: "task_brief.md" };
+  return [
+    {
+      id: `${mission.taskId}-first-message`,
+      trigger: "first-message",
+      crisis: "Scope decision needed",
+      update: `${mission.company} needs a clear first move for ${mission.headline}.`,
+      messages: [
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: `For ${mission.headline}, stabilize the user-impacting path first and leave polish for later.` },
+        { speaker_name: qa.name, speaker_title: qa.title, avatar: qa.avatar, channel: "team", message: `I will use ${firstFile.name} to check the risky path before we call it safe.` },
+      ],
+    },
+    {
+      id: `${mission.taskId}-manual-crisis`,
+      trigger: "manual-crisis",
+      crisis: "Pressure spike",
+      update: "The room needs a smaller, safer recommendation with an owner and validation signal.",
+      messages: [
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: "Time just got tighter. Give me the smallest version we can stand behind." },
+        { speaker_name: anchor.name, speaker_title: anchor.title, avatar: anchor.avatar, channel: "team", message: `I am looking at ${firstFile.name}; lock down the exact behavior we trust before this ships.` },
+      ],
+    },
+    {
+      id: `${mission.taskId}-metrics-worsened`,
+      trigger: "metrics-worsened",
+      crisis: "Metrics worsening",
+      update: "Live metrics moved against the team. The room needs a smaller decision and a clear proof point.",
+      messages: [
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: "Metrics just moved the wrong way. I need the cut line now." },
+        { speaker_name: qa.name, speaker_title: qa.title, avatar: qa.avatar, channel: "team", message: `Do not broaden scope. Prove the risky path in ${firstFile.name} first.` },
+      ],
+    },
+    {
+      id: `${mission.taskId}-leadership-eta`,
+      trigger: "leadership-eta",
+      crisis: "Leadership ETA request",
+      update: "Leadership wants an ETA and rollback confidence before the next stakeholder update.",
+      messages: [
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: "Leadership wants an ETA. Give me owner, validation gate, and what waits." },
+        { speaker_name: anchor.name, speaker_title: anchor.title, avatar: anchor.avatar, channel: "team", message: "Quick patch is fine only if the rollback path is explicit." },
+      ],
+    },
+    {
+      id: `${mission.taskId}-hidden-issue`,
+      trigger: "hidden-issue",
+      crisis: "Hidden issue found",
+      update: "QA found a second risky path. The room needs to adapt without losing the first priority.",
+      messages: [
+        { speaker_name: qa.name, speaker_title: qa.title, avatar: qa.avatar, channel: "team", message: `I found a second path tied to ${firstFile.name}. I am not comfortable shipping until recovery is named.` },
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: "Keep the main call intact. Adjust scope, do not restart the whole sprint." },
+      ],
+    },
+    {
+      id: `${mission.taskId}-draft-80`,
+      trigger: "draft-80",
+      crisis: "Draft review pressure",
+      update: "The workspace has enough shape for the room to challenge the riskiest assumption.",
+      messages: [
+        { speaker_name: qa.name, speaker_title: qa.title, avatar: qa.avatar, channel: "team", message: "Draft is real enough to test. Name the ugly case before polishing it." },
+        { speaker_name: anchor.name, speaker_title: anchor.title, avatar: anchor.avatar, channel: "team", message: `Tie the draft back to ${firstFile.name}; otherwise it reads like a plan without proof.` },
+      ],
+    },
+    {
+      id: `${mission.taskId}-critique`,
+      trigger: "critique",
+      crisis: "Draft needs sharper evidence",
+      update: "The team wants the current workspace tied back to a file, a decision, and a validation gate.",
+      messages: [
+        { speaker_name: qa.name, speaker_title: qa.title, avatar: qa.avatar, channel: "team", message: `Your draft should say what proves ${firstFile.name} is no longer the risky path.` },
+        { speaker_name: pm.name, speaker_title: pm.title, avatar: pm.avatar, channel: "team", message: "Then make the tradeoff explicit so nobody mistakes this for a broad redesign." },
+      ],
+    },
+  ];
 }
 
 function defaultWorkspaceForMission(mission) {
@@ -2987,35 +1768,101 @@ function renderQuickPrompts() {
 }
 
 function renderChannelList() {
-  channelList.innerHTML = channelItemsForMission(state.mission)
-    .map(
-      (channel) => `
-        <div class="channel-item ${channel === state.mission.channel ? "active" : ""}">
-          <strong># ${escapeHtml(channel)}</strong>
-        </div>
-      `
-    )
-    .join("");
+  const teamChannelBtn = document.getElementById("teamChannelBtn");
+  if (teamChannelBtn) {
+    teamChannelBtn.classList.toggle("active", isTeamChannel(state.currentChannel));
+    const title = teamChannelBtn.querySelector("strong");
+    const subtitle = teamChannelBtn.querySelector("small");
+    if (title) title.textContent = `#${state.mission.channel}`;
+    if (subtitle) subtitle.textContent = "Visible to the whole room";
+    teamChannelBtn.onclick = () => {
+      switchToChannel('team');
+    };
+  }
 }
 
 function renderTeammates() {
-  teammateList.innerHTML = state.mission.teammates
+  const agents = (state.agents || state.mission.teammates || []).filter(isVisibleCoworker);
+  teammateList.innerHTML = agents
     .map((person) => {
-      const roleKind = person.kind || normalizeRoleKind(person.title);
+      const roleKind = person.kind || normalizeRoleKind(person.title || person.role);
+      const agentName = person.name || person.agent_name || "Agent";
+      const agentRole = person.title || person.role || "Team Member";
+      const initial = getInitials(agentName);
+      const isActive = normalizeChannelId(state.currentChannel) === agentChannelId(person);
       return `
-        <article class="teammate-row">
-          <div class="teammate-row-main">
-            <div class="member-avatar ${escapeHtml(roleKind)}">${escapeHtml(getInitials(person.name))}</div>
-            <div class="member-copy">
-              <strong>${escapeHtml(person.name)}</strong>
-              <p>${escapeHtml(person.title)}</p>
-            </div>
-          </div>
-          <span class="presence-dot" aria-hidden="true"></span>
-        </article>
+        <button class="teammate-row ${isActive ? "active" : ""}" type="button" data-channel="${escapeHtml(agentChannelId(person))}" data-agent-id="${escapeHtml(person.id || "")}">
+          <span class="teammate-row-main">
+            <span class="member-avatar ${escapeHtml(roleKind)}">${escapeHtml(initial)}</span>
+            <span class="member-copy">
+              <strong>${escapeHtml(agentName)}</strong>
+              <p>${escapeHtml(agentRole)}</p>
+            </span>
+          </span>
+          <span class="dm-pill">DM</span>
+        </button>
       `;
     })
     .join("");
+
+  const dmButtons = teammateList.querySelectorAll(".teammate-row[data-channel]");
+  dmButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const channel = btn.dataset.channel;
+      switchToChannel(channel);
+    });
+  });
+}
+
+function renderWorkspacePeople() {
+  if (!workspacePeopleAvatars) {
+    return;
+  }
+
+  const agents = (state.agents || state.mission.teammates || []).filter(isVisibleCoworker);
+  const agentAvatars = agents
+    .map((person) => {
+      const roleKind = person.kind || normalizeRoleKind(person.title || person.role);
+      const agentName = person.name || person.agent_name || "Agent";
+      return `<span class="mini-avatar avatar-${escapeHtml(roleKind)}" title="${escapeHtml(agentName)}">${escapeHtml(getInitials(agentName))}</span>`;
+    })
+    .join("");
+
+  workspacePeopleAvatars.innerHTML = `${agentAvatars}<span class="mini-avatar avatar-user" title="${escapeHtml(candidateName())}">${escapeHtml(getInitials(candidateName()))}</span>`;
+}
+
+function switchToChannel(channelId) {
+  const normalized = normalizeChannelId(channelId);
+  state.currentChannel = normalized;
+
+  const channelTitleEl = document.getElementById("channelTitle");
+  const channelIconEl = document.getElementById("channelIcon");
+
+  if (isTeamChannel(normalized)) {
+    channelTitleEl.textContent = `#${state.mission.channel}`;
+    channelIconEl.textContent = "#";
+    candidateMessageInput.placeholder = "Message Team Channel";
+    scenarioTitle.textContent = state.mission.headline;
+    if (workspaceShareLabel) workspaceShareLabel.textContent = "team visible";
+  } else {
+    const agent = agentForChannel(normalized);
+    const agentName = agent ? agent.name : "Agent";
+    const agentRole = agent ? agent.title : "Private thread";
+    channelTitleEl.textContent = agentName;
+    channelIconEl.textContent = "@";
+    candidateMessageInput.placeholder = `Message ${agentName} privately...`;
+    scenarioTitle.textContent = agent ? agentRole : state.mission.headline;
+    if (workspaceShareLabel) workspaceShareLabel.textContent = "dm visible";
+  }
+
+  renderChannelList();
+  renderTeammates();
+  loadChannelMessages(channelId);
+}
+
+function loadChannelMessages(channelId) {
+  state.currentChannel = normalizeChannelId(channelId);
+  rerenderChat();
 }
 
 function renderMission() {
@@ -3026,7 +1873,7 @@ function renderMission() {
   currentUserRole.textContent = currentRole();
   selfAvatar.textContent = getInitials(candidateName());
 
-  channelTitle.textContent = state.mission.channel;
+  channelTitle.textContent = `#${state.mission.channel}`;
   priorityBadge.textContent = state.mission.priority;
   crisisStatus.textContent = state.mission.crisisStatus;
   phaseLabel.textContent = "Intro";
@@ -3044,10 +1891,12 @@ function renderMission() {
 
   renderChannelList();
   renderTeammates();
+  renderWorkspacePeople();
   renderLists();
   renderQuickPrompts();
   renderWorkspaceTabs();
   setActiveFile(state.workspace.activeTabId);
+  switchToChannel(state.currentChannel || "team");
   autoResizeComposer();
   refreshIcons();
 }
@@ -3055,6 +1904,9 @@ function renderMission() {
 function clearChat() {
   teamChat.innerHTML = "";
   state.messageKeys = new Set();
+  state.teamMessages = [];
+  state.dmMessages = createEmptyDmMessages();
+  state.messages = [];
 }
 
 function clearTimeline() {
@@ -3064,6 +1916,7 @@ function clearTimeline() {
 
 function uniqueMessageKey(message) {
   return [
+    normalizeChannelId(message.channel || message.channel_id || message.channelId || "team"),
     message.speaker_name || message.name || "speaker",
     message.message || message.content || "",
     message.created_at || message.createdAt || "",
@@ -3087,7 +1940,6 @@ function sanitizeRoomMessage(rawMessage) {
     Noah: { name: "Ravi", title: "Engineering Lead" },
     Priya: { name: "Kenji", title: "QA Engineer" },
     Nora: { name: "Kenji", title: "QA Engineer" },
-    Leah: { name: "Kenji", title: "QA Engineer" },
     Farah: { name: "Kenji", title: "QA Engineer" },
     Elena: { name: "Mira", title: "Product Designer" },
     Jules: { name: "Mira", title: "Product Designer" },
@@ -3137,17 +1989,18 @@ function normalizeMessage(message) {
     avatar: message.avatar || getInitials(speakerName),
     kind: normalizeRoleKind(speakerTitle || speakerName),
     type: isSystem ? "system" : isUser ? "user" : "agent",
+    channel: normalizeChannelId(message.channel || message.channel_id || message.channelId || "team"),
   };
 }
 
-function appendChatMessage(rawMessage) {
-  const safeMessage = sanitizeRoomMessage(rawMessage);
-  const key = uniqueMessageKey(safeMessage);
-  if (state.messageKeys.has(key)) {
-    return;
-  }
+function shouldShowMessage(rawMessage) {
+  const messageChannel = normalizeChannelId(rawMessage.channel || rawMessage.channel_id || rawMessage.channelId || "team");
+  const currentChannel = normalizeChannelId(state.currentChannel || "team");
+  return messageChannel === currentChannel;
+}
 
-  state.messageKeys.add(key);
+function renderChatMessage(rawMessage) {
+  const safeMessage = sanitizeRoomMessage(rawMessage);
   const message = normalizeMessage(safeMessage);
   const item = document.createElement("article");
 
@@ -3179,7 +2032,51 @@ function appendChatMessage(rawMessage) {
   }
 
   teamChat.appendChild(item);
+}
+
+function rerenderChat() {
+  teamChat.innerHTML = "";
+  const visibleMessages = visibleMessageStore().filter(shouldShowMessage);
+  if (!visibleMessages.length && !isTeamChannel(state.currentChannel)) {
+    const emptyState = document.createElement("div");
+    emptyState.className = "chat-empty-state";
+    emptyState.textContent = "No private messages yet. Start the conversation.";
+    teamChat.appendChild(emptyState);
+    return;
+  }
+  visibleMessages.forEach(renderChatMessage);
   scrollChatToBottom();
+}
+
+function appendChatMessage(rawMessage) {
+  const safeMessage = sanitizeRoomMessage({
+    ...rawMessage,
+    channel: normalizeChannelId(rawMessage.channel || rawMessage.channel_id || rawMessage.channelId || state.currentChannel || "team"),
+  });
+  if (isHiddenEvaluatorPayload(safeMessage)) {
+    return;
+  }
+  const isUser = String(safeMessage.role || "").toLowerCase() === "user" || (safeMessage.speaker_name || safeMessage.name) === candidateName();
+  if (!isUser) {
+    safeMessage.message = replaceUnavailableFileReferences(safeMessage.message || safeMessage.content || "");
+    safeMessage.content = safeMessage.message;
+  }
+  const key = uniqueMessageKey(safeMessage);
+  if (state.messageKeys.has(key)) {
+    return;
+  }
+
+  state.messageKeys.add(key);
+  messageStoreForChannel(safeMessage.channel).push(safeMessage);
+  state.messages = [...state.teamMessages, ...Object.values(state.dmMessages).flat()];
+  if (shouldShowMessage(safeMessage)) {
+    const emptyState = teamChat.querySelector(".chat-empty-state");
+    if (emptyState) {
+      emptyState.remove();
+    }
+    renderChatMessage(safeMessage);
+    scrollChatToBottom();
+  }
 }
 
 function addTimelineEvent(entry) {
@@ -3321,86 +2218,61 @@ function workspaceSnapshot() {
     .join("\n\n");
 }
 
-function localReplyPair(userText) {
-  const text = String(userText || "").toLowerCase();
-  const pm = state.mission.teammates.find((person) => person.kind === "pm");
-  const eng = state.mission.teammates.find((person) => person.kind === "eng");
-  const design = state.mission.teammates.find((person) => person.kind === "design");
-  const qa = state.mission.teammates.find((person) => person.kind === "qa");
-  const exec = state.mission.teammates.find((person) => person.kind === "exec");
-  const missionKey = state.mission ? state.mission.key : "";
-  const mentions = (person) => person && text.includes(person.name.toLowerCase());
-  const missionGuidance = {
-    netflix: {
-      technical: "Tie the code change to playback recovery: retry budget, cache stability, rollback state, and region validation.",
-      risk: "Name the region and validation gate you trust least. EU-West rollback and cache error rate cannot be hand-waved.",
-      decision: "Make the incident call: isolate traffic, continue rollback, or patch retry/cache behavior. Then give owner and ETA.",
-      user: "Customer messaging should say streaming may fail after title selection and give the next update window.",
-    },
-    linkedin: {
-      technical: "Tie the fix to launch risk: AI consistency, prompt caching, mobile preview, and analytics instrumentation.",
-      risk: "Name the launch blocker you are accepting or refusing. QA needs full launch, limited beta, or delay.",
-      decision: "Make the launch call: full launch, limited beta, or slip. Then list what ships and what is disabled.",
-      user: "Member-facing language should explain AI suggestions, limitations, and edit control without overpromising.",
-    },
-    spotify: {
-      technical: "Tie the analysis to retention: onboarding completion, analytics discovery, recommendation changes, and cohort return.",
-      risk: "Name the evidence conflict. Activation improved in places while seven-day creator return got worse.",
-      decision: "Make the recovery call: rollback, hotfix onboarding, rebalance recommendations, or run a targeted experiment.",
-      user: "Creator messaging should acknowledge workflow disruption and point to the first recovery change.",
-    },
-    openai: {
-      technical: "Tie the patch to exploit closure: memory binding, retry sanitization, audit logs, and restricted demo fallback.",
-      risk: "Name the residual security risk and the repro gate. Red team needs 0 successful leakage attempts before signoff.",
-      decision: "Make the demo call: go, restricted demo, or delay. Then state mitigation and rollback trigger.",
-      user: "Enterprise-facing language should explain memory isolation controls without exposing exploit details.",
-    },
-  }[missionKey] || {
-    technical: "Tie the change to the failing path and the validation evidence.",
-    risk: "Name the riskiest edge case and the check that proves it is controlled.",
-    decision: "Make the call, name what gets cut, and assign owners.",
-    user: "Keep customer-facing language honest and specific.",
+function workspaceFilesForPayload() {
+  return state.workspace.files.map((file) => ({
+    id: file.id,
+    name: file.name,
+    path: file.name,
+    type: file.type || file.kind,
+    kind: file.kind || file.type,
+    language: file.language || "",
+    content: String(file.content || ""),
+  }));
+}
+
+function chatTaskContext(selectedChannel, selectedAgent) {
+  const currentTask = getCurrentTaskFromSessionStorage();
+  return {
+    taskTitle: currentTask.title,
+    company: currentTask.company,
+    role: currentTask.role,
+    scenario: currentTask.scenario,
+    skills: currentTask.skills,
+    files: currentTask.files,
+    selectedChannel,
+    candidateRole: currentRole(),
+    selectedAgent: selectedAgent
+      ? {
+          id: agentDmKey(selectedAgent),
+          backendId: selectedAgent.id,
+          name: selectedAgent.name,
+          role: selectedAgent.title,
+        }
+      : null,
   };
+}
 
-  if (mentions(eng) || text.includes("engineer") || text.includes("backend") || text.includes("code")) {
-    return [
-      { speaker_name: eng.name, speaker_title: eng.title, message: missionGuidance.technical },
-      { speaker_name: qa.name, speaker_title: qa.title, message: "I need the validation gate that proves this is not just a plausible theory." },
-    ];
-  }
-
-  if (mentions(qa) || text.includes("qa") || text.includes("test") || text.includes("risk") || text.includes("edge")) {
-    return [
-      { speaker_name: qa.name, speaker_title: qa.title, message: missionGuidance.risk },
-      { speaker_name: eng.name, speaker_title: eng.title, message: "Give me that proof target and I can align the implementation around it." },
-    ];
-  }
-
-  if (mentions(design) || text.includes("design") || text.includes("mobile") || text.includes("copy") || text.includes("customer") || text.includes("user")) {
-    return [
-      { speaker_name: design.name, speaker_title: design.title, message: missionGuidance.user },
-      { speaker_name: pm.name, speaker_title: pm.title, message: "Good. Now tie that user-facing message to the operational decision we are making." },
-    ];
-  }
-
-  if (mentions(exec) || text.includes("leadership") || text.includes("ceo") || text.includes("eta") || text.includes("go/no-go")) {
-    return [
-      { speaker_name: exec.name, speaker_title: exec.title, message: "I need the decision, impact, owner, ETA, and residual risk in plain language." },
-      { speaker_name: pm.name, speaker_title: pm.title, message: missionGuidance.decision },
-    ];
-  }
-
-  if (text.includes("log") || text.includes("metric") || text.includes("rollback") || text.includes("cache") || text.includes("latency") || text.includes("memory")) {
-    return [
-      { speaker_name: eng.name, speaker_title: eng.title, message: missionGuidance.technical },
-      { speaker_name: pm.name, speaker_title: pm.title, message: "Summarize what the evidence changes about the decision. The room needs action, not just analysis." },
-    ];
-  }
-
-  return [
-    { speaker_name: pm.name, speaker_title: pm.title, message: missionGuidance.decision },
-    { speaker_name: eng.name, speaker_title: eng.title, message: "Once you make the call, give me the concrete change and the validation signal so we can move." },
-  ];
+function normalizeIncomingAgentMessages(messages, channel, targetAgent = null) {
+  const normalizedChannel = normalizeChannelId(channel);
+  const dmMode = !isTeamChannel(normalizedChannel);
+  return (Array.isArray(messages) ? messages : [])
+    .map((message) => sanitizeRoomMessage(message))
+    .filter((message) => !isHiddenEvaluatorPayload(message))
+    .filter((message) => {
+      const speaker = agentForSpeakerName(message.speaker_name || message.name);
+      if (String(message.role || "").toLowerCase() === "user") {
+        return false;
+      }
+      if (dmMode) {
+        return targetAgent && speaker && agentDmKey(speaker) === agentDmKey(targetAgent);
+      }
+      return !speaker || (state.agents || []).some((agent) => agent.id === speaker.id || agentDmKey(agent) === agentDmKey(speaker));
+    })
+    .map((message) => ({
+      ...message,
+      channel: dmMode && targetAgent ? agentChannelId(targetAgent) : "team",
+      message: replaceUnavailableFileReferences(message.message || message.content || ""),
+    }));
 }
 
 function triggerPressureBeat(trigger, options = {}) {
@@ -3426,16 +2298,103 @@ function triggerPressureBeat(trigger, options = {}) {
   return true;
 }
 
+function clearDynamicTimers() {
+  (state.dynamicTimers || []).forEach((timerId) => window.clearTimeout(timerId));
+  state.dynamicTimers = [];
+}
+
+function scheduleDynamicEvent(trigger, delayMs) {
+  const timerId = window.setTimeout(() => {
+    triggerDynamicEscalation(trigger);
+  }, delayMs);
+  state.dynamicTimers.push(timerId);
+}
+
+function scheduleDynamicEvents() {
+  clearDynamicTimers();
+  scheduleDynamicEvent("metrics-worsened", 45000);
+  scheduleDynamicEvent("leadership-eta", 105000);
+}
+
+async function triggerDynamicEscalation(trigger) {
+  if (state.roomLocked || state.submissionInFlight) {
+    return false;
+  }
+
+  const triggerKey = `dynamic:${trigger}`;
+  if (state.triggeredBeats.has(triggerKey)) {
+    return false;
+  }
+  state.triggeredBeats.add(triggerKey);
+
+  if (!(state.usingLiveBackend || state.sessionId)) {
+    return triggerPressureBeat(trigger, { forceLocal: true });
+  }
+
+  showTyping("Room is reacting to new information...");
+  try {
+    const sessionId = await ensureSession();
+    const response = await fetch(`${API_BASE_URL}/api/agent/event`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: sessionId,
+        event_type: "crisis_triggered",
+        crisis_trigger: trigger,
+        mode: "team",
+        taskId: activeTaskId(),
+        candidate_name: candidateName(),
+        active_file: getActiveFile().name,
+        currentTask: chatTaskContext("team", null),
+        task_context: backendTaskContext(),
+        workspaceFiles: workspaceFilesForPayload(),
+        workspace_snapshot: workspaceSnapshot(),
+        code: codeEditor.value,
+      }),
+    });
+    const payload = await response.json();
+    hideTyping();
+
+    if (!response.ok) {
+      throw new Error(payload.error || "Dynamic event failed.");
+    }
+
+    setLiveBackendMode(true);
+    if (payload.crisis_event) {
+      crisisStatus.textContent = payload.crisis_event.severity || "Pressure spike";
+      taskUpdate.textContent = payload.crisis_event.impact || payload.crisis_event.message || "";
+    }
+    updatePhase(payload.phase);
+    if (payload.timeline_event) {
+      addTimelineEvent(payload.timeline_event);
+    }
+    appendMessagesSequentially(normalizeIncomingAgentMessages(payload.new_messages, "team", null), 160, 260);
+    return true;
+  } catch (error) {
+    console.error("Dynamic escalation backend error:", error);
+    hideTyping();
+    setLiveBackendMode(false);
+    return triggerPressureBeat(trigger, { forceLocal: true });
+  }
+}
+
 function maybeTriggerDraftBeat() {
   const content = codeEditor.value.trim();
   if (content.split(/\s+/).filter(Boolean).length >= 80) {
-    triggerPressureBeat("draft-80");
+    if (state.usingLiveBackend || state.sessionId) {
+      triggerDynamicEscalation("draft-80");
+    } else {
+      triggerPressureBeat("draft-80");
+    }
   }
 }
 
 function persistEvaluation(report) {
   const finalReport = {
     ...report,
+    session_id: report.session_id || state.sessionId || "",
+    user_name: candidateName(),
+    user_role: currentRole(),
     task: report.task || {
       title: state.mission.headline,
       role: state.mission.role,
@@ -3444,10 +2403,18 @@ function persistEvaluation(report) {
     },
   };
 
+  const savedReport = window.DayZeroSkillRecords
+    ? window.DayZeroSkillRecords.store(finalReport, {
+        session_id: finalReport.session_id,
+        source: "simulation",
+      })
+    : finalReport;
+
   localStorage.setItem(STORAGE_KEYS.report, JSON.stringify(finalReport));
-  localStorage.setItem("lastTaskTitle", finalReport.task.title || state.mission.headline);
-  localStorage.setItem("lastScore", String(finalReport.overall_score || 0));
-  localStorage.setItem("feedback", finalReport.summary || "");
+  localStorage.setItem("lastEvaluationReport", JSON.stringify(savedReport));
+  localStorage.setItem("lastTaskTitle", savedReport.task.title || state.mission.headline);
+  localStorage.setItem("lastScore", String(savedReport.overall_score || 0));
+  localStorage.setItem("feedback", savedReport.summary || "");
 }
 
 function recommendationForScore(score) {
@@ -3461,15 +2428,28 @@ function buildLocalEvaluationReport(reason = "submitted") {
   const passed = checklist.passed.length;
   const failed = checklist.failed.length;
   const snapshot = workspaceSnapshot().toLowerCase();
+  const defaultSnapshot = defaultWorkspaceForMission(state.mission)
+    .files
+    .map((file) => `${file.name}\n${String(file.content || "").trim().slice(0, 900)}`)
+    .join("\n\n")
+    .toLowerCase();
+  const workspaceChanged = snapshot.trim() !== defaultSnapshot.trim();
+  const changedWordCount = workspaceChanged ? snapshot.split(/\s+/).filter(Boolean).length : 0;
   const explicitTradeoff =
     snapshot.includes("defer") ||
     snapshot.includes("not shipping") ||
     snapshot.includes("rollback") ||
     snapshot.includes("guardrail");
   const timedPenalty = reason === "expired" ? 4 : 0;
-  const overallScore = clampScore(
-    66 + passed * 7 - failed * 5 + Math.min(state.userMessageCount, 3) * 3 + (explicitTradeoff ? 3 : 0) - timedPenalty
-  );
+  let rawScore = 66 + passed * 7 - failed * 5 + Math.min(state.userMessageCount, 3) * 3 + (explicitTradeoff ? 3 : 0) - timedPenalty;
+  if (!workspaceChanged && state.userMessageCount === 0) {
+    rawScore = Math.min(rawScore, 32);
+  } else if (!workspaceChanged) {
+    rawScore = Math.min(rawScore, 44);
+  } else if (changedWordCount < 25) {
+    rawScore = Math.min(rawScore, 48);
+  }
+  const overallScore = clampScore(rawScore);
 
   const scores = {
     leadership: clampScore(overallScore + (state.userMessageCount > 0 ? 2 : -4)),
@@ -3594,7 +2574,7 @@ function evaluationChecklist() {
           snapshot.includes("memory") ? "Memory risk is identified." : "",
           snapshot.includes("sanitize") || snapshot.includes("binding") || snapshot.includes("tenant") ? "Mitigation addresses unsafe memory handling." : "",
           snapshot.includes("restricted demo") || snapshot.includes("go/no-go") || snapshot.includes("delay") ? "Demo decision is explicit." : "",
-          snapshot.includes("red team") || snapshot.includes("0/20") || snapshot.includes("repro") ? "Security validation gate is named." : "",
+          snapshot.includes("repro") || snapshot.includes("qa") || snapshot.includes("validation") ? "Validation gate is named." : "",
         ].filter(Boolean),
         failed: [
           snapshot.includes("leak") || snapshot.includes("prompt") ? "" : "Prompt leakage source is not named clearly.",
@@ -3614,7 +2594,7 @@ function evaluationChecklist() {
           snapshot.includes("resend") ? "" : "Resend behavior is still not described clearly.",
         ].filter(Boolean),
       };
-    case "security":
+    case "login":
       return {
         passed: [
           snapshot.includes("rollback") ? "Rollback path is present." : "",
@@ -3623,7 +2603,7 @@ function evaluationChecklist() {
         ].filter(Boolean),
         failed: [
           snapshot.includes("rollback") ? "" : "Rollback trigger is still missing.",
-          snapshot.includes("scope") || snapshot.includes("thin") ? "" : "Patch scope is not yet constrained explicitly.",
+          snapshot.includes("scope") || snapshot.includes("thin") ? "" : "Fix scope is not yet constrained explicitly.",
         ].filter(Boolean),
       };
     case "ops":
@@ -3675,7 +2655,21 @@ function evaluationChecklist() {
         ].filter(Boolean),
       };
     default:
-      return { passed: [], failed: [] };
+      const activeNames = missionFiles().map((file) => String(file.name || "").toLowerCase());
+      const firstRequirement = String((state.mission.requirements || [])[0] || "task requirement").toLowerCase();
+      return {
+        passed: [
+          snapshot.includes("decision") || snapshot.includes("first") || snapshot.includes("priority") ? "Decision path is visible." : "",
+          snapshot.includes("tradeoff") || snapshot.includes("defer") || snapshot.includes("scope") ? "Tradeoff or scope is named." : "",
+          snapshot.includes("test") || snapshot.includes("validate") || snapshot.includes("metric") || snapshot.includes("evidence") ? "Validation evidence is included." : "",
+          activeNames.some((name) => snapshot.includes(name)) ? "Workspace references a provided task file." : "",
+        ].filter(Boolean),
+        failed: [
+          snapshot.includes(firstRequirement.split(/\s+/)[0]) || snapshot.includes("decision") ? "" : `The handoff is not clearly tied to ${state.mission.requirements[0] || "the first requirement"}.`,
+          snapshot.includes("owner") || snapshot.includes("next") ? "" : "Next owner or follow-up is still missing.",
+          snapshot.includes("risk") || snapshot.includes("edge") || snapshot.includes("rollback") || snapshot.includes("caveat") ? "" : "Residual risk is not named clearly.",
+        ].filter(Boolean),
+      };
   }
 }
 
@@ -3697,15 +2691,45 @@ function setLiveBackendMode(isLive) {
   state.usingLiveBackend = Boolean(isLive);
 }
 
+function backendTaskContext() {
+  const selectedTask = selectedDashboardTask() || {};
+  const currentTask = getCurrentTaskFromSessionStorage();
+  return {
+    ...selectedTask,
+    id: state.mission.taskId,
+    company: state.mission.company,
+    label: state.mission.sprint,
+    title: state.mission.headline,
+    taskTitle: state.mission.headline,
+    description: state.mission.summary,
+    scenario: state.mission.summary,
+    role: state.mission.role,
+    candidateRole: currentRole(),
+    difficulty: state.mission.priority,
+    time: `${state.mission.deadlineMinutes} mins`,
+    skills: currentTask.skills || state.mission.requirements,
+    crisis: state.mission.crisisStatus,
+    files: currentTask.files,
+    workspaceFiles: workspaceFilesForPayload().map((file) => ({
+      id: file.id,
+      name: file.name,
+      type: file.type || file.kind,
+      kind: file.kind || file.type,
+      language: file.language,
+      content: file.content,
+    })),
+  };
+}
+
 async function createSession() {
   const response = await fetch(`${API_BASE_URL}/api/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       task_id: activeBackendTaskId(),
-      role: state.mission.role,
+      role: currentRole(),
       participant_name: candidateName(),
-      task_context: selectedDashboardTask(),
+      task_context: backendTaskContext(),
     }),
   });
   if (!response.ok) {
@@ -3759,35 +2783,43 @@ function hydrateFromSession(payload) {
 }
 
 function introMessagesForMission() {
-  const teammates = Array.isArray(state.mission.teammates) ? state.mission.teammates : [];
-  const byKind = (kind, fallback) => teammates.find((mate) => mate.kind === kind) || fallback;
-  const pm = byKind("pm", { name: "Asha", title: "Product Manager" });
-  const eng = byKind("eng", { name: "Ravi", title: "Engineering Lead" });
-  const design = byKind("design", { name: "Mira", title: "Product Designer" });
-  const qa = byKind("qa", { name: "Kenji", title: "QA Engineer" });
+  const agents = state.agents && state.agents.length ? state.agents : agentsForMission(state.mission);
+  const byId = (id) => agents.find((mate) => mate.id === id) || null;
+  const pm = byId("pm") || agents[0] || agentById("pm");
+  const anchorId = state.mission.domain === "data"
+      ? "data"
+      : state.mission.domain === "backend"
+        ? "backend"
+      : state.mission.domain === "design" || state.mission.domain === "frontend"
+        ? "designer"
+        : "pm";
+  const anchor = byId(anchorId) || agents.find((mate) => mate.id !== (pm && pm.id)) || pm;
+  const qa = byId("qa") || agents.find((mate) => mate.id !== (pm && pm.id) && mate.id !== (anchor && anchor.id)) || anchor;
+  const firstFile = (state.workspace && state.workspace.files && state.workspace.files[1]) || (state.workspace && state.workspace.files && state.workspace.files[0]) || { name: "task_brief.md" };
 
   return [
     {
       speaker_name: pm.name,
       speaker_title: pm.title,
-      message: `Hi, I am ${pm.name}, ${pm.title} for ${state.mission.company}. We are in #${state.mission.channel}; before we jump in, please introduce yourself and how you approach this kind of work.`,
+      avatar: pm.avatar,
+      channel: "team",
+      message: `${state.mission.headline}: stabilize the main user-impacting path first, then leave polish for later.`,
     },
     {
-      speaker_name: eng.name,
-      speaker_title: eng.title,
-      message: `I am ${eng.name}, ${eng.title}. I will watch contracts, failure modes, and what can ship safely.`,
-    },
-    {
-      speaker_name: design.name,
-      speaker_title: design.title,
-      message: `I am ${design.name}, ${design.title}. I will keep the user-facing path clear, calm, and trustworthy.`,
+      speaker_name: anchor.name,
+      speaker_title: anchor.title,
+      avatar: anchor.avatar,
+      channel: "team",
+      message: `I am starting with ${firstFile.name}. That should show where the risky behavior lives.`,
     },
     {
       speaker_name: qa.name,
       speaker_title: qa.title,
-      message: `I am ${qa.name}, ${qa.title}. I will press on edge cases and proof before we call anything done. Current issue: ${state.mission.summary}`,
+      avatar: qa.avatar,
+      channel: "team",
+      message: `I will keep release risk visible. The first thing to prove is: ${state.mission.summary}`,
     },
-  ];
+  ].slice(0, 2);
 }
 
 function seedLocalRoom() {
@@ -3854,10 +2886,15 @@ async function ensureSession() {
   return state.sessionId;
 }
 
-async function sendRoomMessage(rawText) {
+async function sendRoomMessage(rawText, targetChannel = null) {
   if (state.roomLocked) return;
   const text = String(rawText || "").trim();
   if (!text) return;
+
+  const channel = normalizeChannelId(targetChannel || state.currentChannel || "team");
+  const targetAgent = agentForChannel(channel);
+  const mode = isTeamChannel(channel) ? "team" : "dm";
+  const taskContext = chatTaskContext(channel, targetAgent);
 
   appendChatMessage({
     speaker_name: candidateName(),
@@ -3866,14 +2903,14 @@ async function sendRoomMessage(rawText) {
     avatar: "Y",
     message: text,
     created_at: new Date().toISOString(),
+    channel: channel,
   });
   candidateMessageInput.value = "";
   autoResizeComposer();
 
-  const isFirstUserMessage = state.userMessageCount === 0;
   state.userMessageCount += 1;
 
-  showTyping("Team is typing...");
+  showTyping(targetAgent ? `${targetAgent.name} is typing...` : "Team is typing...");
 
   try {
     const sessionId = await ensureSession();
@@ -3882,10 +2919,18 @@ async function sendRoomMessage(rawText) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
+        mode,
+        agentId: targetAgent ? agentDmKey(targetAgent) : null,
+        taskId: activeTaskId(),
         candidate_name: candidateName(),
         active_file: getActiveFile().name,
+        currentTask: taskContext,
+        task_context: backendTaskContext(),
+        workspaceFiles: workspaceFilesForPayload(),
         workspace_snapshot: workspaceSnapshot(),
         code: codeEditor.value,
+        channel_id: channel,
+        target_agent_id: targetAgent ? targetAgent.id : null,
       }),
     });
     const payload = await response.json();
@@ -3900,20 +2945,29 @@ async function sendRoomMessage(rawText) {
       addTimelineEvent(payload.timeline_event);
     }
 
-    const newMessages = Array.isArray(payload.new_messages) ? payload.new_messages : [];
+    const newMessages = normalizeIncomingAgentMessages(payload.new_messages, channel, targetAgent);
     if (newMessages.length) {
       appendMessagesSequentially(newMessages);
     }
+    if (state.userMessageCount === 2 && isTeamChannel(channel)) {
+      window.setTimeout(() => triggerDynamicEscalation("hidden-issue"), 1800);
+    }
   } catch (error) {
+    console.error("Room chat backend error:", error);
     hideTyping();
     setLiveBackendMode(false);
-    if (isFirstUserMessage) {
-      triggerPressureBeat("first-message", { forceLocal: true });
-    }
-    appendMessagesSequentially(localReplyPair(text).map((message) => ({ ...message, created_at: new Date().toISOString() })));
+    appendChatMessage({
+      speaker_name: "System",
+      speaker_title: "Backend",
+      role: "system",
+      avatar: "!",
+      message: `Backend chat failed: ${error.message || "unknown error"}. Check the Flask logs; no local teammate reply was generated.`,
+      created_at: new Date().toISOString(),
+      channel,
+    });
     addTimelineEvent({
-      title: "Local simulation reaction",
-      description: "The backend was unavailable, so the room continued with local simulation logic.",
+      title: "Backend chat failed",
+      description: "No hardcoded teammate reply was used. Check the backend logs for the provider or route error.",
       created_at: new Date().toISOString(),
     });
   }
@@ -3936,7 +2990,11 @@ async function runChecks() {
     created_at: new Date().toISOString(),
   });
 
-  showTyping("Ravi and Kenji are checking this...");
+  const channel = normalizeChannelId(state.currentChannel);
+  const targetAgent = agentForChannel(channel);
+  const mode = isTeamChannel(channel) ? "team" : "dm";
+  const taskContext = chatTaskContext(channel, targetAgent);
+  showTyping(targetAgent ? `${targetAgent.name} is checking this...` : "Ravi and Kenji are checking this...");
 
   try {
     const sessionId = await ensureSession();
@@ -3945,11 +3003,19 @@ async function runChecks() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: summary,
+        mode,
+        agentId: targetAgent ? agentDmKey(targetAgent) : null,
+        taskId: activeTaskId(),
         candidate_name: candidateName(),
         active_file: getActiveFile().name,
+        currentTask: taskContext,
+        task_context: backendTaskContext(),
+        workspaceFiles: workspaceFilesForPayload(),
         workspace_snapshot: workspaceSnapshot(),
         code: codeEditor.value,
         test_results: results,
+        channel_id: channel,
+        target_agent_id: targetAgent ? targetAgent.id : null,
       }),
     });
     const payload = await response.json();
@@ -3963,29 +3029,33 @@ async function runChecks() {
     if (payload.timeline_event) {
       addTimelineEvent(payload.timeline_event);
     }
-    appendMessagesSequentially((payload.new_messages || []).map((message) => ({ ...message })));
+    appendMessagesSequentially(normalizeIncomingAgentMessages(payload.new_messages, channel, targetAgent));
   } catch (error) {
+    console.error("Run checks backend error:", error);
     hideTyping();
     setLiveBackendMode(false);
-    appendMessagesSequentially(
-      localReplyPair(hasFailures ? "test risk edge case" : "test validation green").map((message) => ({
-        ...message,
-        created_at: new Date().toISOString(),
-      }))
-    );
+    appendChatMessage({
+      speaker_name: "System",
+      speaker_title: "Backend",
+      role: "system",
+      avatar: "!",
+      message: `Backend checks response failed: ${error.message || "unknown error"}. Check Flask logs; no local teammate reply was generated.`,
+      created_at: new Date().toISOString(),
+      channel,
+    });
   }
 }
 
 function insertOutline() {
   const file = getActiveFile();
   const outline = file.kind === "brief"
-    ? [
+      ? [
         "# Decision",
         "",
-        "- What is failing right now?",
-        "- What are we doing first?",
-        "- What are we deferring on purpose?",
-        "- What proves this is safe enough today?",
+        "- Current failure:",
+        "- First move:",
+        "- Deferred on purpose:",
+        "- Ship check:",
       ].join("\n")
     : [
         "// Plan",
@@ -4010,9 +3080,20 @@ function shareWorkspace() {
     return;
   }
 
-  const message = `I updated ${getActiveFile().name}. Review this direction:\n\n${excerpt}`;
-  sendRoomMessage(message);
-  showToast("Shared in chat.");
+  let message;
+  let targetChannel = normalizeChannelId(state.currentChannel);
+
+  if (isTeamChannel(targetChannel)) {
+    message = `I updated ${getActiveFile().name}. Review this direction:\n\n${excerpt}`;
+    showToast("Shared with team.");
+  } else {
+    const agent = agentForChannel(targetChannel);
+    const agentName = agent ? agent.name : "agent";
+    message = `I updated ${getActiveFile().name}. Here's what I changed:\n\n${excerpt}`;
+    showToast(`Shared with ${agentName}.`);
+  }
+
+  sendRoomMessage(message, targetChannel);
 }
 
 function requestCritique() {
@@ -4022,7 +3103,9 @@ function requestCritique() {
     showToast("Write something in the workspace first so the team has something to critique.");
     return;
   }
-  triggerPressureBeat("critique");
+  if (isTeamChannel(state.currentChannel)) {
+    triggerPressureBeat("critique");
+  }
   sendRoomMessage(`Review my current ${getActiveFile().name} draft and tell me what breaks first:\n\n${excerpt}`);
 }
 
@@ -4039,8 +3122,14 @@ async function triggerCrisis() {
         body: JSON.stringify({
           session_id: sessionId,
           event_type: "crisis_triggered",
+          crisis_trigger: "manual-crisis",
+          mode: "team",
+          taskId: activeTaskId(),
           candidate_name: candidateName(),
           active_file: getActiveFile().name,
+          currentTask: chatTaskContext("team", null),
+          task_context: backendTaskContext(),
+          workspaceFiles: workspaceFilesForPayload(),
           workspace_snapshot: workspaceSnapshot(),
           code: codeEditor.value,
         }),
@@ -4053,11 +3142,15 @@ async function triggerCrisis() {
       }
 
       setLiveBackendMode(true);
+      if (payload.crisis_event) {
+        crisisStatus.textContent = payload.crisis_event.severity || "Pressure spike";
+        taskUpdate.textContent = payload.crisis_event.impact || payload.crisis_event.message || "";
+      }
       updatePhase(payload.phase);
       if (payload.timeline_event) {
         addTimelineEvent(payload.timeline_event);
       }
-      appendMessagesSequentially((payload.new_messages || []).map((message) => ({ ...message })));
+      appendMessagesSequentially(normalizeIncomingAgentMessages(payload.new_messages, "team", null));
       return;
     } catch (error) {
       hideTyping();
@@ -4078,6 +3171,7 @@ async function submitSimulation(reason = "submitted") {
 
   const submission = buildSubmission();
   state.submissionInFlight = true;
+  clearDynamicTimers();
   setRoomLocked(true, reason === "expired" ? "Time ended - generating SkillRecord..." : "Submitting...");
   showToast(reason === "expired" ? "Time ended - generating SkillRecord..." : "Submitting simulation for evaluation...");
 
@@ -4089,8 +3183,13 @@ async function submitSimulation(reason = "submitted") {
       body: JSON.stringify({
         submission,
         reason,
+        mode: "team",
+        taskId: activeTaskId(),
         candidate_name: candidateName(),
         active_file: getActiveFile().name,
+        currentTask: chatTaskContext("team", null),
+        task_context: backendTaskContext(),
+        workspaceFiles: workspaceFilesForPayload(),
         workspace_snapshot: workspaceSnapshot(),
         code: submission,
       }),
@@ -4146,21 +3245,27 @@ async function submitSimulation(reason = "submitted") {
 }
 
 function resetMissionState(nextMissionKey) {
+  clearDynamicTimers();
   const missionConfig = getMissionConfigByKey(nextMissionKey) || getMissionConfigByKey("mobile");
   state.missionKey = nextMissionKey;
   state.mission = personalizeMissionForDashboardTask(clone(missionConfig), selectedDashboardTask());
+  state.agents = agentsForMission(state.mission);
+  state.mission.teammates = state.agents;
   state.workspace = loadWorkspaceState();
   state.timeline = loadTimelineState();
   state.triggeredBeats = new Set();
+  state.dynamicTimers = [];
   state.userMessageCount = 0;
   state.submissionInFlight = false;
   state.allowNavigationAway = false;
+  state.currentChannel = "team";
   clearChat();
   clearTimeline();
   renderMission();
   renderTimeline();
   setRoomLocked(false, "");
   startOrResumeSession();
+  scheduleDynamicEvents();
 }
 
 function switchMission(nextMissionKey) {
@@ -4202,7 +3307,8 @@ function bindEvents() {
       void document.body.offsetWidth;
       document.body.classList.add("team-glow");
       window.setTimeout(() => document.body.classList.remove("team-glow"), 1300);
-      showToast("Asha, Ravi, Mira, and Kenji are here.");
+      const names = (state.agents || []).map((agent) => agent.name).filter(Boolean).join(", ");
+      showToast(`${names || "The team"} and ${candidateName()} are here.`);
     });
   }
 
@@ -4270,6 +3376,7 @@ function bindEvents() {
 }
 
 async function init() {
+  await hydrateSimulationWorkspaceFiles();
   await hydrateSelectedDashboardTaskWorkspaceFiles();
   bindEvents();
   resetMissionState(selectedMissionKey());

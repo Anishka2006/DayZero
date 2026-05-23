@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | Preparing Room</title>
+  <link rel="stylesheet" href="../css/briefing.css?v=1" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="light">
+  <div class="briefing-container loading-container">
+    <header class="briefing-header">
+      <div class="header-left">
+        <div class="progress-indicator">
+          <div class="progress-step completed">
+            <span class="step-number">1</span>
+            <span class="step-label">Project Brief</span>
+          </div>
+          <div class="progress-line completed"></div>
+          <div class="progress-step completed">
+            <span class="step-number">2</span>
+            <span class="step-label">Workspace Preview</span>
+          </div>
+          <div class="progress-line completed"></div>
+          <div class="progress-step active">
+            <span class="step-number">3</span>
+            <span class="step-label">Room Preparing</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="company-badge" id="companyBadge">
+          <span class="company-logo" id="companyLogo">A</span>
+          <span class="company-name" id="companyName">Astra</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="briefing-main loading-main">
+      <div class="loading-content">
+        <div class="loading-animation">
+          <div class="spinner"></div>
+        </div>
+
+        <div class="loading-text-container">
+          <div class="loading-text" id="loadingText">Preparing company workspace...</div>
+        </div>
+
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-percentage" id="progressPercentage">0%</div>
+        </div>
+
+        <div class="status-messages" id="statusMessages">
+          <div class="status-item completed">
+            <i data-lucide="check-circle" class="status-icon"></i>
+            <span>Preparing room</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const taskData = JSON.parse(sessionStorage.getItem('dayzero_selected_task_details') || localStorage.getItem('dayzero_selected_task_details') || '{}');
+  </script>
+  <script src="../js/briefing-loading.js?v=2"></script>
+</body>
+</html>

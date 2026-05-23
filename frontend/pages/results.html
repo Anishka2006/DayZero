@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/results.css?v=4" />
+  <link rel="stylesheet" href="../css/results.css?v=5" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -19,13 +19,13 @@
           <div class="profile-avatar-premium">YZ</div>
           <div class="profile-identity">
             <h2>Your SkillRecord</h2>
-            <p class="profile-title">Simulation Candidate</p>
+            <p class="profile-title">Work Readiness Assessment</p>
             <p class="profile-task" id="reportTaskTitle">Latest simulation</p>
             <p class="profile-location"><i data-lucide="briefcase" class="icon-xs"></i> DayZero | <i data-lucide="calendar-days" class="icon-xs"></i> No completed flow yet</p>
           </div>
           <div class="profile-actions">
-            <button class="primary-btn" id="shareProfileBtn" type="button"><i data-lucide="share-2" class="icon-sm"></i> Share Profile</button>
-            <button class="secondary-btn" id="downloadReportBtn" type="button"><i data-lucide="download" class="icon-sm"></i> Download Report</button>
+            <button class="primary-btn" id="shareProfileBtn" type="button"><i data-lucide="linkedin" class="icon-sm"></i> Post on LinkedIn</button>
+            <button class="secondary-btn" id="downloadReportBtn" type="button"><i data-lucide="download" class="icon-sm"></i> Download PDF</button>
             <a href="dashboard.html" class="secondary-btn action-link"><i data-lucide="layout-dashboard" class="icon-sm"></i> Open Dashboard</a>
           </div>
         </div>
@@ -41,7 +41,7 @@
             <div class="score-value" id="overallScore">0</div>
           </div>
           <div class="profile-score-text">
-            <h4>Overall Skill Score</h4>
+            <h4>Overall Work Readiness</h4>
             <div class="score-tags">
               <span class="badge top-tier" id="scoreBadge"><i data-lucide="award" class="icon-xs"></i> Awaiting submission</span>
               <span class="subtitle" id="recommendation">No data</span>
@@ -49,7 +49,7 @@
           </div>
         </div>
         <div class="professional-summary">
-          <h4>Professional Summary</h4>
+          <h4>Assessment Summary</h4>
           <p id="reportSummary">Complete a simulation in the dashboard to generate a verified SkillRecord.</p>
         </div>
       </div>
@@ -61,11 +61,11 @@
 
       <div class="profile-bottom-section">
         <div class="achievements-area">
-          <h4>Milestones & Certifications</h4>
+          <h4>Key Strengths</h4>
           <div class="badges-row" id="strengthList"></div>
         </div>
         <div class="recommendations-area">
-          <h4>Ideal Role Fit</h4>
+          <h4>Growth Areas</h4>
           <div class="roles-row" id="nextStepList"></div>
         </div>
       </div>
@@ -74,7 +74,7 @@
         <div class="trust-stamp">
           <div class="stamp-icon"><i data-lucide="shield-check"></i></div>
           <div class="stamp-details">
-            <strong>AI Verified Skill Assessment</strong>
+            <strong>AI Verified Work Readiness Assessment</strong>
             <p id="issuedDate">Issued by DayZero Simulation OS | Assessment Date: Pending</p>
           </div>
         </div>
@@ -82,11 +82,22 @@
       </div>
     </section>
 
+    <section class="record-history" id="recordHistory">
+      <div class="history-heading">
+        <div>
+          <p class="eyebrow">Saved Records</p>
+          <h3>Your SkillRecord History</h3>
+        </div>
+        <span id="recordCount">0 records</span>
+      </div>
+      <div class="record-list" id="recordList"></div>
+    </section>
+
     <section class="details-grid" id="detailsGrid">
       <article class="detail-card">
         <div class="section-head">
           <p class="eyebrow">Strengths</p>
-          <h3>What Landed Well</h3>
+          <h3>What You Did Well</h3>
         </div>
         <ul id="strengthDetailList" class="signal-list"></ul>
       </article>
@@ -94,7 +105,7 @@
       <article class="detail-card">
         <div class="section-head">
           <p class="eyebrow">Risks</p>
-          <h3>What Needs Tightening</h3>
+          <h3>Areas To Improve</h3>
         </div>
         <ul id="riskList" class="signal-list"></ul>
       </article>
@@ -102,7 +113,7 @@
       <article class="detail-card">
         <div class="section-head">
           <p class="eyebrow">Observer</p>
-          <h3>Recruiter Notes</h3>
+          <h3>Behavioral Analysis</h3>
         </div>
         <ul id="observerNoteList" class="signal-list"></ul>
       </article>
@@ -135,6 +146,7 @@
 
   <div class="results-toast hidden" id="toast"></div>
 
-  <script src="../js/results.js?v=3"></script>
+  <script src="../js/skill-record-utils.js?v=1"></script>
+  <script src="../js/results.js?v=4"></script>
 </body>
 </html>

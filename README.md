@@ -1,6 +1,41 @@
 # DayZero
 
-DayZero is an AI-powered work simulation platform built around realistic hiring tasks, role-based dashboards, and AI-driven evaluation.
+DayZero is a premium AI-powered Work Simulation Operating System and hackathon-ready flagship project. It is designed to feel like joining a real company sprint: reading messy artifacts, collaborating with believable teammates, handling pressure changes, making tradeoffs, and producing a final SkillRecord based on work behavior.
+
+DayZero is not interview prep, LeetCode, or a generic AI chat. The core product experience is a live company room inspired by Slack, Linear, Notion, and modern developer tools.
+
+## Simulation Principles
+
+- Realistic company problems: incidents, rollout risk, scaling pressure, UX failures, customer complaints, and stakeholder deadlines.
+- Believable teammates: Asha the PM, Ravi the Engineering Lead, Mira the Product Designer, Kenji the QA Engineer, and Leah the Data Analyst.
+- Dynamic pressure: metrics worsen, leadership asks for ETA, QA finds hidden paths, and scope shifts over time.
+- Authentic workspace: task briefs, code, logs, CSV metrics, support tickets, PR comments, onboarding reports, screenshot notes, and customer context.
+- Hidden evaluation: the Observer records behavioral notes silently, then Quinn generates the final SkillRecord.
+
+## Supported Roles
+
+- Frontend Engineer
+- Backend Engineer
+- Product Manager
+- Product Designer
+- QA Engineer
+- Data Analyst
+
+The current scope intentionally excludes DevOps, cloud engineering, Kubernetes, infrastructure dashboards, security operations, and site reliability tracks so the product stays focused and polished.
+
+## Agent Rules
+
+- Asha focuses on priorities, deadlines, business impact, user pain, and release decisions.
+- Ravi focuses on architecture, implementation risk, scalability, rollback, and technical tradeoffs.
+- Mira focuses on UX clarity, onboarding friction, accessibility, visual consistency, and customer confusion.
+- Kenji focuses on edge cases, release blockers, validation gaps, reliability, and recovery proof.
+- Leah focuses on metrics, trends, conversion drops, retention analysis, and experiment insights.
+- Quinn never participates in chat. Quinn only evaluates the transcript, observer notes, workspace, and final submission.
+- The Observer never appears in the UI.
+
+## Hackathon Pitch
+
+DayZero wins by demonstrating something most AI products miss: believable work behavior. It is not another chat wrapper; it is a live sprint room where AI agents disagree, incidents interrupt, files matter, and evaluation is based on how the user collaborates under pressure.
 
 ## Current Structure
 

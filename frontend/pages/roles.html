@@ -3,71 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DayZero | Choose Your Role</title>
-  <link rel="stylesheet" href="../css/roles.css" />
+  <title>DayZero | Choose Your Sprint Role</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/roles.css?v=4" />
 </head>
 <body>
-  <main class="page">
-    <section class="left-panel">
-      <div class="brand">
-        <div class="logo">DZ</div>
-        <div>
-          <h1>DayZero</h1>
-          <p>Candidate setup</p>
+  <main class="page centered">
+    <div class="brand-compact">
+      <div class="logo">DZ</div>
+      <h1>DayZero</h1>
+    </div>
+
+    <section class="role-selection">
+      <div class="selection-header">
+        <span class="selection-kicker">Work Simulation OS</span>
+        <h2>Choose Your Sprint Role</h2>
+        <p>Enter a live company room with teammates, blockers, files, metrics, and pressure.</p>
+      </div>
+
+      <div class="role-grid" id="roleOptions">
+        <button class="role-card" type="button" data-value="Frontend Engineer">
+          <div class="role-icon">FE</div>
+          <h3>Frontend Engineer</h3>
+          <p>Interfaces, flows, accessibility, responsive states</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Backend Engineer">
+          <div class="role-icon">BE</div>
+          <h3>Backend Engineer</h3>
+          <p>APIs, data flow, reliability, rollback thinking</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Product Manager">
+          <div class="role-icon">PM</div>
+          <h3>Product Manager</h3>
+          <p>Users, priorities, deadlines, stakeholder pressure</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Product Designer">
+          <div class="role-icon">PD</div>
+          <h3>Product Designer</h3>
+          <p>UX clarity, onboarding, usability, customer confusion</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="QA Engineer">
+          <div class="role-icon">QA</div>
+          <h3>QA Engineer</h3>
+          <p>Edge cases, validation, release safety, regressions</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Data Analyst">
+          <div class="role-icon">DA</div>
+          <h3>Data Analyst</h3>
+          <p>Metrics, trends, conversion drops, experiment insight</p>
+        </button>
+      </div>
+
+      <div class="selection-footer">
+        <div class="level-selector">
+          <span class="level-label">Difficulty</span>
+          <div class="level-options" id="levelOptions">
+            <button class="level-btn" type="button" data-value="Beginner">Beginner</button>
+            <button class="level-btn active" type="button" data-value="Intermediate">Intermediate</button>
+            <button class="level-btn" type="button" data-value="Advanced">Advanced</button>
+          </div>
         </div>
+        <button class="continue-btn" id="continueBtn" type="button">Enter Sprint Room</button>
       </div>
-
-      <div class="hero-copy">
-        <span class="eyebrow">Role-based simulations</span>
-        <h2>Choose the work you want to be tested on.</h2>
-        <p>Your dashboard will show tasks for this role only, so a frontend candidate sees frontend work and a backend candidate sees backend work.</p>
-      </div>
-
-      <div class="preview-card">
-        <p>Current setup</p>
-        <h3 id="profilePreview">Frontend - Intermediate - 1-hour Task</h3>
-        <span>You can change these before entering the dashboard.</span>
-      </div>
-    </section>
-
-    <section class="setup-card" aria-labelledby="setupTitle">
-      <div class="setup-header">
-        <h2 id="setupTitle">Select Your Role</h2>
-        <p>Pick a role, experience level, and simulation length. DayZero will filter the dashboard tasks to match your selection.</p>
-      </div>
-
-      <div class="setup-section">
-        <h3>Role</h3>
-        <div class="option-grid" id="roleOptions">
-          <button class="option" type="button" data-value="Frontend">Frontend<span>UI, state, accessibility</span></button>
-          <button class="option" type="button" data-value="Backend">Backend<span>APIs, data, reliability</span></button>
-          <button class="option" type="button" data-value="Product Manager">Product Manager<span>Scope, metrics, strategy</span></button>
-          <button class="option" type="button" data-value="Data Analyst">Data Analyst<span>SQL, dashboards, insight</span></button>
-          <button class="option" type="button" data-value="Designer">Designer<span>UX, flows, prototypes</span></button>
-        </div>
-      </div>
-
-      <div class="setup-section">
-        <h3>Experience</h3>
-        <div class="option-grid three" id="levelOptions">
-          <button class="option" type="button" data-value="Beginner">Beginner<span>Guided task</span></button>
-          <button class="option" type="button" data-value="Intermediate">Intermediate<span>Realistic pressure</span></button>
-          <button class="option" type="button" data-value="Advanced">Advanced<span>Leadership scope</span></button>
-        </div>
-      </div>
-
-      <div class="setup-section">
-        <h3>Simulation type</h3>
-        <div class="option-grid two" id="typeOptions">
-          <button class="option" type="button" data-value="1-hour Task">1-hour Task<span>Focused assessment</span></button>
-          <button class="option" type="button" data-value="5-day Sprint">5-day Sprint<span>Extended project</span></button>
-        </div>
-      </div>
-
-      <button class="continue-btn" id="continueBtn" type="button">Open My Dashboard</button>
     </section>
   </main>
 
-  <script src="../js/roles.js"></script>
+  <script src="../js/roles.js?v=3"></script>
 </body>
 </html>

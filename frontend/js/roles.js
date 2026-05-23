@@ -1,63 +1,73 @@
 const ROLE_ALIASES = {
-  frontend: "Frontend",
-  "frontend developer": "Frontend",
-  backend: "Backend",
-  "backend developer": "Backend",
+  frontend: "Frontend Engineer",
+  "frontend developer": "Frontend Engineer",
+  "frontend engineer": "Frontend Engineer",
+  backend: "Backend Engineer",
+  "backend developer": "Backend Engineer",
+  "backend engineer": "Backend Engineer",
   pm: "Product Manager",
   product: "Product Manager",
   "product manager": "Product Manager",
   data: "Data Analyst",
   analyst: "Data Analyst",
   "data analyst": "Data Analyst",
-  design: "Designer",
-  designer: "Designer"
+  qa: "QA Engineer",
+  "qa engineer": "QA Engineer",
+  quality: "QA Engineer",
+  design: "Product Designer",
+  designer: "Product Designer",
+  "product designer": "Product Designer"
 };
 
 function normalizeRole(value) {
   const key = String(value || "").trim().toLowerCase();
-  return ROLE_ALIASES[key] || "Frontend";
+  return ROLE_ALIASES[key] || "Frontend Engineer";
 }
 
 const profile = {
   role: normalizeRole(localStorage.getItem("userRole")),
-  level: localStorage.getItem("userExperience") || "Intermediate",
-  type: localStorage.getItem("simulationType") || "1-hour Task"
+  level: localStorage.getItem("userExperience") || "Intermediate"
 };
 
-const profilePreview = document.getElementById("profilePreview");
 const continueBtn = document.getElementById("continueBtn");
 
 function setActive(containerId, value) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.querySelectorAll(".option").forEach((btn) => {
+  container.querySelectorAll(".role-card, .level-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.value === value);
   });
 }
 
-function updatePreview() {
-  if (profilePreview) {
-    profilePreview.textContent = `${profile.role} - ${profile.level} - ${profile.type}`;
-  }
-
+function updateSelection() {
   localStorage.setItem("userRole", profile.role);
   localStorage.setItem("userExperience", profile.level);
-  localStorage.setItem("simulationType", profile.type);
 
   setActive("roleOptions", profile.role);
   setActive("levelOptions", profile.level);
-  setActive("typeOptions", profile.type);
 }
 
-function bindOptions(containerId, key) {
-  const container = document.getElementById(containerId);
+function bindRoleCards() {
+  const container = document.getElementById("roleOptions");
   if (!container) return;
 
-  container.querySelectorAll(".option").forEach((btn) => {
+  container.querySelectorAll(".role-card").forEach((btn) => {
     btn.addEventListener("click", () => {
-      profile[key] = key === "role" ? normalizeRole(btn.dataset.value) : btn.dataset.value;
-      updatePreview();
+      profile.role = normalizeRole(btn.dataset.value);
+      updateSelection();
+    });
+  });
+}
+
+function bindLevelButtons() {
+  const container = document.getElementById("levelOptions");
+  if (!container) return;
+
+  container.querySelectorAll(".level-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      profile.level = btn.dataset.value;
+      updateSelection();
     });
   });
 }
@@ -69,9 +79,8 @@ function clearCandidateSimulationState() {
   localStorage.removeItem("dayzero_selected_task_details");
 }
 
-bindOptions("roleOptions", "role");
-bindOptions("levelOptions", "level");
-bindOptions("typeOptions", "type");
+bindRoleCards();
+bindLevelButtons();
 
 if (continueBtn) {
   continueBtn.addEventListener("click", () => {
@@ -81,4 +90,4 @@ if (continueBtn) {
   });
 }
 
-updatePreview();
+updateSelection();

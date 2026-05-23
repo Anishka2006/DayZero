@@ -1,13 +1,13 @@
 :root {
   --surface: #ffffff;
-  --bg-color: #f8fafc;
+  --bg-color: #f7f9fc;
   --text-color: #0f172a;
   --subtext: #64748b;
-  --blue: #4f46e5;
-  --indigo: #4f46e5;
+  --blue: #2563eb;
+  --indigo: #0f766e;
   --green: #059669;
   --border: #e2e8f0;
-  --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  --shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -19,10 +19,7 @@ body {
   min-height: 100vh;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text-color);
-  background:
-    radial-gradient(circle at top left, rgba(79, 70, 229, 0.1), transparent 24%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 20%),
-    linear-gradient(180deg, #f8fbff 0%, #eef4ff 40%, #edf3ff 100%);
+  background: linear-gradient(180deg, #f8fafc 0%, #eef4f8 46%, #f8fafc 100%);
 }
 
 button,
@@ -53,20 +50,14 @@ a {
 .recruiter-profile-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.recruiter-profile-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
 }
 
 .primary-btn,
 .secondary-btn {
-  border-radius: 14px;
+  border-radius: 8px;
   padding: 12px 18px;
   min-height: 44px;
   display: inline-flex;
@@ -77,9 +68,9 @@ a {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%);
+  background: #0f172a;
   color: #ffffff;
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.24);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
 }
 
 .secondary-btn {
@@ -109,9 +100,9 @@ a {
 }
 
 .profile-hero-bg {
-  height: 120px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 118px;
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 58%, #0f766e 100%);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
 }
 
 .profile-hero-content {
@@ -148,7 +139,7 @@ a {
   font-weight: 800;
   color: var(--text-color);
   margin: 0 0 4px;
-  letter-spacing: -0.5px;
+  letter-spacing: 0;
 }
 
 .profile-title {
@@ -243,7 +234,7 @@ a {
   gap: 20px;
   background: var(--bg-color);
   padding: 20px;
-  border-radius: 16px;
+  border-radius: 8px;
   border: 1px solid var(--border);
 }
 
@@ -289,7 +280,7 @@ a {
   font-size: 14px;
   color: var(--subtext);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
 }
 
 .score-tags {
@@ -393,7 +384,7 @@ a {
   margin: 0 0 16px;
   font-size: 14px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
   color: var(--subtext);
 }
 
@@ -433,7 +424,7 @@ a {
   padding: 8px 14px;
   background: rgba(59, 130, 246, 0.05);
   border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 20px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   color: var(--blue);
@@ -490,10 +481,103 @@ a {
   margin-top: 24px;
 }
 
+.record-history {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.history-heading h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.history-heading span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.record-list {
+  display: grid;
+  gap: 10px;
+}
+
+.record-item {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.record-item:hover,
+.record-item.active {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
+}
+
+.record-item strong,
+.record-item small {
+  display: block;
+}
+
+.record-item strong {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.record-item small {
+  color: var(--subtext);
+  font-size: 12px;
+}
+
+.record-item b {
+  flex: 0 0 auto;
+  color: #0f766e;
+  font-size: 14px;
+}
+
+.record-empty {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--subtext);
+  background: #f8fafc;
+}
+
 .detail-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 255, 0.96) 100%);
   border: 1px solid rgba(99, 102, 241, 0.12);
-  border-radius: 24px;
+  border-radius: 8px;
   padding: 22px;
   box-shadow: var(--shadow);
 }
@@ -509,14 +593,14 @@ a {
 .section-head h3 {
   margin: 6px 0 0;
   font-size: 18px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .eyebrow {
   margin: 0;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
   color: var(--subtext);
 }
@@ -540,7 +624,7 @@ a {
 
 .note-card {
   padding: 18px;
-  border-radius: 18px;
+  border-radius: 8px;
   border: 1px solid rgba(99, 102, 241, 0.12);
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
@@ -588,7 +672,7 @@ a {
   right: 18px;
   bottom: 18px;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: 8px;
   background: #111827;
   color: #ffffff;
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
@@ -635,6 +719,16 @@ a {
   .profile-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .record-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

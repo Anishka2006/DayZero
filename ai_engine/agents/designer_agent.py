@@ -10,8 +10,8 @@ class DesignerAgent(BaseAgent):
     name = "Mira"
     role = "Product Designer"
     avatar = "M"
-    personality = "Sharp, user-centered, and protective of clarity under pressure"
-    expertise = "Mobile UX, loading states, copy, layout clarity, and trust-building interfaces"
+    personality = "Thoughtful, user-centered, and practical about clarity under pressure"
+    expertise = "UX clarity, onboarding friction, accessibility, visual consistency, customer confusion, mobile flows, and trust-building interfaces"
     allowed_topics = (
         "UX",
         "accessibility",
@@ -23,11 +23,12 @@ class DesignerAgent(BaseAgent):
         "customer-facing copy",
     )
     avoid_topics = ("backend implementation", "database design", "QA signoff", "metric ownership")
-    speaking_style = "thoughtful, concise, and user-focused"
-    pressure_style = "protects user clarity when the room wants to rush"
+    speaking_style = "thoughtful, concise, and user-focused like a frontend teammate"
+    pressure_style = "protects the user-facing path when the room wants to rush"
     constraints = (
         "Talk about user states, not backend architecture.",
         "Push for clearer loading, retry, and error behavior.",
+        "Suggest the next UX move directly instead of interrogating the candidate.",
         "Do not solve backend logic.",
     )
 
@@ -37,17 +38,24 @@ class DesignerAgent(BaseAgent):
         code = self._code(event).lower()
         task = event.get("task") or {}
         focus_file = self._focus_file(event, task, ("ui", "screen", "flow", "layout", "copy", "component", "onboarding"))
+        needs_help = any(token in message for token in ("what i have to do", "what do i do", "what should i do", "what to do", "help me", "where to start", "how to start"))
+
+        if needs_help:
+            return self._two_sentences(
+                f"Start with {focus_file}.",
+                "Make the confusing state visible on the smallest screen first, then tighten copy once the flow is stable.",
+            )
 
         if event_type == "candidate_message" and event.get("candidate_introduction_detected"):
             return self._two_sentences(
-                "I am Mira, product design. I will watch whether the user understands what is happening under pressure.",
                 f"For {task.get('title', 'this task')}, keep the recovery path visible.",
+                "The user should understand the state, the next action, and why the flow is safe.",
             )
 
-        if event_type == "candidate_message" and not memory.get("candidate_introduced"):
+        if event_type == "candidate_message" and not memory.get("candidate_introduced") and int(memory.get("user_message_count", 0)) <= 1:
             return self._two_sentences(
-                "Quick intro first so we know how you are approaching the room.",
-                "Then I can help pressure-test the user-facing path.",
+                f"Start with the user-facing path for {task.get('title', 'this task')}.",
+                f"{focus_file} should show the state, the next action, and the recovery path without extra explanation.",
             )
 
         if "loading" in message or "spinner" in message or "state" in message:
@@ -59,7 +67,7 @@ class DesignerAgent(BaseAgent):
         if "mobile" in message or "spacing" in message or "responsive" in message:
             return self._two_sentences(
                 f"The mobile layout in {focus_file} still matters because cramped inputs feel bad fast.",
-                "Tell me how the small-screen version avoids overlap and bad taps.",
+                "Keep the keyboard, error text, and primary action from fighting for the same space.",
             )
 
         if "copy" in message or "error" in message or "message" in message:

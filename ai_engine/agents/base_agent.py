@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
 from ai_engine.core.llm import ask_ai
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAgent(ABC):
@@ -30,8 +33,23 @@ class BaseAgent(ABC):
     def generate_response(self, event: dict[str, Any], memory: dict[str, Any], scores: dict[str, int]) -> str:
         llm_response = self._generate_llm_response(event, memory, scores)
         if llm_response:
+            logger.info(
+                "agent_response source=llm agent=%s event=%s channel=%s chars=%s",
+                self.id,
+                self._event_type(event),
+                event.get("channel_id") or "team",
+                len(llm_response),
+            )
             return llm_response
-        return self.fallback_response(event, memory, scores)
+        fallback = self.fallback_response(event, memory, scores)
+        logger.warning(
+            "agent_response source=fallback agent=%s event=%s channel=%s candidate_len=%s",
+            self.id,
+            self._event_type(event),
+            event.get("channel_id") or "team",
+            len(self._message(event)),
+        )
+        return fallback
 
     @abstractmethod
     def fallback_response(self, event: dict[str, Any], memory: dict[str, Any], scores: dict[str, int]) -> str:
@@ -48,7 +66,7 @@ class BaseAgent(ABC):
             prompt=prompt,
             system_prompt=self._build_system_prompt(event),
             temperature=0.85,
-            max_tokens=160,
+            max_tokens=320,
         )
         return self._clean_response(response)
 
@@ -56,6 +74,7 @@ class BaseAgent(ABC):
         constraints = "\n".join(f"- {item}" for item in self.constraints)
         task = (event or {}).get("task") or {}
         room = task.get("room") or {}
+        question_allowed = bool((event or {}).get("question_allowed"))
         allowed_topics = ", ".join(self.allowed_topics)
         avoid_topics = ", ".join(self.avoid_topics)
         room_line = ""
@@ -65,7 +84,7 @@ class BaseAgent(ABC):
                 f"{room.get('severity', 'active')} severity / deadline {room.get('deadline', task.get('deadline', 'unknown'))} mins.\n"
             )
         return (
-            f"You are {self.name}, a {self.role} inside the DayZero hiring simulation.\n"
+            f"You are {self.name}, a {self.role} inside a DayZero company sprint simulation.\n"
             f"Personality: {self.personality}\n"
             f"Expertise: {self.expertise}\n"
             f"Allowed topics: {allowed_topics}\n"
@@ -73,18 +92,22 @@ class BaseAgent(ABC):
             f"Speaking style: {self.speaking_style}\n"
             f"Pressure style: {self.pressure_style}\n"
             f"{room_line}"
+            "You are inside a DayZero company sprint simulation. Only use the active task and active workspace files. Do not invent files, tasks, companies, or requirements. If a file is not listed, do not mention it.\n"
+            "Do not introduce yourself unless the candidate asks who you are. Reply naturally, shortly, and role-specifically.\n"
             "Behave like a real coworker inside a high-pressure startup sprint or incident room.\n"
             "You are not a tutor and not a generic chatbot.\n"
             "Stay inside your role boundary. If the candidate asks outside your lane, hand it to the right teammate briefly.\n"
             "Rules:\n"
             f"{constraints}\n"
-            "- If the candidate has not introduced themself yet, keep the room in intro mode and ask for a quick intro.\n"
-            "- Once the candidate introduces themself, welcome them briefly and move toward the first decision.\n"
-            "- Test one skill at a time without announcing the test: ask for a decision, evidence, tradeoff, validation plan, or owner.\n"
-            "- Do not sound like a quiz. Make the ask feel like a real teammate needing clarity.\n"
+            "- Do not block on candidate introductions; keep the work tied to the active task.\n"
+            "- You are a teammate, not an interviewer. Guide, suggest, react, and explain naturally.\n"
+            f"- Question allowed in this reply: {'yes' if question_allowed else 'no'}.\n"
+            "- If questions are not allowed, do not ask anything. Give a concrete suggestion or next step instead.\n"
+            "- If the candidate seems confused, explain the task simply and point to the relevant listed file.\n"
             "- Reference concrete files, logs, metrics, or active workspace context when available.\n"
+            "- Do not invent file names; use only the active file or listed workspace files.\n"
             "- React to the previous teammate if useful: agree, disagree, or add the missing risk in one line.\n"
-            "- Reply in 1 or 2 short sentences.\n"
+            "- Reply in 1 or 2 complete short sentences. Never stop mid-thought.\n"
             "- Use casual teammate English, like quick Slack messages.\n"
             "- Use contractions naturally, but do not overdo slang.\n"
             "- It is okay to sound slightly rushed, uncertain, or opinionated when the situation calls for it.\n"
@@ -93,6 +116,7 @@ class BaseAgent(ABC):
             "- Avoid jargon and long setup. Lead with the point.\n"
             "- Be specific to the current situation.\n"
             "- Do not write code unless explicitly asked for a tiny example.\n"
+            "- Avoid scoring or evaluator language in visible team chat; final evaluation happens in the background.\n"
             "- Do not narrate your reasoning or mention being an AI model.\n"
         )
 
@@ -114,6 +138,11 @@ class BaseAgent(ABC):
         workspace_snapshot = str(event.get("workspace_snapshot") or "").strip()
         room = task.get("room") or {}
         workspace_files = task.get("workspace_files") or []
+        channel_id = str(event.get("channel_id") or "team")
+        target_agent_id = str(event.get("target_agent_id") or "")
+        current_task = event.get("current_task") or event.get("currentTask") or {}
+        selected_channel = current_task.get("selectedChannel") or channel_id
+        selected_agent = current_task.get("selectedAgent") or target_agent_id or "(none)"
         decisions = memory.get("decisions") or []
         blockers = memory.get("blockers") or []
         unresolved_risks = memory.get("unresolved_risks") or []
@@ -124,6 +153,10 @@ class BaseAgent(ABC):
         return (
             "Current simulation context:\n"
             f"- Event type: {event_type}\n"
+            f"- Conversation channel: {channel_id}\n"
+            f"- Target agent id: {target_agent_id or '(none)'}\n"
+            f"- Question allowed: {'yes' if event.get('question_allowed') else 'no'}\n"
+            f"- Active task context: {{'taskTitle': {current_task.get('taskTitle') or task.get('title') or '(unknown)'!r}, 'company': {current_task.get('company') or task.get('company') or '(unknown)'!r}, 'role': {current_task.get('role') or task.get('role') or '(unknown)'!r}, 'scenario': {current_task.get('scenario') or task.get('problem') or '(unknown)'!r}, 'skills': {current_task.get('skills') or task.get('requirements') or []}, 'files': {current_task.get('files') or task.get('files') or []}, 'selectedChannel': {selected_channel!r}, 'selectedAgent': {selected_agent!r}}}\n"
             f"- Task title: {task.get('title') or '(unknown)'}\n"
             f"- Company: {task.get('company') or '(unknown)'}\n"
             f"- Channel: #{task.get('channel') or room.get('channel') or 'war-room'}\n"
@@ -161,7 +194,7 @@ class BaseAgent(ABC):
             f"- Test results: {test_results}\n"
             f"- Workspace snapshot: {workspace_snapshot[:900] if workspace_snapshot else '(no workspace snapshot shared)'}\n"
             f"- Code excerpt: {code[:700] if code else '(no code shared)'}\n\n"
-            "Reply as this coworker inside the room. Push the work forward."
+            "Reply as this coworker inside the room. If this is a DM channel, answer only as the targeted teammate and keep it private to that thread. Push the work forward. Do not ask a question unless question_allowed is yes."
         )
 
     def _message(self, event: dict[str, Any]) -> str:
@@ -193,8 +226,14 @@ class BaseAgent(ABC):
         if not merged:
             return None
 
-        if len(merged) > 360:
-            merged = merged[:357].rstrip() + "..."
+        if len(merged) > 700:
+            trimmed = merged[:700].rstrip()
+            sentence_end = max(trimmed.rfind("."), trimmed.rfind("!"), trimmed.rfind("?"))
+            if sentence_end >= 180:
+                trimmed = trimmed[: sentence_end + 1]
+            merged = trimmed.rstrip(" ,;:")
+            if merged and merged[-1] not in ".!?":
+                merged += "."
         return merged
 
     def _focus_file(self, event: dict[str, Any], task: dict[str, Any], keywords: tuple[str, ...] = ()) -> str:

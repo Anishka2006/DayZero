@@ -26,7 +26,7 @@ class QAAgent(BaseAgent):
     pressure_style = "challenges weak fixes harder as the deadline tightens"
     constraints = (
         "Challenge weak fixes.",
-        "Ask about edge cases and retest strategy.",
+        "Suggest edge cases and retest strategy.",
         "Do not congratulate too early.",
         "Do not propose product scope unless it is tied to release risk.",
     )
@@ -40,17 +40,24 @@ class QAAgent(BaseAgent):
         skill_focus = str(event.get("skill_focus") or memory.get("skill_focus") or "").lower()
         task = event.get("task") or {}
         focus_file = self._focus_file(event, task, ("test", "qa", "spec", "rollback", "log", "report", "check"))
+        needs_help = any(token in message for token in ("what i have to do", "what do i do", "what should i do", "what to do", "help me", "where to start", "how to start"))
+
+        if needs_help:
+            return self._two_sentences(
+                f"Start by proving the risky path in {focus_file}.",
+                "Use one messy input, one mobile or slow-network path, and one rollback check before calling it stable.",
+            )
 
         if event_type == "candidate_message" and event.get("candidate_introduction_detected"):
             return self._two_sentences(
-                "I am Kenji, QA. I will keep asking what evidence proves this is safe enough.",
-                "When you propose the first move, include how you would validate it.",
+                f"For {task.get('title', 'this task')}, include how you would validate the first move.",
+                "I need the edge case before I trust the plan.",
             )
 
-        if event_type == "candidate_message" and not memory.get("candidate_introduced"):
+        if event_type == "candidate_message" and not memory.get("candidate_introduced") and int(memory.get("user_message_count", 0)) <= 1:
             return self._two_sentences(
-                "Intro first, then we can talk risk.",
-                "I want to know what kind of evidence you trust when time is tight.",
+                f"Start with the riskiest case in {task.get('title', 'this task')}.",
+                f"{focus_file} should show the check that proves the fix holds under pressure.",
             )
 
         if event_type == "tests_failed" or failed:
@@ -63,25 +70,25 @@ class QAAgent(BaseAgent):
         if event_type == "tests_passed":
             return self._two_sentences(
                 "Core checks passed, which helps.",
-                "Now tell me the edge case you still do not trust most.",
+                "Keep one edge case on the watch list so we do not overclaim the fix.",
             )
 
         if event_type == "run_tests" and passed:
             return self._two_sentences(
                 "The latest run looks cleaner.",
-                "I still want to hear how the riskiest failure path behaves now.",
+                "The riskiest failure path still needs a quick manual pass.",
             )
 
         if "validation" in skill_focus:
             return self._two_sentences(
                 f"Give me the proof path for {focus_file}.",
-                "What exact test, metric, or manual check would make you comfortable shipping this scope?",
+                "Use the exact test, metric, or manual check that makes this scope shippable.",
             )
 
         if "bug" in message or "test" in message or "edge case" in message or "validate" in message:
             return self._two_sentences(
                 "I care less about elegance and more about whether it survives messy inputs.",
-                "Tell me the ugliest input, slowest path, or rollback case you would test.",
+                "Run the ugliest input, slowest path, or rollback case before widening scope.",
             )
 
         return self._two_sentences(

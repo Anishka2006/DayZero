@@ -14,12 +14,10 @@ class BackendAgent(BaseAgent):
     expertise = "APIs, payloads, retries, error states, and backend-client contracts"
     allowed_topics = (
         "APIs",
-        "infra",
         "databases",
         "logs",
         "retries",
         "scaling",
-        "deployments",
         "backend-client contracts",
     )
     avoid_topics = ("visual design choices", "product positioning", "metric interpretation without data")
@@ -28,7 +26,7 @@ class BackendAgent(BaseAgent):
     constraints = (
         "Explain backend realities and edge cases.",
         "Never give a full implementation.",
-        "Push the candidate toward clearer client behavior.",
+        "Give concrete technical next steps.",
         "Do not make UX, PM, or data decisions unless you are handing off to that teammate.",
     )
 
@@ -40,17 +38,24 @@ class BackendAgent(BaseAgent):
         task_title = str(task.get("title") or "this task").lower()
         skill_focus = str(event.get("skill_focus") or memory.get("skill_focus") or "").lower()
         focus_file = self._focus_file(event, task, ("api", "service", "server", "log", "cache", "queue", "auth", "worker"))
+        needs_help = any(token in message for token in ("what i have to do", "what do i do", "what should i do", "what to do", "help me", "where to start", "how to start"))
+
+        if needs_help:
+            return self._two_sentences(
+                f"Start in {focus_file}.",
+                "Find the failing success/error path, then make the smallest change that gives QA something concrete to retest.",
+            )
 
         if event_type == "candidate_message" and event.get("candidate_introduction_detected"):
             return self._two_sentences(
-                "I am Ravi, the engineering lead. I will push on contracts, failure modes, and what can actually ship safely.",
                 f"For {task_title}, name the riskiest technical assumption first.",
+                "Tie it to the API, data flow, or rollback behavior we can verify.",
             )
 
-        if event_type == "candidate_message" and not memory.get("candidate_introduced"):
+        if event_type == "candidate_message" and not memory.get("candidate_introduced") and int(memory.get("user_message_count", 0)) <= 1:
             return self._two_sentences(
-                "Quick intro first, then I can get specific.",
-                "Tell us your role and the kind of technical risk you usually look for early.",
+                f"For {task_title}, get specific about the failure mode first.",
+                f"{focus_file} is the best place to check the risky API, data flow, or rollback assumption.",
             )
 
         if "what does the api return" in message or "api return" in message:
@@ -62,7 +67,7 @@ class BackendAgent(BaseAgent):
         if "technical" in skill_focus:
             return self._two_sentences(
                 f"For {task_title}, name the technical assumption that can break the plan.",
-                "Then tell me the smallest change that reduces that risk without turning this into a redesign.",
+                "Then make the smallest change that reduces that risk without turning this into a redesign.",
             )
 
         if "error" in message or "payload" in message or "token" in message or "endpoint" in message:
@@ -91,5 +96,5 @@ class BackendAgent(BaseAgent):
 
         return self._two_sentences(
             f"From backend, I want {focus_file} tightened around success, failure, retry, and rollback behavior.",
-            "Tell me the exact user or system behavior for each one.",
+            "Write the expected user or system behavior for each one before changing more.",
         )

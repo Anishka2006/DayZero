@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from typing import Any
 
@@ -9,36 +10,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
-DEFAULT_TIMEOUT = float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "25"))
-DEFAULT_SITE_URL = os.getenv("OPENROUTER_SITE_URL", "http://localhost")
-DEFAULT_APP_NAME = os.getenv("OPENROUTER_APP_NAME", "DayZero")
+logger = logging.getLogger(__name__)
+
+GROQ_API_URL = os.getenv(
+    "GROQ_API_URL",
+    "https://api.groq.com/openai/v1/chat/completions",
+)
+DEFAULT_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+DEFAULT_TIMEOUT = float(os.getenv("GROQ_TIMEOUT_SECONDS", "25"))
 
 
-def get_openrouter_api_key() -> str:
+def get_groq_api_key() -> str:
     return (
-        os.getenv("OPENROUTER_API_KEY")
-        or os.getenv("OPEN_ROUTER_API_KEY")
-        or os.getenv("OPENROUTER_KEY")
+        os.getenv("GROQ_API_KEY")
+        or os.getenv("GROK_API_KEY")
         or ""
     ).strip()
 
 
-def has_openrouter_config() -> bool:
-    return bool(get_openrouter_api_key())
+def has_groq_config() -> bool:
+    return bool(get_groq_api_key())
 
 
 def _headers() -> dict[str, str] | None:
-    api_key = get_openrouter_api_key()
+    api_key = get_groq_api_key()
     if not api_key:
         return None
 
     return {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": DEFAULT_SITE_URL,
-        "X-Title": DEFAULT_APP_NAME,
     }
 
 
@@ -52,6 +53,7 @@ def chat_completion(
 ) -> dict[str, Any] | None:
     headers = _headers()
     if not headers:
+        logger.warning("groq_chat skipped: missing GROQ_API_KEY")
         return None
 
     payload: dict[str, Any] = {
@@ -66,14 +68,23 @@ def chat_completion(
 
     try:
         response = requests.post(
-            OPENROUTER_API_URL,
+            GROQ_API_URL,
             headers=headers,
             json=payload,
             timeout=timeout or DEFAULT_TIMEOUT,
         )
         response.raise_for_status()
         return response.json()
-    except requests.RequestException:
+    except requests.RequestException as exc:
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        body = getattr(getattr(exc, "response", None), "text", "") or ""
+        logger.warning(
+            "groq_chat failed model=%s status=%s error=%s body=%s",
+            payload.get("model"),
+            status or "n/a",
+            exc,
+            body[:500],
+        )
         return None
 
 

@@ -96,9 +96,9 @@ const TASKS = {
       },
       {
         id: "frontend-accessibility",
-        company: "Nova",
+        company: "Nexa",
         logo: "N",
-        label: "Nova Accessibility Audit",
+        label: "Nexa Accessibility Audit",
         title: "Upgrade Keyboard Navigation",
         description: "Improve the app's keyboard and screen reader support for the main content flow.",
         role: "Frontend",
@@ -150,7 +150,7 @@ const TASKS = {
         time: "40 mins",
         difficulty: "Medium",
         teamSize: "3",
-        skills: ["Debugging", "Monitoring", "API stability"]
+        skills: ["Debugging", "Metrics", "API stability"]
       },
       {
         id: "backend-cache",
@@ -172,13 +172,13 @@ const TASKS = {
         company: "Forge",
         logo: "F",
         label: "Forge Auth Harden",
-        title: "Secure the Login Service",
-        description: "Patch the authentication flow to protect against session fixation and improve retry handling.",
+        title: "Stabilize the Login Service",
+        description: "Fix the login retry flow so valid users can recover without getting blocked.",
         role: "Backend",
         time: "1 hour",
         difficulty: "Medium",
         teamSize: "4",
-        skills: ["Security", "API design", "Reliability"]
+        skills: ["Session handling", "API design", "Reliability"]
       },
       {
         id: "backend-queue",
@@ -200,13 +200,13 @@ const TASKS = {
         company: "Crimson",
         logo: "C",
         label: "Crimson DB Migration",
-        title: "Execute zero-downtime migration",
-        description: "Plan and run a database migration that preserves traffic while changing the schema safely.",
+        title: "Plan a safe schema change",
+        description: "Plan a database change that preserves user flows while the team updates the schema.",
         role: "Backend",
         time: "5 days",
         difficulty: "High",
         teamSize: "5",
-        skills: ["Database", "Deployment", "Rollback planning"]
+        skills: ["Database", "Release planning", "Rollback planning"]
       },
       {
         id: "backend-scaling",
@@ -214,12 +214,12 @@ const TASKS = {
         logo: "N",
         label: "Nimbus Scale Event",
         title: "Build automatic scaling safeguards",
-        description: "Create a backend autoscaling strategy that protects the service during traffic spikes.",
+        description: "Create backend spike-handling rules that protect users during traffic surges.",
         role: "Backend",
         time: "5 days",
         difficulty: "Advanced",
         teamSize: "5",
-        skills: ["Scalability", "Load balancing", "Incident readiness"]
+        skills: ["Scalability", "Queue pressure", "Incident readiness"]
       }
     ]
   },
@@ -255,9 +255,9 @@ const TASKS = {
     "Intermediate": [
       {
         id: "pm-goals",
-        company: "Nova",
+        company: "Nexa",
         logo: "N",
-        label: "Nova GTM Plan",
+        label: "Nexa GTM Plan",
         title: "Create a go-to-market brief",
         description: "Draft the launch plan and stakeholder messaging for a new mobile product.",
         role: "Product Manager",
@@ -404,7 +404,7 @@ const TASKS = {
         label: "Wave Microcopy Audit",
         title: "Improve the mobile signup flow",
         description: "Refine the screens and microcopy for a smoother onboarding experience.",
-        role: "Designer",
+        role: "Product Designer",
         time: "45 mins",
         difficulty: "Beginner",
         teamSize: "3",
@@ -417,7 +417,7 @@ const TASKS = {
         label: "Pulse Style Update",
         title: "Refresh the product card library",
         description: "Align the existing cards with the brand system and improve legibility.",
-        role: "Designer",
+        role: "Product Designer",
         time: "40 mins",
         difficulty: "Medium",
         teamSize: "3",
@@ -427,12 +427,12 @@ const TASKS = {
     "Intermediate": [
       {
         id: "design-research",
-        company: "Nova",
+        company: "Nexa",
         logo: "N",
-        label: "Nova User Research",
+        label: "Nexa User Research",
         title: "Synthesize feedback into design changes",
         description: "Collect user insights and turn them into actionable UI improvements.",
-        role: "Designer",
+        role: "Product Designer",
         time: "1 hour",
         difficulty: "Medium",
         teamSize: "4",
@@ -445,7 +445,7 @@ const TASKS = {
         label: "Lumen Prototype",
         title: "Prototype a new dashboard interaction",
         description: "Design and prototype a richer interaction for the metrics dashboard.",
-        role: "Designer",
+        role: "Product Designer",
         time: "55 mins",
         difficulty: "Intermediate",
         teamSize: "4",
@@ -460,7 +460,7 @@ const TASKS = {
         label: "Astra Design System",
         title: "Lead the component library overhaul",
         description: "Drive a brand-consistent system upgrade across web and mobile interfaces.",
-        role: "Designer",
+        role: "Product Designer",
         time: "5 days",
         difficulty: "High",
         teamSize: "5",
@@ -473,15 +473,105 @@ const TASKS = {
         label: "Crimson Design Ops",
         title: "Create a design delivery framework",
         description: "Establish the process and tooling for faster, higher quality design handoffs.",
-        role: "Designer",
+        role: "Product Designer",
         time: "5 days",
         difficulty: "Advanced",
         teamSize: "5",
         skills: ["Process", "Collaboration", "Quality"]
       }
     ]
+  },
+  "QA Engineer": {
+    "Beginner": [
+      {
+        id: "qa-checkout-regression",
+        company: "Shoply",
+        logo: "S",
+        label: "Shoply Regression Room",
+        title: "Validate checkout recovery",
+        description: "Find the riskiest checkout edge cases and decide what blocks release.",
+        role: "QA Engineer",
+        time: "40 mins",
+        difficulty: "Beginner",
+        teamSize: "4",
+        skills: ["Regression testing", "Bug triage", "Release safety"]
+      },
+      {
+        id: "qa-onboarding-mobile",
+        company: "Wave",
+        logo: "W",
+        label: "Wave Mobile QA",
+        title: "Test mobile onboarding under pressure",
+        description: "Validate confusing onboarding states before a same-day product review.",
+        role: "QA Engineer",
+        time: "45 mins",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Mobile QA", "Edge cases", "Communication"]
+      }
+    ],
+    "Intermediate": [
+      {
+        id: "qa-release-blocker",
+        company: "Beacon",
+        logo: "B",
+        label: "Beacon Release Gate",
+        title: "Investigate a release blocker",
+        description: "QA found inconsistent recovery behavior. Work with the team to decide ship, hold, or narrow.",
+        role: "QA Engineer",
+        time: "55 mins",
+        difficulty: "Intermediate",
+        teamSize: "5",
+        skills: ["Release blocking", "Validation strategy", "Risk communication"]
+      },
+      {
+        id: "qa-analytics-mismatch",
+        company: "Pulse",
+        logo: "P",
+        label: "Pulse Metrics QA",
+        title: "Validate analytics mismatch",
+        description: "Events are firing inconsistently and product needs confidence before quoting the numbers.",
+        role: "QA Engineer",
+        time: "1 hour",
+        difficulty: "Medium",
+        teamSize: "4",
+        skills: ["Data QA", "Reproduction", "Stakeholder updates"]
+      }
+    ],
+    "Advanced": [
+      {
+        id: "qa-sprint-signoff",
+        company: "Astra",
+        logo: "A",
+        label: "Astra Signoff Sprint",
+        title: "Lead release signoff under pressure",
+        description: "Coordinate QA evidence, open risks, and team tradeoffs before a high-visibility release.",
+        role: "QA Engineer",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Release judgment", "Risk ownership", "Cross-functional collaboration"]
+      },
+      {
+        id: "qa-support-spike",
+        company: "Lumen",
+        logo: "L",
+        label: "Lumen Support Spike",
+        title: "Triage customer-reported failures",
+        description: "Support tickets are rising after a rollout. Separate real regressions from noise and guide the room.",
+        role: "QA Engineer",
+        time: "5 days",
+        difficulty: "High",
+        teamSize: "5",
+        skills: ["Bug triage", "Customer impact", "Escalation handling"]
+      }
+    ]
   }
 };
+
+TASKS["Frontend Engineer"] = TASKS.Frontend;
+TASKS["Backend Engineer"] = TASKS.Backend;
+TASKS["Product Designer"] = TASKS.Designer;
 
 function loadWorkspaceFilesModule() {
   if (window.getWorkspaceFiles || window.WORKSPACE_FILES) {
@@ -579,20 +669,26 @@ async function taskPayloadWithWorkspaceFiles(task) {
   };
 }
 
-const DEFAULT_CANDIDATE_ROLE = "Frontend";
+const DEFAULT_CANDIDATE_ROLE = "Frontend Engineer";
 const ROLE_ALIASES = {
-  frontend: "Frontend",
-  "frontend developer": "Frontend",
-  backend: "Backend",
-  "backend developer": "Backend",
+  frontend: "Frontend Engineer",
+  "frontend developer": "Frontend Engineer",
+  "frontend engineer": "Frontend Engineer",
+  backend: "Backend Engineer",
+  "backend developer": "Backend Engineer",
+  "backend engineer": "Backend Engineer",
   pm: "Product Manager",
   product: "Product Manager",
   "product manager": "Product Manager",
   data: "Data Analyst",
   analyst: "Data Analyst",
   "data analyst": "Data Analyst",
-  design: "Designer",
-  designer: "Designer"
+  qa: "QA Engineer",
+  "qa engineer": "QA Engineer",
+  quality: "QA Engineer",
+  design: "Product Designer",
+  designer: "Product Designer",
+  "product designer": "Product Designer"
 };
 
 function normalizeCandidateRole(value) {
@@ -658,7 +754,10 @@ if (submitBtn) {
       localStorage.setItem("lastScore", data.score);
       localStorage.setItem("feedback", data.feedback);
       if (data.report) {
-        localStorage.setItem("lastEvaluationReport", JSON.stringify(data.report));
+        const savedReport = window.DayZeroSkillRecords
+          ? window.DayZeroSkillRecords.store(data.report, { source: "dashboard-submit" })
+          : data.report;
+        localStorage.setItem("lastEvaluationReport", JSON.stringify(savedReport));
       }
 
       showToast("AI Evaluation Complete ✅");
@@ -1015,7 +1114,7 @@ const teamFeed = document.querySelector(".team-feed");
 const feedMessages = [
   { role: `<i data-lucide="code" class="icon-sm"></i> Ravi`, text: "Quick gut check: are we fixing the risky path first, or still trying to polish the whole flow?" },
   { role: `<i data-lucide="pen-tool" class="icon-sm"></i> Mira`, text: "I can simplify the screen today, but I need to know which user state we are protecting." },
-  { role: `<i data-lucide="bar-chart" class="icon-sm"></i> Leah`, text: "The metric looks better after cleanup. I still would not quote it without one caveat." },
+  { role: `<i data-lucide="shield-check" class="icon-sm"></i> Kenji`, text: "I need the recovery path validated before this feels shippable." },
   { role: `<i data-lucide="megaphone" class="icon-sm"></i> Asha`, text: "Leadership will ask for a crisp call. Give me the tradeoff in one sentence when you can." }
 ];
 
@@ -1150,21 +1249,21 @@ if (exitBtn) {
 // Re-initialize icons just in case new html needs it
 refreshLucideIcons();
 
-// AI Manager Interactive Logic & API Integration
-const GROQ_API_KEY = ""; // Your Groq API key (Loaded from .env in production)
+// Sprint console logic.
+const SPRINT_CONSOLE_MODEL = "llama-3.1-8b-instant";
 
 const managerStyleSelect = document.getElementById("managerStyleSelect");
 const managerMsgs = document.getElementById("managerMsgs");
-const managerActions = document.querySelectorAll(".nova-chip");
+const managerActions = document.querySelectorAll(".console-chip");
 const typingIndicator = document.getElementById("typingIndicator");
 const managerInput = document.getElementById("aiManagerInput");
 const managerSendBtn = document.getElementById("aiManagerSendBtn");
 
 const systemPrompts = {
-  "Strict": "You are Nova, a direct but human engineering manager in a live work simulation. Speak like a busy teammate on Slack: concise, specific, and practical. Ask for the next decision, owner, or proof. Do not use corporate filler.",
-  "Supportive": "You are Nova, a supportive manager in a live work simulation. Sound like a real coworker: warm, concise, and specific. Acknowledge the user's move, then suggest the next practical step.",
-  "Startup Founder": "You are Nova, a startup founder in a tense sprint. Sound energetic but real, like someone in the room trying to make a call. Be brief, concrete, and avoid buzzword parody.",
-  "Corporate VP": "You are Nova, a senior VP in a product review. Sound polished but still human. Keep it brief, name the business risk, and ask for one clear next step."
+  "Strict": "You are a direct but human sprint coach in a live work simulation. Speak like a busy teammate on Slack: concise, specific, and practical. Ask for the next decision, owner, or proof. Do not use corporate filler.",
+  "Supportive": "You are a supportive sprint coach in a live work simulation. Sound like a real coworker: warm, concise, and specific. Acknowledge the user's move, then suggest the next practical step.",
+  "Startup Founder": "You are a startup founder in a tense sprint. Sound energetic but real, like someone in the room trying to make a call. Be brief, concrete, and avoid buzzword parody.",
+  "Corporate VP": "You are a senior VP in a product review. Sound polished but still human. Keep it brief, name the business risk, and ask for one clear next step."
 };
 
 function localHumanManagerReply(userMessage, style) {
@@ -1193,7 +1292,7 @@ function localHumanManagerReply(userMessage, style) {
 function addManagerMessage(text, isUser = false) {
   if (!managerMsgs) return;
   const msg = document.createElement("div");
-  msg.className = "nova-msg-card " + (isUser ? "user" : "default");
+  msg.className = "console-msg-card " + (isUser ? "user" : "default");
   
   let iconHtml = isUser ? '' : '<div class="msg-icon"><i data-lucide="message-square" class="icon-sm"></i></div>';
   
@@ -1218,7 +1317,7 @@ function addManagerMessage(text, isUser = false) {
 
 function addAiAlert(type, text) {
   const msg = document.createElement("div");
-  msg.className = "nova-msg-card " + type;
+  msg.className = "console-msg-card " + type;
   
   let iconName = 'lightbulb';
   if (type === 'approval') iconName = 'check-circle';
@@ -1283,7 +1382,7 @@ function addTimelineEvent(actionText) {
        alertMsg = 'Submission received. Analyzing deliverables...';
     } else if (textLower.includes('provisioning') || textLower.includes('established')) {
        type = 'hint';
-       alertMsg = 'Secure workspace active. KPI tracking started.';
+       alertMsg = 'Workspace active. KPI tracking started.';
     }
     
     // Slight delay to make it feel like AI is reacting
@@ -1342,7 +1441,7 @@ async function simulateAiResponse(userMessage) {
       },
       signal: controller.signal,
       body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model: SPRINT_CONSOLE_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage }
@@ -1410,6 +1509,24 @@ if (managerSendBtn && managerInput) {
   });
 }
 
+function openRequestedSprintConsole() {
+  if (localStorage.getItem("dayzero_open_sprint_console") !== "true") return;
+  localStorage.removeItem("dayzero_open_sprint_console");
+
+  const consoleCard = document.querySelector(".console-card");
+  if (consoleCard) {
+    consoleCard.classList.add("console-focus");
+    consoleCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => consoleCard.classList.remove("console-focus"), 1800);
+  }
+
+  if (managerInput) {
+    setTimeout(() => managerInput.focus(), 350);
+  }
+}
+
+openRequestedSprintConsole();
+
 // Style change event
 if (managerStyleSelect) {
   managerStyleSelect.addEventListener("change", () => {
@@ -1424,7 +1541,7 @@ function updateManagerActions(suggestions) {
   container.innerHTML = "";
   suggestions.forEach(sugg => {
     const btn = document.createElement("button");
-    btn.className = "nova-chip";
+    btn.className = "console-chip";
     btn.textContent = sugg;
     btn.addEventListener("click", () => {
       addManagerMessage(sugg, true);
@@ -1875,7 +1992,7 @@ document.querySelectorAll(".project-card").forEach(card => {
                 <div class="coop-user" style="display:flex; align-items:center; gap:8px;"><div class="avatar blue">Y</div><span style="display:flex; flex-direction:column; line-height:1.2;"><strong>You (PM)</strong><small style="color:var(--text-muted); font-size:11px;">you@dayzero.io</small></span></div>
                 <div class="coop-user" style="display:flex; align-items:center; gap:8px;"><div class="avatar purple">${t1[0]}</div><span style="display:flex; flex-direction:column; line-height:1.2;"><strong>${t1} (Backend)</strong><small style="color:var(--text-muted); font-size:11px;">${e1}</small></span></div>
                 <div class="coop-user" style="display:flex; align-items:center; gap:8px;"><div class="avatar green">${t2[0]}</div><span style="display:flex; flex-direction:column; line-height:1.2;"><strong>${t2} (QA)</strong><small style="color:var(--text-muted); font-size:11px;">${e2}</small></span></div>
-                <div class="coop-user" style="display:flex; align-items:center; gap:8px;"><div class="avatar dark">N</div><span style="display:flex; flex-direction:column; line-height:1.2;"><strong>Nova (Manager)</strong><small style="color:var(--text-muted); font-size:11px;">nova@dayzero.io</small></span></div>
+                <div class="coop-user" style="display:flex; align-items:center; gap:8px;"><div class="avatar dark">Q</div><span style="display:flex; flex-direction:column; line-height:1.2;"><strong>Quinn (Evaluator)</strong><small style="color:var(--text-muted); font-size:11px;">hidden until SkillRecord</small></span></div>
               </div>
             `;
             workspace.appendChild(teamRow);
@@ -1944,7 +2061,7 @@ document.querySelectorAll(".project-card").forEach(card => {
 
                   const toast = document.getElementById("toast");
                   if (toast) {
-                    toast.textContent = `Opened ${fileName} securely.`;
+                    toast.textContent = `Opened ${fileName}.`;
                     toast.classList.remove("hidden");
                     setTimeout(() => toast.classList.add("hidden"), 3000);
                   }
@@ -2194,7 +2311,7 @@ document.querySelectorAll(".project-card").forEach(card => {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
+                model: SPRINT_CONSOLE_MODEL,
                 response_format: { type: "json_object" },
                 messages: [
                   { role: "system", content: "You are a strict AI manager. Evaluate the user's simulation submissions. Return JSON: { \"passed\": boolean, \"verdict\": \"Professional and thorough 2-3 sentence verdict explaining the reasoning.\", \"missingSkills\": [\"skill1\", \"skill2\", \"skill3\", \"skill4\", \"skill5\"], \"stars\": number_between_1_and_5 }. ALWAYS provide at least 4-5 specific, professional missing skills." },
@@ -2247,8 +2364,8 @@ document.querySelectorAll(".project-card").forEach(card => {
                 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                    <button id="uploadCodeBtn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #3730a3; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(55,48,163,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="upload-cloud" style="width:16px; height:16px; margin-right:8px;"></i> Upload Code / Zip</button>
-                    <button id="addLinkBtn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(22,101,52,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="link" style="width:16px; height:16px; margin-right:8px;"></i> Add Platform Link</button>
+                    <button id="uploadCodeBtn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #3730a3; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(55,48,163,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="upload" style="width:16px; height:16px; margin-right:8px;"></i> Upload Code / Zip</button>
+                    <button id="addLinkBtn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(22,101,52,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="link" style="width:16px; height:16px; margin-right:8px;"></i> Add Project Link</button>
                     <button style="background: linear-gradient(135deg, #fdf4ff, #fae8ff); color: #86198f; border: 1px solid #fbcfe8; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(134,25,143,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'" onclick="alert('File browser opened to upload assets')"><i data-lucide="image" style="width:16px; height:16px; margin-right:8px;"></i> Creative Assets</button>
                   </div>
                 </div>
@@ -2314,7 +2431,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           linkModal.innerHTML = `
             <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
               <div style="background:#fff; padding:32px; border-radius:16px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); animation: fadeIn 0.2s ease-out;">
-                <h3 style="margin:0 0 16px; color:#0f172a; font-family:'Inter', sans-serif;">Add Platform Link</h3>
+                <h3 style="margin:0 0 16px; color:#0f172a; font-family:'Inter', sans-serif;">Add Project Link</h3>
                 <input type="text" id="customLinkInput" placeholder="https://github.com/..." style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:24px; font-family:inherit; outline:none; box-sizing:border-box;" />
                 <div style="display:flex; justify-content:flex-end; gap:12px;">
                   <button id="cancelLinkBtn" style="padding:10px 16px; background:#f1f5f9; border:none; border-radius:8px; cursor:pointer; color:#475569; font-weight:600;">Cancel</button>
@@ -2328,7 +2445,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           document.getElementById('confirmLinkBtn').onclick = () => {
              const l = document.getElementById('customLinkInput').value.trim();
              if(l) {
-                textArea.value += `\n[Platform Link: ${l}]`;
+                textArea.value += `\n[Project Link: ${l}]`;
                 charCountSpan.textContent = textArea.value.length + " chars";
              }
              linkModal.remove();
@@ -2353,7 +2470,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           const currentPressure = document.body.className.includes("pressure-high") ? "High" : document.body.className.includes("pressure-low") ? "Low" : "Medium";
           
           let reply = "Solid update. Let's proceed to the next phase.";
-          let skillAnalysis = "Submission logged. Monitoring consistency and accuracy.";
+          let skillAnalysis = "Submission logged. Tracking consistency and accuracy.";
           try {
               const controller = new AbortController();
               const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s for review
@@ -2362,15 +2479,16 @@ document.querySelectorAll(".project-card").forEach(card => {
                 headers: { "Content-Type": "application/json" },
                 signal: controller.signal,
                 body: JSON.stringify({
+                  model: SPRINT_CONSOLE_MODEL,
                   message: "Review my submission: " + val,
-                  system_prompt: `You are evaluating a tech simulation. Act as two entities: 1. ${data.teammateName}, a ${data.teammateRole}. 2. Nova, the strict AI Manager. Current pressure: ${currentPressure}. Review their latest submission. If the submission is short, wrong, or gibberish, ${data.teammateName} should act stressed/impatient. Nova must perform a micro skill analysis based on their exact text. Return ONLY JSON: { "teammate_reply": "1-2 conversational sentences", "nova_analysis": "1-2 sentences of professional skill analysis grading their actual code/text." }`
+                  system_prompt: `You are evaluating a tech simulation. Act as two entities: 1. ${data.teammateName}, a ${data.teammateRole}. 2. Quinn, the hidden evaluator. Current pressure: ${currentPressure}. Review their latest submission. If the submission is short, wrong, or gibberish, ${data.teammateName} should act stressed/impatient. Quinn must perform a micro skill analysis based on their exact text. Return ONLY JSON: { "teammate_reply": "1-2 conversational sentences", "quinn_analysis": "1-2 sentences of professional skill analysis grading their actual code/text." }`
                 })
               });
               const rd = await res.json();
               if (rd.choices && rd.choices.length > 0) {
                  const parsed = JSON.parse(rd.choices[0].message.content);
                  if (parsed.teammate_reply) reply = parsed.teammate_reply;
-                 if (parsed.nova_analysis) skillAnalysis = parsed.nova_analysis;
+                 if (parsed.quinn_analysis || parsed.console_analysis) skillAnalysis = parsed.quinn_analysis || parsed.console_analysis;
               }
               clearTimeout(timeoutId);
           } catch(e) {
@@ -2394,13 +2512,13 @@ document.querySelectorAll(".project-card").forEach(card => {
                 </div>
               </div>
 
-              <!-- AI Manager Review Below Teammate -->
+              <!-- Evaluator Review Below Teammate -->
               <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(15,23,42,0.02); margin-top: 16px; animation: fadeIn 0.5s ease; cursor: pointer;">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #cbd5e1; background: #ffffff; flex-shrink: 0;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #cbd5e1; background: #0f172a; color:#fff; display:grid; place-items:center; font-weight:800; flex-shrink: 0;">Q</div>
                 <div style="flex: 1;">
                   <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Nova</span>
-                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">AI MANAGER</span>
+                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Quinn</span>
+                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">EVALUATOR</span>
                   </div>
                   <div style="color: #334155; font-size: 14px; line-height: 1.6;">
                     <strong>Skill Analysis:</strong> ${skillAnalysis}
@@ -2457,6 +2575,39 @@ document.querySelectorAll(".project-card").forEach(card => {
       const renderCertificate = (passed = true, finalVerdict = "", missingSkills = [], starRating = 5) => {
         const uName = window.simulationUser ? window.simulationUser.name : "Participant";
         const uRole = window.simulationUser ? window.simulationUser.role : "Candidate";
+        const overallScore = Math.max(25, Math.min(96, passed ? 58 + (starRating * 8) : 24 + (starRating * 7)));
+        const dashboardReport = {
+          mode: "dashboard_sprint",
+          status: "completed",
+          overall_score: overallScore,
+          scores: {
+            communication: Math.max(20, Math.min(99, overallScore + 2)),
+            leadership: Math.max(20, Math.min(99, overallScore + (passed ? 4 : -4))),
+            ownership: Math.max(20, Math.min(99, overallScore + (passed ? 3 : -6))),
+            prioritization: Math.max(20, Math.min(99, overallScore + 1)),
+            technicalDepth: Math.max(20, Math.min(99, overallScore - 2)),
+          },
+          recommendation: passed ? "Strong simulation signal" : "Needs more evidence",
+          summary: finalVerdict || (passed ? "Simulation completed with a strong DayZero signal." : "Simulation completed, but the final signal needs more concrete evidence."),
+          strengths: passed
+            ? ["Completed the sprint flow and responded to team pressure.", "Created a saved SkillRecord with score and evaluator feedback."]
+            : ["Completed the simulation attempt and created a saved SkillRecord."],
+          weaknesses: missingSkills,
+          next_steps: missingSkills.length ? missingSkills : ["Practice a sharper final handoff with clear evidence and ownership."],
+          task: {
+            title: title || "Dashboard sprint simulation",
+            company: title || "DayZero",
+            role: uRole,
+            duration: "Dashboard sprint",
+          },
+          user_name: uName,
+          user_role: uRole,
+          submitted_at: new Date().toISOString(),
+        };
+        const savedDashboardReport = window.DayZeroSkillRecords
+          ? window.DayZeroSkillRecords.store(dashboardReport, { source: "dashboard-certificate" })
+          : dashboardReport;
+        hydrateDashboardSkillRecord();
         
         let starsHtml = '';
         for(let i=1; i<=5; i++) {
@@ -2501,10 +2652,10 @@ document.querySelectorAll(".project-card").forEach(card => {
                 <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 40px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
                     <div style="display: flex; align-items: center; gap: 16px;">
-                      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" width="48" height="48" style="border-radius:50%; background: #f8fafc; border: 1px solid #cbd5e1;">
+                      <div style="width:48px; height:48px; border-radius:50%; background:#0f172a; color:#fff; border:1px solid #cbd5e1; display:grid; place-items:center; font-weight:800;">Q</div>
                       <div>
-                        <p style="font-weight: 700; font-size: 16px; margin: 0; color: #0f172a;">Nova</p>
-                        <p style="color: #64748b; font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">AI Manager</p>
+                        <p style="font-weight: 700; font-size: 16px; margin: 0; color: #0f172a;">Quinn</p>
+                        <p style="color: #64748b; font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">SkillRecord Evaluator</p>
                       </div>
                     </div>
                     <div style="width: 60px; height: 60px; border-radius: 50%; border: 3px dashed #fbbf24; display: flex; align-items: center; justify-content: center; background: #fffbeb;">
@@ -2523,7 +2674,7 @@ document.querySelectorAll(".project-card").forEach(card => {
                 
                 <div style="display: flex; gap: 16px; width: 100%; flex-wrap: wrap;">
                   <button id="downloadReportBtn" style="flex: 1; padding: 16px; font-size: 16px; border-radius: 12px; border: 2px solid #e2e8f0; background: #ffffff; color: #475569; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.borderColor='var(--blue)'; this.style.color='var(--blue)';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#475569';">
-                    <i data-lucide="download-cloud" style="width: 20px; height: 20px;"></i> Save as PDF
+                    <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save as PDF
                   </button>
                   <button id="viewSkillRecordBtn" style="flex: 2; padding: 16px; font-size: 16px; border-radius: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
                     Return to Dashboard <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
@@ -2567,7 +2718,7 @@ document.querySelectorAll(".project-card").forEach(card => {
 
                 <div style="display: flex; gap: 16px; width: 100%; flex-wrap: wrap;">
                   <button id="downloadReportBtn" style="flex: 1; padding: 16px; font-size: 16px; border-radius: 12px; border: 2px solid #fecaca; background: #ffffff; color: #b91c1c; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';">
-                    <i data-lucide="download-cloud" style="width: 20px; height: 20px;"></i> Download Report
+                    <i data-lucide="download" style="width: 20px; height: 20px;"></i> Download PDF
                   </button>
                   <button id="viewSkillRecordBtn" style="flex: 2; padding: 16px; font-size: 16px; border-radius: 12px; background: #0f172a; color: #ffffff; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(15,23,42,0.1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
                     Return to Dashboard <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
@@ -2579,26 +2730,17 @@ document.querySelectorAll(".project-card").forEach(card => {
         }
 
         
-        // Add Download Report Logic
+        // Add PDF download logic
         const dlBtn = document.getElementById("downloadReportBtn");
         if(dlBtn) {
           dlBtn.addEventListener("click", () => {
-             // Change styling temporarily for printing
-             const modal = modalContent.querySelector("div > div");
-             const oldBoxShadow = modal.style.boxShadow;
-             modal.style.boxShadow = "none";
-             modal.style.border = "none";
-             dlBtn.style.display = "none";
-             document.getElementById("viewSkillRecordBtn").style.display = "none";
-             
+             if (window.DayZeroSkillRecords) {
+               window.DayZeroSkillRecords.downloadPdf(savedDashboardReport);
+               showToast("SkillRecord PDF downloaded.");
+               return;
+             }
+
              window.print();
-             
-             // Restore
-             modal.style.boxShadow = oldBoxShadow;
-             if(!passed) modal.style.border = "1px solid rgba(220, 38, 38, 0.15)";
-             else modal.style.border = "1px solid rgba(79, 70, 229, 0.15)";
-             dlBtn.style.display = "flex";
-             document.getElementById("viewSkillRecordBtn").style.display = "flex";
           });
         }
 
@@ -2826,17 +2968,17 @@ document.addEventListener("change", (e) => {
       }
       
       if (typeof addManagerMessage === 'function') {
-        addManagerMessage(`System Notice: Provisioning secure cloud connection to ${toolName}...`, false);
+        addManagerMessage(`System Notice: Connecting ${toolName} to the sprint workspace...`, false);
       }
       
       e.target.disabled = true;
 
       setTimeout(() => {
         if (toast) {
-          toast.textContent = `Secure connection established. Opening ${toolName}.`;
+          toast.textContent = `Connection established. Opening ${toolName}.`;
         }
         if (typeof addManagerMessage === 'function') {
-          addManagerMessage(`System Notice: Secure connection established. ${toolName} environment is active.`, false);
+          addManagerMessage(`System Notice: Connection established. ${toolName} environment is active.`, false);
         }
         if (typeof simulateAiResponse === 'function') {
           simulateAiResponse(`Your ${toolName} environment is ready. You can switch to that window to complete your task.`);
@@ -2891,12 +3033,118 @@ const shareProfileBtn = document.getElementById("shareProfileBtn");
 const downloadResumeBtn = document.getElementById("downloadResumeBtn");
 const fullReportBtn = document.getElementById("fullReportBtn");
 
+function escapeDashboardHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function hydrateDashboardSkillRecord() {
+  const panel = document.getElementById("panel-skillrecord");
+  if (!panel || !window.DayZeroSkillRecords) return;
+
+  const record = window.DayZeroSkillRecords.latest();
+  const user = window.DayZeroSkillRecords.currentUser();
+  const nameEl = panel.querySelector(".profile-identity h2");
+  const titleEl = panel.querySelector(".profile-title");
+  const locationEl = panel.querySelector(".profile-location");
+  const avatarEl = panel.querySelector(".profile-avatar-premium");
+  const scoreEl = panel.querySelector(".score-value");
+  const ringEl = panel.querySelector(".ring-fill");
+  const summaryEl = panel.querySelector(".professional-summary p");
+  const skillsGridEl = panel.querySelector(".skills-grid");
+  const badgesEl = panel.querySelector(".badges-row");
+  const rolesEl = panel.querySelector(".roles-row");
+  const footerEl = panel.querySelector(".stamp-details p");
+  const publicLinkEl = panel.querySelector(".public-link");
+
+  const initials = String(user.name || "Candidate")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "C";
+
+  if (nameEl) nameEl.textContent = user.name || "Candidate";
+  if (avatarEl) avatarEl.textContent = initials;
+
+  if (!record) {
+    if (titleEl) titleEl.textContent = `${user.role || "Candidate"} | No SkillRecord yet`;
+    if (locationEl) locationEl.innerHTML = `<i data-lucide="badge-check" class="icon-xs"></i> Complete a simulation to generate your first saved record`;
+    if (scoreEl) scoreEl.textContent = "0";
+    if (ringEl) ringEl.style.strokeDashoffset = "283";
+    if (summaryEl) summaryEl.textContent = "Your completed simulations will be saved here automatically with PDF download and LinkedIn posting tools.";
+    if (skillsGridEl) {
+      skillsGridEl.innerHTML = `
+        <div class="skill-row"><div class="skill-info"><span>Communication</span><strong>0</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 0%;"></div></div></div>
+        <div class="skill-row"><div class="skill-info"><span>Execution</span><strong>0</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: 0%;"></div></div></div>
+      `;
+    }
+    if (badgesEl) badgesEl.innerHTML = `<div class="ach-badge"><i data-lucide="clock" class="icon-sm"></i> Awaiting first simulation</div>`;
+    if (rolesEl) rolesEl.innerHTML = `<span class="role-tag">${escapeDashboardHtml(user.role || "Candidate")}</span>`;
+    if (footerEl) footerEl.textContent = "Issued by DayZero Simulation OS | Assessment Date: Pending";
+    if (publicLinkEl) publicLinkEl.textContent = "dayzero.ai/your-profile";
+    if (typeof lucide !== "undefined") lucide.createIcons();
+    return;
+  }
+
+  const task = record.task || {};
+  const score = Number(record.overall_score) || 0;
+  const ringOffset = 283 * (1 - score / 100);
+
+  if (titleEl) titleEl.textContent = `${task.role || user.role || "Candidate"} Candidate`;
+  if (locationEl) {
+    locationEl.innerHTML = `<i data-lucide="briefcase" class="icon-xs"></i> ${escapeDashboardHtml(task.company || task.company_name || "DayZero")} &nbsp;|&nbsp; <i data-lucide="calendar-days" class="icon-xs"></i> ${escapeDashboardHtml(task.title || "Latest simulation")}`;
+  }
+  if (scoreEl) scoreEl.textContent = String(score);
+  if (ringEl) ringEl.style.strokeDashoffset = String(ringOffset);
+  if (summaryEl) summaryEl.textContent = record.summary || record.score_summary || "Latest SkillRecord is ready.";
+  if (skillsGridEl) {
+    skillsGridEl.innerHTML = window.DayZeroSkillRecords.scoreEntries(record)
+      .slice(0, 8)
+      .map(([label, value]) => `
+        <div class="skill-row"><div class="skill-info"><span>${escapeDashboardHtml(label)}</span><strong>${escapeDashboardHtml(value)}</strong></div><div class="skill-bar-wrap"><div class="skill-bar-fill" style="width: ${Number(value) || 0}%;"></div></div></div>
+      `)
+      .join("");
+  }
+  if (badgesEl) {
+    const badges = (Array.isArray(record.strengths) && record.strengths.length ? record.strengths : ["Completed DayZero simulation"]).slice(0, 4);
+    badgesEl.innerHTML = badges
+      .map((badge, index) => `<div class="ach-badge${index === 1 ? " gold" : ""}"><i data-lucide="${index === 1 ? "star" : "check-circle"}" class="icon-sm"></i> ${escapeDashboardHtml(badge)}</div>`)
+      .join("");
+  }
+  if (rolesEl) {
+    rolesEl.innerHTML = [task.role || user.role || "Candidate", record.recommendation || "SkillRecord ready", "Simulation-ready profile"]
+      .map((role) => `<span class="role-tag">${escapeDashboardHtml(role)}</span>`)
+      .join("");
+  }
+  if (footerEl) {
+    const date = new Date(record.submitted_at || record.created_at || Date.now()).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+    footerEl.textContent = `Issued by DayZero Simulation OS | Assessment Date: ${date}`;
+  }
+  if (publicLinkEl) {
+    publicLinkEl.textContent = window.DayZeroSkillRecords.publicUrl(record).replace(/^https?:\/\//, "");
+  }
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+hydrateDashboardSkillRecord();
+
 if (shareProfileBtn) {
   shareProfileBtn.addEventListener("click", () => {
+    const latestRecord = window.DayZeroSkillRecords ? window.DayZeroSkillRecords.latest() : null;
+    if (!latestRecord) {
+      showToast("Complete a simulation first to create a SkillRecord.");
+      return;
+    }
     const originalText = shareProfileBtn.innerHTML;
-    shareProfileBtn.innerHTML = '<i data-lucide="check" class="icon-sm"></i> Link Copied';
+    const result = window.DayZeroSkillRecords.openLinkedInPost(latestRecord);
+    shareProfileBtn.innerHTML = '<i data-lucide="check" class="icon-sm"></i> LinkedIn Opened';
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    showToast("Profile link copied to clipboard.");
+    showToast(result.opened ? "LinkedIn opened. Post text copied." : "Post text copied. Allow popups to open LinkedIn.");
     
     setTimeout(() => {
       shareProfileBtn.innerHTML = originalText;
@@ -2907,12 +3155,18 @@ if (shareProfileBtn) {
 
 if (downloadResumeBtn) {
   downloadResumeBtn.addEventListener("click", () => {
+    const latestRecord = window.DayZeroSkillRecords ? window.DayZeroSkillRecords.latest() : null;
+    if (!latestRecord) {
+      showToast("Complete a simulation first to download a SkillRecord.");
+      return;
+    }
     const originalText = downloadResumeBtn.innerHTML;
     downloadResumeBtn.innerHTML = '<i data-lucide="loader-2" class="icon-sm pulse"></i> Downloading...';
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    showToast("Downloading Resume...");
+    showToast("Downloading SkillRecord PDF...");
     
     setTimeout(() => {
+      window.DayZeroSkillRecords.downloadPdf(latestRecord);
       downloadResumeBtn.innerHTML = '<i data-lucide="check" class="icon-sm"></i> Downloaded';
       if (typeof lucide !== 'undefined') lucide.createIcons();
       
@@ -3065,39 +3319,6 @@ function predictTypingName(userText, phase) {
   return "Asha";
 }
 
-function localTeamReply(userText, phase) {
-  const name = predictTypingName(userText, phase);
-  const lowered = String(userText || "").toLowerCase();
-  if (name === "Rohan" || name === "Ravi") {
-    return {
-      name: "Ravi",
-      role: "Engineering Lead",
-      message: lowered.includes("file")
-        ? "Yep, start with the file you touched and the failure path it changes. I can sanity-check the edge case after that."
-        : "I would keep the fix narrow. Tell me the path we trust, and I will call out anything that breaks the contract.",
-    };
-  }
-  if (name === "Mira") {
-    return {
-      name: "Mira",
-      role: "Product Designer",
-      message: "That direction works if the user gets a clear state. Please name the one screen or message we are changing first.",
-    };
-  }
-  if (name === "Dev") {
-    return {
-      name: "Kenji",
-      role: "QA Engineer",
-      message: "I can test that. Give me the exact happy path and one edge case you want me to try before we call it safe.",
-    };
-  }
-  return {
-    name: "Asha",
-    role: "Product Manager",
-    message: "Good, that gives us a path. I still need the tradeoff and who owns the next check.",
-  };
-}
-
 async function initializeLiveSimulation(forceRefresh = false) {
   if (!teamChatHistory) return loadOrchestratorState();
 
@@ -3207,8 +3428,12 @@ async function handleTeamChatSend() {
   } catch (error) {
     console.error("Team Chat Error:", error);
     typingMsg.remove();
-    const fallback = localTeamReply(userText, orchestratorState.phase);
-    appendTeamChatMessage(fallback.name, fallback.role, fallback.message);
+    appendTeamChatMessage(
+      "System",
+      "Backend",
+      `Backend chat failed: ${error.message || "unknown error"}. Check Flask logs; no hardcoded teammate reply was used.`,
+      "system"
+    );
   }
 }
 

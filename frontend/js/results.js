@@ -22,8 +22,12 @@ const teamNotes = document.getElementById("teamNotes");
 const shareProfileBtn = document.getElementById("shareProfileBtn");
 const downloadReportBtn = document.getElementById("downloadReportBtn");
 const toast = document.getElementById("toast");
+const recordHistory = document.getElementById("recordHistory");
+const recordList = document.getElementById("recordList");
+const recordCount = document.getElementById("recordCount");
 
 let currentReport = null;
+let currentRecordIndex = 0;
 
 function currentUserName() {
   return localStorage.getItem("userName") || "You";
@@ -110,6 +114,9 @@ function copyToClipboard(text, successMessage) {
 }
 
 function publicSkillRecordLink(name) {
+  if (window.DayZeroSkillRecords && currentReport) {
+    return window.DayZeroSkillRecords.publicUrl(currentReport).replace(/^https?:\/\//, "");
+  }
   const slug = String(name || "candidate")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -122,6 +129,9 @@ function reportScore(report, key) {
   if (report.scores && Number.isFinite(Number(report.scores[key]))) {
     return Number(report.scores[key]);
   }
+  if (Number.isFinite(Number(report[`${key}_score`]))) {
+    return Number(report[`${key}_score`]);
+  }
   const fallbackScores = report.scores || {};
   if (key === "technicalReasoning" && Number.isFinite(Number(fallbackScores.technicalDepth))) {
     return Number(fallbackScores.technicalDepth);
@@ -131,6 +141,9 @@ function reportScore(report, key) {
   }
   if (key === "stakeholderManagement" && Number.isFinite(Number(fallbackScores.prioritization))) {
     return Math.round((Number(fallbackScores.prioritization) + Number(fallbackScores.communication || fallbackScores.prioritization)) / 2);
+  }
+  if (key === "role_judgment" && Number.isFinite(Number(report.role_skill_score))) {
+    return Number(report.role_skill_score);
   }
   if (Number.isFinite(Number(report[key]))) {
     return Number(report[key]);
@@ -152,13 +165,13 @@ function scoreBadgeLabel(score) {
 
 function reportMetricEntries(report) {
   return [
-    ["Leadership", reportScore(report, "leadership")],
+    ["Problem Solving", reportScore(report, "problem_solving") || reportScore(report, "prioritization")],
     ["Communication", reportScore(report, "communication")],
-    ["Prioritization", reportScore(report, "prioritization")],
-    ["Adaptability", reportScore(report, "adaptability")],
+    ["Role Judgment", reportScore(report, "role_judgment") || reportScore(report, "leadership")],
+
     ["Collaboration", reportScore(report, "collaboration")],
     ["Technical Reasoning", reportScore(report, "technicalReasoning")],
-    ["Stakeholder Management", reportScore(report, "stakeholderManagement")],
+
   ];
 }
 
@@ -167,14 +180,14 @@ function recommendedRoleTags(report) {
   if (role.includes("product")) {
     return ["Product Manager", "Growth PM", "Founder's Office", "Strategy Associate"];
   }
-  if (role.includes("backend") || role.includes("infra")) {
-    return ["Backend Engineer", "Platform Engineer", "DevOps", "Reliability"];
+  if (role.includes("backend")) {
+    return ["Backend Engineer", "Product Engineer", "API Engineer", "Quality-Focused Builder"];
   }
-  if (role.includes("full stack") || role.includes("frontend")) {
-    return ["Full Stack Engineer", "Frontend Engineer", "Product Engineer", "Launch Team"];
+  if (role.includes("frontend")) {
+    return ["Frontend Engineer", "Product Engineer", "UI Systems", "Launch Team"];
   }
-  if (role.includes("developer experience")) {
-    return ["Developer Experience", "Technical Writer", "Platform Docs", "API Enablement"];
+  if (role.includes("designer") || role.includes("design")) {
+    return ["Product Designer", "UX Designer", "Design Systems", "Product Team"];
   }
   return ["Product Generalist", "Operator", "Builder", "Analyst"];
 }
@@ -271,6 +284,56 @@ function renderTeamNotes(notes) {
     .join("");
 }
 
+function renderHistory(records) {
+  const safeRecords = Array.isArray(records) ? records : [];
+  if (!recordHistory || !recordList || !recordCount) {
+    return;
+  }
+
+  recordCount.textContent = `${safeRecords.length} record${safeRecords.length === 1 ? "" : "s"}`;
+
+  if (!safeRecords.length) {
+    recordList.innerHTML = `
+      <article class="record-empty">
+        Complete a simulation and your saved SkillRecords will appear here.
+      </article>
+    `;
+    return;
+  }
+
+  recordList.innerHTML = safeRecords
+    .map((record, index) => {
+      const task = record.task || {};
+      const title = task.title || "DayZero simulation";
+      const company = task.company || task.company_name || "DayZero";
+      const score = Number(record.overall_score) || 0;
+      const active = index === currentRecordIndex ? " active" : "";
+      return `
+        <button class="record-item${active}" type="button" data-record-index="${index}">
+          <span>
+            <strong>${escapeHtml(title)}</strong>
+            <small>${escapeHtml(company)} | ${escapeHtml(formatDate(record.submitted_at || record.created_at))}</small>
+          </span>
+          <b>${escapeHtml(score)}/100</b>
+        </button>
+      `;
+    })
+    .join("");
+
+  recordList.querySelectorAll("[data-record-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextIndex = Number(button.dataset.recordIndex);
+      const nextReport = safeRecords[nextIndex];
+      if (!nextReport) return;
+      currentRecordIndex = nextIndex;
+      localStorage.setItem("lastEvaluationReport", JSON.stringify(nextReport));
+      renderReport(nextReport);
+      renderHistory(safeRecords);
+      showToast("SkillRecord loaded.");
+    });
+  });
+}
+
 function toggleActionButtons(enabled) {
   if (shareProfileBtn) {
     shareProfileBtn.disabled = !enabled;
@@ -342,6 +405,7 @@ function renderEmpty() {
 
   renderTimeline([]);
   renderTeamNotes([]);
+  renderHistory([]);
   toggleActionButtons(false);
   refreshIcons();
 }
@@ -351,6 +415,7 @@ function renderReport(report) {
   const userName = currentUserName();
   const metricRows = reportMetricEntries(report);
   const taskTitle = report.task && report.task.title ? report.task.title : localStorage.getItem("lastTaskTitle") || "Latest simulation";
+  const taskCompany = report.task && (report.task.company || report.task.company_name) ? (report.task.company || report.task.company_name) : "DayZero";
   const ringCircumference = 283;
   const ringOffset = ringCircumference * (1 - (report.overall_score || 0) / 100);
 
@@ -358,7 +423,7 @@ function renderReport(report) {
   if (profileTitle) profileTitle.textContent = `${report.task && report.task.role ? report.task.role : currentUserRole()} Candidate`;
   if (profileTask) profileTask.textContent = taskTitle;
   if (profileLocation) {
-    profileLocation.innerHTML = `<i data-lucide="briefcase" class="icon-xs"></i> ${escapeHtml(report.task && report.task.company ? report.task.company : "DayZero")} | <i data-lucide="calendar-days" class="icon-xs"></i> ${escapeHtml(reportModeLabel(report))}`;
+    profileLocation.innerHTML = `<i data-lucide="briefcase" class="icon-xs"></i> ${escapeHtml(taskCompany)} | <i data-lucide="calendar-days" class="icon-xs"></i> ${escapeHtml(reportModeLabel(report))}`;
   }
   if (profileAvatar) profileAvatar.textContent = initials(userName);
   if (scoreValue) scoreValue.textContent = String(report.overall_score || 0);
@@ -428,17 +493,30 @@ function renderReport(report) {
 }
 
 function loadReport() {
-  const rawReport = localStorage.getItem("lastEvaluationReport");
-  if (!rawReport) {
+  let report = window.DayZeroSkillRecords ? window.DayZeroSkillRecords.latest() : null;
+
+  if (!report) {
+    const rawReport = localStorage.getItem("lastEvaluationReport");
+    if (rawReport) {
+      try {
+        report = JSON.parse(rawReport);
+        if (window.DayZeroSkillRecords) {
+          report = window.DayZeroSkillRecords.store(report, { migrated_from_last_report: true });
+        }
+      } catch (error) {
+        report = null;
+      }
+    }
+  }
+
+  if (!report) {
     renderEmpty();
     return;
   }
 
-  try {
-    renderReport(JSON.parse(rawReport));
-  } catch (error) {
-    renderEmpty();
-  }
+  currentRecordIndex = 0;
+  renderReport(report);
+  renderHistory(window.DayZeroSkillRecords ? window.DayZeroSkillRecords.list() : [report]);
 }
 
 function downloadReport() {
@@ -447,22 +525,24 @@ function downloadReport() {
     return;
   }
 
-  const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  const taskSlug = (currentReport.task && currentReport.task.id ? currentReport.task.id : "skillrecord").replace(/[^a-z0-9-]/gi, "-");
-  anchor.href = url;
-  anchor.download = `${taskSlug}-skillrecord.json`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-  showToast("SkillRecord downloaded.");
+  if (window.DayZeroSkillRecords) {
+    window.DayZeroSkillRecords.downloadPdf(currentReport);
+    showToast("SkillRecord PDF downloaded.");
+    return;
+  }
+
+  window.print();
 }
 
 function shareProfile() {
   if (!currentReport) {
     showToast("No SkillRecord to share yet.");
+    return;
+  }
+
+  if (window.DayZeroSkillRecords) {
+    const result = window.DayZeroSkillRecords.openLinkedInPost(currentReport);
+    showToast(result.opened ? "LinkedIn opened. Post text copied." : "Post text copied. Allow popups to open LinkedIn.");
     return;
   }
 

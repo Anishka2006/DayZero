@@ -50,7 +50,16 @@ body {
     linear-gradient(315deg, rgba(217, 119, 6, 0.12) 0%, rgba(255, 255, 255, 0) 38%),
     var(--bg);
 }
-
+.dm-pill {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.18);
+  color: #c7d2fe;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
 button,
 textarea {
   font: inherit;
@@ -247,6 +256,14 @@ textarea:focus-visible {
   text-overflow: ellipsis;
 }
 
+.channel-item small {
+  display: block;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
 .channel-item span {
   display: block;
   margin-top: 2px;
@@ -282,6 +299,7 @@ textarea:focus-visible {
 }
 
 .teammate-row {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -289,13 +307,22 @@ textarea:focus-visible {
   padding: 8px;
   border: 1px solid transparent;
   border-radius: var(--radius-card);
+  background: transparent;
+  color: #e2e8f0;
+  text-align: left;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
-.teammate-row:hover {
+.teammate-row:hover,
+.teammate-row.active {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(226, 232, 240, 0.1);
   transform: translateX(1px);
+}
+
+.teammate-row.active {
+  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(125, 211, 252, 0.28);
 }
 
 .teammate-row-main {
@@ -335,6 +362,11 @@ textarea:focus-visible {
 .member-avatar.qa,
 .chat-row.role-qa .chat-avatar {
   background: #16a34a;
+}
+
+.member-avatar.data,
+.chat-row.role-data .chat-avatar {
+  background: #0f766e;
 }
 
 .member-avatar.exec,
@@ -825,6 +857,17 @@ textarea:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.chat-empty-state {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .reference-typing {
   padding: 5px 20px;
   color: var(--muted);
@@ -981,6 +1024,12 @@ kbd {
   flex-shrink: 0;
 }
 
+.workspace-people-avatars {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
 .mini-avatar {
   width: 27px;
   height: 27px;
@@ -998,7 +1047,15 @@ kbd {
   background: #db2777;
 }
 
+.avatar-pm {
+  background: #db2777;
+}
+
 .avatar-r {
+  background: #0891b2;
+}
+
+.avatar-eng {
   background: #0891b2;
 }
 
@@ -1006,8 +1063,28 @@ kbd {
   background: #7c3aed;
 }
 
+.avatar-design {
+  background: #7c3aed;
+}
+
 .avatar-k {
   background: #16a34a;
+}
+
+.avatar-qa {
+  background: #16a34a;
+}
+
+.avatar-l {
+  background: #0f766e;
+}
+
+.avatar-data {
+  background: #0f766e;
+}
+
+.avatar-user {
+  background: #0f172a;
 }
 
 .reference-tabs {

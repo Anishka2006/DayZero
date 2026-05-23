@@ -11,9 +11,21 @@ document.addEventListener("DOMContentLoaded", () => {
   initTimer();
   initModal();
   initAuthModal();
+  initSprintLinks();
 });
 
 const AUTH_BASE_URL = "https://madauth.onrender.com";
+
+function initSprintLinks() {
+  document.querySelectorAll('a[href="#sprint-room"]').forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      localStorage.setItem("userName", localStorage.getItem("userName") || "Guest");
+      localStorage.setItem("candidateSetupComplete", "true");
+      window.location.href = "frontend/pages/roles.html";
+    });
+  });
+}
 
 /* =====================================
    1. NAVBAR SCROLL EFFECT
