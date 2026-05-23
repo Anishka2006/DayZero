@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DayZero — Recruiter Dashboard</title>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="../data/mockAuth.js"></script>
+  <script src="../data/mockProjects.js"></script>
+  <script src="../utils/localStorage.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -483,6 +486,112 @@
       from { opacity: 0; transform: translateY(-4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ─── PROJECTS VIEW ─── */
+    #projectsView {
+      display: none;
+      padding: 24px 28px;
+      flex: 1;
+      overflow-y: auto;
+      flex-direction: column;
+      gap: 18px;
+    }
+    #projectsView.visible { display: flex; }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      position: relative;
+    }
+    .project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      border-color: var(--border2);
+    }
+    .project-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .project-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+    }
+    .project-desc {
+      font-size: 12.5px;
+      color: var(--subtext);
+      line-height: 1.5;
+      margin: 0;
+      flex-grow: 1;
+    }
+    .project-tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .tech-tag {
+      background: var(--surface2);
+      color: var(--subtext);
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .project-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--hint);
+    }
+    .project-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .project-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .project-action-btn {
+      background: none;
+      border: none;
+      color: var(--subtext);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .project-action-btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+    .project-action-btn.delete:hover {
+      background: var(--red-bg);
+      color: var(--red);
+    }
   </style>
 </head>
 <body>
@@ -840,6 +949,23 @@
         </button>
       </div>
 
+      <!-- ═══ PROJECTS VIEW ═══ -->
+      <div id="projectsView">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <h2 style="font-size:18px; font-weight:800;" id="projectsViewTitle">Company Projects</h2>
+            <p style="font-size:13px; color:var(--subtext);" id="projectsViewSub">Manage and monitor technical assessment projects</p>
+          </div>
+          <button class="topbar-btn primary" id="addProjectBtn">
+            <i data-lucide="plus" style="width:14px; height:14px;"></i> Add Project
+          </button>
+        </div>
+
+        <div class="projects-grid" id="projectsGrid">
+          <!-- Dynamically populated or empty state -->
+        </div>
+      </div>
+
       <!-- ═══ RIGHT SIDE PANEL ═══ -->
       <aside class="side-panel" id="sidePanel">
         <div class="sp-header">
@@ -861,6 +987,57 @@
     </div><!-- end #viewWrapper -->
   </div><!-- end .main -->
 </div><!-- end .app -->
+
+<!-- ═══ ADD PROJECT MODAL ═══ -->
+<div id="addProjectModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter: blur(2px);">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:450px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.2);display:flex;flex-direction:column;gap:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <h3 style="font-size:16px;font-weight:700;" id="projectModalTitle">Create Technical Project</h3>
+      <button id="closeProjectModal" style="background:none;border:none;cursor:pointer;color:var(--subtext);font-size:18px;line-height:1;">✕</button>
+    </div>
+    
+    <input type="hidden" id="projectEditId" value="">
+
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Project Title *</label>
+      <input type="text" id="projectTitle" placeholder="e.g. AI Resume Screener" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);">
+      <div id="projectTitleError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Project title is required</div>
+    </div>
+
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Description *</label>
+      <textarea id="projectDescription" placeholder="Provide a brief description of the technical assessment..." rows="3" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;resize:none;font-family:inherit;background:var(--surface);color:var(--text);"></textarea>
+      <div id="projectDescError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Description is required</div>
+    </div>
+
+    <div>
+      <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Tech Stack * (Comma separated)</label>
+      <input type="text" id="projectTechStack" placeholder="e.g. React, Node.js, Tailwind" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);">
+      <div id="projectTechError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Tech stack is required</div>
+    </div>
+
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;">
+        <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Deadline *</label>
+        <input type="date" id="projectDeadline" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);">
+        <div id="projectDeadlineError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Deadline is required</div>
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Status</label>
+        <select id="projectStatus" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);outline:none;height:38px;">
+          <option value="Active">Active</option>
+          <option value="Planning">Planning</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button id="cancelProjectBtn" style="flex:1;padding:10px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;">Cancel</button>
+      <button id="projectSubmit" style="flex:1;padding:10px;background:var(--indigo);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background 0.15s;">Create Project</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ INVITE MODAL ═══ -->
 <div id="inviteModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center;">
@@ -899,37 +1076,39 @@
 (function () {
   "use strict";
 
-  const recruiterData = {
-    name: " Anil Patel",
+  // Read recruiter profile dynamically from mockAuth (or localStorage fallback if real user logged in)
+  const recruiter = window.mockUser ? {
+    name: window.mockUser.recruiterName,
+    role: window.mockUser.recruiterRole,
+    company: window.mockUser.companyName,
+    companyId: window.mockUser.companyId
+  } : JSON.parse(localStorage.getItem("recruiter")) || {
+    name: "Sarah Johnson",
     role: "Senior Recruiter",
-    company: "Google"
-};
+    company: "Google",
+    companyId: "google"
+  };
 
-localStorage.setItem(
-    "recruiter",
-    JSON.stringify(recruiterData)
-);
+  localStorage.setItem("recruiter", JSON.stringify(recruiter));
 
-const recruiter =
-    JSON.parse(localStorage.getItem("recruiter"));
+  // The entire project visibility depends on this centralized, easily replaceable variable
+  const currentCompany = recruiter ? recruiter.companyId : "google";
 
-if(recruiter){
-
-    document.getElementById("recruiterName").innerText =
-        recruiter.name;
+  if(recruiter){
+    const cleanName = recruiter.name.trim();
+    document.getElementById("recruiterName").innerText = cleanName;
 
     document.getElementById("recruiterRole").innerText =
         `${recruiter.role} · ${recruiter.company}`;
 
-    const initials = recruiter.name
+    const initials = cleanName
         .split(" ")
         .map(word => word[0])
         .join("")
         .toUpperCase();
 
-    document.getElementById("recruiterAvatar").innerText =
-        initials;
-}
+    document.getElementById("recruiterAvatar").innerText = initials;
+  }
 
   /* ══════════════════════════════════════════════════════════
      DATA
@@ -1587,12 +1766,14 @@ if(recruiter){
     var dashView     = el("dashboardView");
     var analyticsView= el("analyticsView");
     var settingsView = el("settingsView");
+    var projectsView = el("projectsView");
     var sidePanel    = el("sidePanel");
 
     // Reset all
     if (dashView)      dashView.style.display      = "none";
     if (analyticsView) analyticsView.classList.remove("visible");
     if (settingsView)  settingsView.classList.remove("visible");
+    if (projectsView)  projectsView.classList.remove("visible");
 
     var titleMap = {
       dashboard:   {title:"Recruiter Dashboard", sub:"Build a Real-time Fraud Detection Dashboard"},
@@ -1652,9 +1833,9 @@ if(recruiter){
       if(el("statusFilter")) el("statusFilter").value="Interviewing";
       renderTable();
     } else if (view==="projects") {
-      if (dashView) dashView.style.display = "block";
-      if (sidePanel) sidePanel.style.display = "";
-      showToast("Project tracking coming in V2","default");
+      if (projectsView) projectsView.classList.add("visible");
+      if (sidePanel) sidePanel.style.display = "none";
+      renderProjects();
     } else if (view==="messages") {
       if (dashView) dashView.style.display = "block";
       if (sidePanel) sidePanel.style.display = "";
@@ -1830,6 +2011,315 @@ if(recruiter){
   }
 
   /* ══════════════════════════════════════════════════════════
+     PROJECTS LOGIC (VANILLA JS IMPLEMENTATION)
+  ══════════════════════════════════════════════════════════ */
+  var projects = [];
+
+  // Load from localStorage via our utility or fall back to mockProjects
+  function loadProjects() {
+    var stored = window.storageUtils ? window.storageUtils.get("recruiter_projects") : null;
+    if (stored) {
+      projects = stored;
+    } else {
+      projects = window.mockProjects || [];
+      if (window.storageUtils) {
+        window.storageUtils.set("recruiter_projects", projects);
+      }
+    }
+  }
+
+  function saveProjects() {
+    if (window.storageUtils) {
+      window.storageUtils.set("recruiter_projects", projects);
+    }
+  }
+
+  function getCompanyProjects() {
+    // Only render projects matching currentCompany!
+    return projects.filter(function(p) {
+      return p.companyId === currentCompany;
+    });
+  }
+
+  function renderProjects() {
+    var grid = el("projectsGrid");
+    if (!grid) return;
+
+    var filtered = getCompanyProjects();
+
+    if (!filtered.length) {
+      grid.innerHTML = 
+        '<div style="grid-column: 1 / -1; padding: 48px; text-align: center; background: var(--surface); border: 1px dashed var(--border2); border-radius: var(--radius-lg);">' +
+          '<i data-lucide="folder-open" style="width:40px; height:40px; color:var(--hint); margin:0 auto 12px; display:block;"></i>' +
+          '<h3 style="font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px;">No projects found</h3>' +
+          '<p style="font-size:12.5px; color:var(--subtext); margin-bottom:16px;">Get started by creating a new technical project for your company.</p>' +
+          '<button class="topbar-btn primary" onclick="openProjectModal()" style="margin: 0 auto;">' +
+            '<i data-lucide="plus" style="width:14px; height:14px;"></i> Create Project' +
+          '</button>' +
+        '</div>';
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(p) {
+      var badgeClass = p.status === "Active" ? "green" : p.status === "Planning" ? "amber" : "blue";
+      var techTags = p.techStack ? p.techStack.split(",").map(function(t) {
+        return '<span class="tech-tag">' + t.trim() + '</span>';
+      }).join("") : "";
+
+      return '<div class="project-card" data-id="' + p.id + '">' +
+        '<div class="project-title-row">' +
+          '<div>' +
+            '<h3 class="project-title">' + p.title + '</h3>' +
+            '<span class="badge ' + badgeClass + '" style="margin-top: 6px; display: inline-block;">' + p.status + '</span>' +
+          '</div>' +
+          '<div class="project-actions">' +
+            '<button class="project-action-btn edit-proj-btn" data-id="' + p.id + '" title="Edit Project">' +
+              '<i data-lucide="edit-3" style="width:14px; height:14px;"></i>' +
+            '</button>' +
+            '<button class="project-action-btn delete delete-proj-btn" data-id="' + p.id + '" title="Delete Project">' +
+              '<i data-lucide="trash-2" style="width:14px; height:14px;"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+        '<p class="project-desc" style="margin-top: 8px;">' + p.description + '</p>' +
+        '<div class="project-tech-stack" style="margin-top: 12px;">' + techTags + '</div>' +
+        '<div class="project-footer">' +
+          '<div class="project-meta-item">' +
+            '<i data-lucide="calendar" style="width:12px; height:12px;"></i>' +
+            '<span>Deadline: ' + p.deadline + '</span>' +
+          '</div>' +
+          '<div class="project-meta-item">' +
+            '<i data-lucide="clock" style="width:12px; height:12px;"></i>' +
+            '<span>Created: ' + p.createdAt + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    bindProjectEvents();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function bindProjectEvents() {
+    document.querySelectorAll(".edit-proj-btn").forEach(function(btn) {
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        var id = parseInt(this.getAttribute("data-id"), 10);
+        openProjectModal(id);
+      };
+    });
+
+    document.querySelectorAll(".delete-proj-btn").forEach(function(btn) {
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        var id = parseInt(this.getAttribute("data-id"), 10);
+        deleteProject(id);
+      };
+    });
+  }
+
+  function deleteProject(id) {
+    var p = projects.find(function(proj) { return proj.id === id; });
+    if (!p) return;
+    if (confirm("Are you sure you want to delete the project '" + p.title + "'?")) {
+      projects = projects.filter(function(proj) { return proj.id !== id; });
+      saveProjects();
+      renderProjects();
+      showToast("Project '" + p.title + "' deleted", "warning");
+    }
+  }
+
+  function openProjectModal(editId) {
+    var modal = el("addProjectModal");
+    if (!modal) return;
+
+    var titleInput = el("projectTitle");
+    var descInput = el("projectDescription");
+    var techInput = el("projectTechStack");
+    var deadlineInput = el("projectDeadline");
+    var statusSelect = el("projectStatus");
+    var modalTitle = el("projectModalTitle");
+    var submitBtn = el("projectSubmit");
+    var idInput = el("projectEditId");
+
+    // Clear errors
+    clearProjectErrors();
+
+    if (editId) {
+      var p = projects.find(function(proj) { return proj.id === editId; });
+      if (p) {
+        idInput.value = p.id;
+        titleInput.value = p.title;
+        descInput.value = p.description;
+        techInput.value = p.techStack;
+        deadlineInput.value = p.deadline;
+        statusSelect.value = p.status;
+        modalTitle.textContent = "Edit Project";
+        submitBtn.textContent = "Save Changes";
+      }
+    } else {
+      idInput.value = "";
+      titleInput.value = "";
+      descInput.value = "";
+      techInput.value = "";
+      deadlineInput.value = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Default 30 days out
+      statusSelect.value = "Active";
+      modalTitle.textContent = "Create Technical Project";
+      submitBtn.textContent = "Create Project";
+    }
+
+    modal.style.display = "flex";
+    titleInput.focus();
+  }
+
+  function closeProjectModal() {
+    var modal = el("addProjectModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function clearProjectErrors() {
+    ["projectTitleError", "projectDescError", "projectTechError", "projectDeadlineError"].forEach(function(id) {
+      if (el(id)) el(id).style.display = "none";
+    });
+    ["projectTitle", "projectDescription", "projectTechStack", "projectDeadline"].forEach(function(id) {
+      if (el(id)) el(id).style.borderColor = "";
+    });
+  }
+
+  function initProjectFeatures() {
+    var addBtn = el("addProjectBtn");
+    var closeBtn = el("closeProjectModal");
+    var cancelBtn = el("cancelProjectBtn");
+    var submitBtn = el("projectSubmit");
+    var modal = el("addProjectModal");
+
+    if (addBtn) addBtn.onclick = function() { openProjectModal(); };
+    if (closeBtn) closeBtn.onclick = closeProjectModal;
+    if (cancelBtn) cancelBtn.onclick = closeProjectModal;
+
+    if (modal) {
+      modal.addEventListener("click", function(e) {
+        if (e.target === modal) closeProjectModal();
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.onclick = function() {
+        var idInput = el("projectEditId").value;
+        var title = el("projectTitle").value.trim();
+        var desc = el("projectDescription").value.trim();
+        var tech = el("projectTechStack").value.trim();
+        var deadline = el("projectDeadline").value;
+        var status = el("projectStatus").value;
+        
+        var valid = true;
+
+        if (!title) {
+          el("projectTitleError").style.display = "block";
+          el("projectTitle").style.borderColor = "var(--red)";
+          valid = false;
+        } else {
+          el("projectTitleError").style.display = "none";
+          el("projectTitle").style.borderColor = "";
+        }
+
+        if (!desc) {
+          el("projectDescError").style.display = "block";
+          el("projectDescription").style.borderColor = "var(--red)";
+          valid = false;
+        } else {
+          el("projectDescError").style.display = "none";
+          el("projectDescription").style.borderColor = "";
+        }
+
+        if (!tech) {
+          el("projectTechError").style.display = "block";
+          el("projectTechStack").style.borderColor = "var(--red)";
+          valid = false;
+        } else {
+          el("projectTechError").style.display = "none";
+          el("projectTechStack").style.borderColor = "";
+        }
+
+        if (!deadline) {
+          el("projectDeadlineError").style.display = "block";
+          el("projectDeadline").style.borderColor = "var(--red)";
+          valid = false;
+        } else {
+          el("projectDeadlineError").style.display = "none";
+          el("projectDeadline").style.borderColor = "";
+        }
+
+        if (!valid) return;
+
+        if (idInput) {
+          // Edit existing
+          var editId = parseInt(idInput, 10);
+          var p = projects.find(function(proj) { return proj.id === editId; });
+          if (p) {
+            p.title = title;
+            p.description = desc;
+            p.techStack = tech;
+            p.deadline = deadline;
+            p.status = status;
+            saveProjects();
+            renderProjects();
+            showToast("Project '" + title + "' updated", "success");
+          }
+        } else {
+          // Add new
+          var newProj = {
+            id: Date.now(),
+            title: title,
+            description: desc,
+            techStack: tech,
+            deadline: deadline,
+            status: status,
+            createdAt: new Date().toISOString().split('T')[0],
+            companyId: currentCompany
+          };
+          projects.push(newProj);
+          saveProjects();
+          renderProjects();
+          showToast("Project '" + title + "' created successfully", "success");
+        }
+
+        closeProjectModal();
+      };
+    }
+  }
+
+  function updateCompanyBadge() {
+    var badge = document.querySelector(".project-badge");
+    if (!badge) return;
+
+    var logoImg = badge.querySelector("img");
+    var badgeText = badge.querySelector("span");
+
+    var compLogos = {
+      google: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+      amazon: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+      netflix: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg",
+      stripe: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+    };
+
+    var comp = currentCompany;
+    if (logoImg && compLogos[comp]) {
+      logoImg.style.display = "block";
+      logoImg.src = compLogos[comp];
+      logoImg.alt = recruiter ? recruiter.company : "Company";
+    }
+    
+    if (badgeText) {
+      badgeText.textContent = recruiter ? recruiter.company + " Projects" : "Active Sprint";
+    }
+  }
+
+  // Expose globally
+  window.openProjectModal = openProjectModal;
+
+  /* ══════════════════════════════════════════════════════════
      INIT
   ══════════════════════════════════════════════════════════ */
 
@@ -1837,6 +2327,10 @@ if(recruiter){
     // Show dashboard by default
     var dashView = el("dashboardView");
     if (dashView) dashView.style.display="block";
+
+    loadProjects();
+    initProjectFeatures();
+    updateCompanyBadge();
 
     updateStatCards();
     renderTable();
