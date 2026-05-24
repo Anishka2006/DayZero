@@ -43,6 +43,7 @@ logging.basicConfig(
 )
 
 app = Flask(__name__)
+
 app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
 CORS(app)
 
