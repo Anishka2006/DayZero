@@ -1024,3 +1024,34 @@ section {
     cursor: pointer;
     font-weight: bold;
 }
+
+/* =========================================
+   EMAIL DOMAIN WARNING STYLES (NEW)
+   ========================================= */
+.email-domain-warning {
+  display: none;
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: all 0.3s ease;
+}
+
+.email-domain-warning.success {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.email-domain-warning.warning {
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.email-domain-warning.info {
+  background-color: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+}
