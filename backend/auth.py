@@ -12,9 +12,49 @@ CORS(app)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
 
+# Approved company email domains for recruiters
+APPROVED_RECRUITER_DOMAINS = {
+    "google.com",
+    "microsoft.com",
+    "amazon.com",
+    "apple.com",
+    "meta.com",
+    "facebook.com",
+    "netflix.com",
+    "adobe.com",
+    "tesla.com",
+    "linkedin.com",
+    "uber.com",
+    "airbnb.com",
+    "spotify.com",
+    "slack.com",
+    "salesforce.com",
+    "ibm.com",
+    "oracle.com",
+    "cisco.com",
+    "intel.com",
+    "qualcomm.com",
+    "vmware.com",
+    "redhat.com",
+}
+
 
 def supabase_config_missing():
     return not SUPABASE_URL or not SUPABASE_KEY
+
+
+def get_email_domain(email: str) -> str:
+    """Extract domain from email"""
+    try:
+        return email.split("@")[1].lower()
+    except IndexError:
+        return ""
+
+
+def is_approved_recruiter_domain(email: str) -> bool:
+    """Check if email domain is approved for recruiters"""
+    domain = get_email_domain(email)
+    return domain in APPROVED_RECRUITER_DOMAINS
 
 
 @app.route("/", methods=["GET"])
@@ -39,6 +79,14 @@ def signup():
 
     if role not in ["user", "recruiter"]:
         return jsonify({"error": "Invalid role"}), 400
+
+    # Validate recruiter email domain
+    if role == "recruiter":
+        if not is_approved_recruiter_domain(email):
+            domain = get_email_domain(email)
+            return jsonify({
+                "error": f"Recruiter registration requires a company email domain. '{domain}' is not approved. Please use an official company email address from an approved organization."
+            }), 403
 
     try:
         res = requests.post(
@@ -163,6 +211,14 @@ def request_demo():
         return jsonify({"error": "All fields required"}), 400
 
     return jsonify({"message": "Demo request submitted"}), 200
+
+
+@app.route("/approved-recruiter-domains", methods=["GET"])
+def get_approved_domains():
+    """Return list of approved recruiter domains for frontend validation"""
+    return jsonify({
+        "domains": sorted(list(APPROVED_RECRUITER_DOMAINS))
+    }), 200
 
 
 if __name__ == "__main__":
