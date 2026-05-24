@@ -1,6 +1,6 @@
 // app.js
 // DayZero Full Interaction Script
-// Buttons + Scroll + Navbar + Reveal + Progress Bars
+// Buttons + Scroll + Navbar + Reveal + Progress Bars + Email Domain Validation
 
 document.addEventListener("DOMContentLoaded", () => {
   initNavbar();
@@ -15,6 +15,45 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const AUTH_BASE_URL = "https://madauth.onrender.com";
+
+// Hardcoded approved recruiter domains
+const approvedRecruiterDomains = [
+  "google.com",
+  "microsoft.com",
+  "amazon.com",
+  "apple.com",
+  "meta.com",
+  "facebook.com",
+  "netflix.com",
+  "adobe.com",
+  "tesla.com",
+  "linkedin.com",
+  "uber.com",
+  "airbnb.com",
+  "spotify.com",
+  "slack.com",
+  "salesforce.com",
+  "ibm.com",
+  "oracle.com",
+  "cisco.com",
+  "intel.com",
+  "qualcomm.com",
+  "vmware.com",
+  "redhat.com",
+];
+
+function getEmailDomain(email) {
+  try {
+    return email.split("@")[1].toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isApprovedRecruiterDomain(email) {
+  const domain = getEmailDomain(email);
+  return approvedRecruiterDomains.includes(domain);
+}
 
 function initSprintLinks() {
   document.querySelectorAll('a[href="#sprint-room"]').forEach((link) => {
@@ -304,6 +343,8 @@ function initAuthModal() {
   const switchPrompt = document.getElementById("auth-switch-prompt");
   const switchLink = document.getElementById("auth-switch-link");
   const authForm = document.getElementById("auth-form");
+  const emailInput = document.getElementById("auth-email");
+  const emailWarning = document.getElementById("email-domain-warning");
 
   if (!authModal) return;
 
@@ -328,8 +369,54 @@ function initAuthModal() {
         sideTitle.innerText = currentMode === "login" ? "Welcome Back" : "Join DayZero";
         sideDesc.innerText = "Explore opportunities and grow your career.";
       }
+
+      // Show domain warning if signup mode and recruiter role
+      if (currentMode === "signup" && role === "recruiter") {
+        showEmailDomainHint();
+      } else {
+        hideEmailDomainHint();
+      }
     });
   });
+
+  /* =============================
+     EMAIL DOMAIN VALIDATION
+  ============================= */
+  function showEmailDomainHint() {
+    if (!emailWarning) return;
+    emailWarning.style.display = "block";
+    updateEmailWarning();
+  }
+
+  function hideEmailDomainHint() {
+    if (!emailWarning) return;
+    emailWarning.style.display = "none";
+  }
+
+  function updateEmailWarning() {
+    if (!emailWarning) return;
+
+    const email = emailInput.value.trim().toLowerCase();
+    const role = roleInput.value;
+
+    if (role === "recruiter" && email) {
+      const domain = getEmailDomain(email);
+      const isApproved = isApprovedRecruiterDomain(email);
+
+      if (isApproved) {
+        emailWarning.innerHTML = `✅ Domain <strong>${domain}</strong> is approved for recruiters`;
+        emailWarning.className = "email-domain-warning success";
+      } else {
+        emailWarning.innerHTML = `⚠️ Domain <strong>${domain}</strong> is not approved. Recruiters must use official company emails (@google, @microsoft, etc.)`;
+        emailWarning.className = "email-domain-warning warning";
+      }
+    } else if (role === "recruiter") {
+      emailWarning.innerHTML = `ℹ️ Recruiters must use official company email addresses`;
+      emailWarning.className = "email-domain-warning info";
+    }
+  }
+
+  emailInput.addEventListener("input", updateEmailWarning);
 
   /* =============================
      MODAL OPEN/CLOSE
@@ -355,6 +442,7 @@ function initAuthModal() {
 
       nameGroup.style.display = "none";
       nameInput.removeAttribute("required");
+      hideEmailDomainHint();
 
       submitBtn.innerText = "Log In";
       switchPrompt.innerText = "Don't have an account?";
@@ -365,6 +453,11 @@ function initAuthModal() {
 
       nameGroup.style.display = "block";
       nameInput.setAttribute("required", "true");
+
+      const role = roleInput.value;
+      if (role === "recruiter") {
+        showEmailDomainHint();
+      }
 
       submitBtn.innerText = "Create Account";
       switchPrompt.innerText = "Already have an account?";
@@ -418,6 +511,14 @@ function initAuthModal() {
     const name = nameInput.value;
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
+
+    // Validate recruiter email domain on frontend before submission
+    if (!isLogin && role === "recruiter") {
+      if (!isApprovedRecruiterDomain(email)) {
+        showToast("Please use an approved company email domain to register as a recruiter.", "error");
+        return;
+      }
+    }
 
     const url = isLogin
       ? `${AUTH_BASE_URL}/login`
