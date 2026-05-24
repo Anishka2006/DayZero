@@ -394,131 +394,67 @@
   </div>
 
   <!-- AUTH MODAL -->
-<div class="modal-overlay auth-overlay" id="auth-modal">
-  <div class="auth-content">
+  <div class="modal-overlay auth-overlay" id="auth-modal">
+    <div class="auth-content">
 
-    <button class="modal-close" id="auth-close-btn">&times;</button>
+      <button class="modal-close" id="auth-close-btn">&times;</button>
 
-    <!-- LEFT SIDE -->
-    <div class="auth-left">
-      <h3 id="auth-side-title">Welcome</h3>
-      <p id="auth-side-desc">Login or create an account to continue.</p>
-      <div class="auth-abstract-bg"></div>
-    </div>
-
-    <!-- RIGHT SIDE -->
-    <div class="auth-right">
-
-      <!-- ROLE SELECT -->
-      <div class="auth-role-toggle">
-        <button class="role-btn active" data-role="user">User</button>
-        <button class="role-btn" data-role="recruiter">Recruiter</button>
+      <!-- LEFT SIDE -->
+      <div class="auth-left">
+        <h3 id="auth-side-title">Welcome</h3>
+        <p id="auth-side-desc">Login or create an account to continue.</p>
+        <div class="auth-abstract-bg"></div>
       </div>
 
-      <!-- LOGIN / SIGNUP TABS -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login">Login</button>
-        <button class="auth-tab" id="tab-signup">Sign Up</button>
+      <!-- RIGHT SIDE -->
+      <div class="auth-right">
+
+        <!-- ROLE SELECT -->
+        <div class="auth-role-toggle">
+          <button class="role-btn active" data-role="user">User</button>
+          <button class="role-btn" data-role="recruiter">Recruiter</button>
+        </div>
+
+        <!-- LOGIN / SIGNUP TABS -->
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login">Login</button>
+          <button class="auth-tab" id="tab-signup">Sign Up</button>
+        </div>
+
+        <!-- FORM -->
+        <form class="modal-form auth-form" id="auth-form">
+
+          <input type="hidden" id="auth-role" value="user" />
+
+          <div class="input-group signup-only" id="auth-name-group" style="display:none;">
+            <input type="text" id="auth-name" placeholder="Full Name" />
+          </div>
+
+          <div class="input-group">
+            <input type="email" id="auth-email" placeholder="Email" required />
+          </div>
+
+          <!-- EMAIL DOMAIN WARNING (NEW) -->
+          <div id="email-domain-warning" class="email-domain-warning"></div>
+
+          <div class="input-group">
+            <input type="password" id="auth-password" placeholder="Password" required />
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width" id="auth-submit-btn">
+            Login
+          </button>
+        </form>
+
+        <!-- SWITCH TEXT -->
+        <p class="auth-switch-text">
+          <span id="auth-switch-prompt">Don't have an account?</span>
+          <a href="#" id="auth-switch-link">Sign Up</a>
+        </p>
+
       </div>
-
-      <!-- FORM -->
-      <form class="modal-form auth-form" id="auth-form">
-
-        <input type="hidden" id="auth-role" value="user" />
-
-        <div class="input-group signup-only" id="auth-name-group" style="display:none;">
-          <input type="text" id="auth-name" placeholder="Full Name" />
-        </div>
-
-        <div class="input-group">
-          <input type="email" id="auth-email" placeholder="Email" required />
-        </div>
-
-       ...
-<!-- AUTH MODAL -->
-<div class="modal-overlay auth-overlay" id="auth-modal">
-  <div class="auth-content">
-
-    <button class="modal-close" id="auth-close-btn">&times;</button>
-
-    <!-- LEFT SIDE -->
-    <div class="auth-left">
-      <h3 id="auth-side-title">Welcome</h3>
-      <p id="auth-side-desc">Login or create an account to continue.</p>
-      <div class="auth-abstract-bg"></div>
-    </div>
-
-    <!-- RIGHT SIDE -->
-    <div class="auth-right">
-
-      <!-- ROLE SELECT -->
-      <div class="auth-role-toggle">
-        <button class="role-btn active" data-role="user">User</button>
-        <button class="role-btn" data-role="recruiter">Recruiter</button>
-      </div>
-
-      <!-- LOGIN / SIGNUP TABS -->
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login">Login</button>
-        <button class="auth-tab" id="tab-signup">Sign Up</button>
-      </div>
-
-      <!-- FORM -->
-      <form class="modal-form auth-form" id="auth-form">
-
-        <input type="hidden" id="auth-role" value="user" />
-
-        <div class="input-group signup-only" id="auth-name-group" style="display:none;">
-          <input type="text" id="auth-name" placeholder="Full Name" />
-        </div>
-
-        <div class="input-group">
-          <input type="email" id="auth-email" placeholder="Email" required />
-        </div>
-
-        <!-- EMAIL DOMAIN WARNING (NEW) -->
-        <div id="email-domain-warning" class="email-domain-warning"></div>
-
-        <div class="input-group">
-          <input type="password" id="auth-password" placeholder="Password" required />
-        </div>
-
-        <button type="submit" class="btn btn-primary full-width" id="auth-submit-btn">
-          Login
-        </button>
-      </form>
-
-      <!-- SWITCH TEXT -->
-      <p class="auth-switch-text">
-        <span id="auth-switch-prompt">Don't have an account?</span>
-        <a href="#" id="auth-switch-link">Sign Up</a>
-      </p>
-
     </div>
   </div>
-</div>
-
-  <script src="app.js"></script>
-</body>
-</html>
-        <div class="input-group">
-          <input type="password" id="auth-password" placeholder="Password" required />
-        </div>
-
-        <button type="submit" class="btn btn-primary full-width" id="auth-submit-btn">
-          Login
-        </button>
-      </form>
-
-      <!-- SWITCH TEXT -->
-      <p class="auth-switch-text">
-        <span id="auth-switch-prompt">Don't have an account?</span>
-        <a href="#" id="auth-switch-link">Sign Up</a>
-      </p>
-
-    </div>
-  </div>
-</div>
 
   <script src="app.js"></script>
 </body>
