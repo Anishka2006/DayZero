@@ -606,6 +606,445 @@
       font-size: 12px;
       font-weight: 700;
     }
+
+    /* ─── SIMULATION WORKSPACE VIEW ─── */
+    #simulationWorkspaceView {
+      display: none;
+      padding: 24px 28px;
+      flex: 1;
+      overflow-y: auto;
+      flex-direction: column;
+      gap: 18px;
+    }
+    #simulationWorkspaceView.visible {
+      display: flex;
+    }
+    .sim-workspace-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .sim-left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sim-right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sim-pool-list {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pool-cand-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .pool-cand-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .pool-cand-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pool-cand-meta {
+      font-size: 10.5px;
+      color: var(--subtext);
+    }
+    .pool-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .pool-action-btn {
+      background: none;
+      border: none;
+      color: var(--subtext);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .pool-action-btn:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--text);
+    }
+    .pool-action-btn.delete:hover {
+      color: var(--red);
+      background: var(--red-bg);
+    }
+    
+    /* Config form */
+    .sim-config-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sim-type-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .sim-type-btn {
+      padding: 10px;
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--subtext);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .sim-type-btn.active {
+      border-color: var(--indigo);
+      background: var(--indigo-bg);
+      color: var(--indigo);
+    }
+    .sim-cand-checklist {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      user-select: none;
+    }
+    .checklist-item:hover {
+      background: var(--surface2);
+    }
+
+    /* Simulation room card */
+    .sim-rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .sim-room-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+    .sim-room-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    }
+    .sim-room-card.active-monitoring {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 2px var(--indigo-bg);
+    }
+    .room-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .room-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .room-avatars {
+      display: flex;
+      align-items: center;
+      margin-left: 2px;
+    }
+    .room-avatar-node {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      margin-left: -6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+    }
+    .room-avatar-node:first-child {
+      margin-left: 0;
+    }
+    
+    /* Slack-style Monitoring Console */
+    .observer-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      height: 580px;
+      overflow: hidden;
+    }
+    .observer-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface);
+    }
+    .observer-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border-right: 1px solid var(--border);
+      min-height: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8fafc;
+    }
+    .chat-msg-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 13px;
+    }
+    .chat-msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: white;
+      flex-shrink: 0;
+    }
+    .chat-msg-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .chat-msg-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .chat-msg-sender {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .chat-msg-sender.ai-agent {
+      color: var(--indigo);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chat-msg-sender.ai-agent::after {
+      content: 'AI';
+      font-size: 9px;
+      font-weight: 700;
+      background: var(--indigo-bg);
+      color: var(--indigo);
+      padding: 1px 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .chat-msg-time {
+      font-size: 10px;
+      color: var(--hint);
+    }
+    .chat-msg-text {
+      color: var(--text);
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .chat-msg-item.system-msg {
+      justify-content: center;
+      padding: 4px 0;
+    }
+    .chat-msg-item.system-msg .chat-msg-text {
+      font-size: 11px;
+      color: var(--subtext);
+      font-style: italic;
+      background: var(--surface2);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .chat-composer-observer {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .composer-disabled-box {
+      background: var(--surface2);
+      border: 1px dashed var(--border2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--subtext);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    /* Console Sidebar (Activity Feed & Contributions) */
+    .console-sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+      padding: 16px;
+      gap: 16px;
+      background: var(--surface);
+    }
+    .contribution-card {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+    .contrib-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .contrib-item:last-child {
+      margin-bottom: 0;
+    }
+    .contrib-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .contrib-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .contrib-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+    .observation-panel-box {
+      background: var(--indigo-bg);
+      border-left: 3px solid var(--indigo);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 10px;
+      font-size: 12px;
+      color: #312e81;
+    }
+    .observation-panel-box p {
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .observation-panel-box strong {
+      color: var(--indigo);
+    }
+    .activity-dot-line {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .activity-dot-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 11.5px;
+    }
+    .activity-dot-bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--indigo);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .activity-dot-text {
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .activity-dot-time {
+      font-size: 9.5px;
+      color: var(--hint);
+      margin-top: 1px;
+    }
+    .sim-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .sim-stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+    }
+    .sim-stat-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .sim-stat-lbl {
+      font-size: 11px;
+      color: var(--subtext);
+      margin-top: 2px;
+    }
+    @media (max-width: 900px) {
+      .sim-workspace-layout {
+        grid-template-columns: 1fr;
+      }
+      .observer-grid {
+        grid-template-columns: 1fr;
+      }
+      .console-sidebar {
+        border-top: 1px solid var(--border);
+      }
+    }
   </style>
 </head>
 <body>
@@ -977,6 +1416,204 @@
 
         <div class="projects-grid" id="projectsGrid">
           <!-- Dynamically populated or empty state -->
+        </div>
+      </div>
+
+      <!-- ═══ SIMULATION WORKSPACE VIEW ═══ -->
+      <div id="simulationWorkspaceView">
+        
+        <!-- Workspace Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+              <button class="topbar-btn" onclick="switchView('projects')" style="padding: 4px 8px; font-size: 11px;">
+                ← Back to Projects
+              </button>
+              <h2 style="font-size:18px; font-weight:800; display:inline;" id="simWorkspaceProjectTitle">Project Simulation Workspace</h2>
+            </div>
+            <p style="font-size:13px; color:var(--subtext);" id="simWorkspaceProjectDesc">Manage recruitment simulations, candidate assignments, and monitor real-time collaboration logs.</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Stat Cards for Active Simulations -->
+        <div class="sim-stats-grid" style="margin-bottom: 16px;">
+          <div class="sim-stat-card">
+            <div class="sim-stat-val" id="simStatTotalRooms">0</div>
+            <div class="sim-stat-lbl">Active Rooms</div>
+          </div>
+          <div class="sim-stat-card">
+            <div class="sim-stat-val" id="simStatGroupRooms">0</div>
+            <div class="sim-stat-lbl">Group Simulations</div>
+          </div>
+          <div class="sim-stat-card">
+            <div class="sim-stat-val" id="simStatIndivRooms">0</div>
+            <div class="sim-stat-lbl">Individual Simulations</div>
+          </div>
+          <div class="sim-stat-card">
+            <div class="sim-stat-val" id="simStatActiveCands">0</div>
+            <div class="sim-stat-lbl">Assigned Candidates</div>
+          </div>
+        </div>
+
+        <!-- Workspace Layout -->
+        <div class="sim-workspace-layout">
+          
+          <!-- Left Column: Candidate Pool & Room Creator -->
+          <div class="sim-left-panel">
+            
+            <!-- Candidate Pool Panel -->
+            <div class="card" style="padding: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 style="font-size: 13.5px; font-weight: 700; color: var(--text);">Project Candidate Pool</h3>
+                <button class="action-btn invite" id="addSimCandidateBtn" style="padding: 4px 8px; font-size: 11px;">
+                  <i data-lucide="plus" style="width:12px; height:12px;"></i> Add Candidate
+                </button>
+              </div>
+              <p style="font-size: 11.5px; color: var(--subtext);">Select and assign candidates from this pool to active simulation rooms.</p>
+              
+              <div class="sim-pool-list" id="simCandidatePoolList">
+                <!-- Dynamically populated candidate pool list -->
+              </div>
+            </div>
+
+            <!-- Simulation Room Config Panel -->
+            <div class="card" style="padding: 16px;">
+              <h3 style="font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Create Simulation Room</h3>
+              <div class="sim-config-form">
+                <div>
+                  <label style="font-size:11px; font-weight:600; color:var(--subtext); display:block; margin-bottom:4px;">Simulation Type</label>
+                  <div class="sim-type-selector">
+                    <button type="button" class="sim-type-btn active" id="typeIndivBtn" onclick="setSimConfigType('individual')">Individual</button>
+                    <button type="button" class="sim-type-btn" id="typeGroupBtn" onclick="setSimConfigType('group')">Group</button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label style="font-size:11px; font-weight:600; color:var(--subtext); display:block; margin-bottom:4px;">Select Candidates</label>
+                  <div class="sim-cand-checklist" id="simCandChecklist">
+                    <!-- Dynamic pool checklist -->
+                  </div>
+                  <span style="font-size: 10px; color: var(--hint); display: block; margin-top: 4px;" id="simTypeHint">Choose exactly 1 candidate for individual workspace.</span>
+                </div>
+
+                <button class="topbar-btn primary" id="btnCreateSimRoom" onclick="handleCreateSimRoom()" style="width: 100%; justify-content: center; padding: 8px; font-size: 12.5px;">
+                  <i data-lucide="plus-circle" style="width:14px; height:14px; margin-right: 4px;"></i> Create Simulation Room
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Active Simulation Rooms & Room Console -->
+          <div class="sim-right-panel">
+            
+            <!-- Active Rooms -->
+            <div class="card" style="padding: 16px;">
+              <h3 style="font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 8px;">Active Simulations</h3>
+              <div class="sim-rooms-grid" id="activeSimRoomsGrid">
+                <!-- Dynamic active simulation rooms cards -->
+              </div>
+            </div>
+
+            <!-- Monitoring console (Slack UI) -->
+            <div class="observer-panel" id="simMonitoringConsole" style="display: none;">
+              <div class="observer-header">
+                <div>
+                  <span class="badge indigo" id="consoleRoomTypeBadge" style="margin-bottom: 2px;">Group Simulation</span>
+                  <h4 style="font-size: 14px; font-weight: 700; color: var(--text);" id="consoleRoomTitle">Room #1 - Group Assessment</h4>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="badge green dot-badge" style="font-size: 11px;" id="consoleRoomStatus">Live Activity</span>
+                  <button class="pool-action-btn delete" id="btnCloseMonitoringConsole" onclick="closeMonitoringConsole()" title="Close Console" style="padding: 6px;">✕</button>
+                </div>
+              </div>
+
+              <div class="observer-grid">
+                
+                <!-- Left panel of observer grid: Chat Feed -->
+                <div class="chat-container">
+                  <div class="chat-messages" id="consoleChatMessages">
+                    <!-- Dynamic Slack-like messages -->
+                  </div>
+                  <div class="chat-composer-observer">
+                    <div class="composer-disabled-box">
+                      <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                      <span>Silent Recruiter Observation Mode — Chat controls disabled</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right panel of observer grid: Details, Activity and Contributions -->
+                <div class="console-sidebar">
+                  
+                  <!-- Recruiter observation guidance -->
+                  <div class="observation-panel-box">
+                    <strong>Recruiter Insight</strong>
+                    <p style="margin-top: 4px; font-size: 11px;" id="recruiterGuidanceText">Silently observing candidate responses, speed of execution, and collaborative task delegation.</p>
+                  </div>
+
+                  <!-- Contribution indicators (for group sim) -->
+                  <div id="groupContributionSection" style="display: none;">
+                    <h5 class="section-head" style="margin-bottom: 8px; font-size: 10px;">Candidate Contribution</h5>
+                    <div class="contribution-card" id="groupContributionList">
+                      <!-- Dynamic progress bars -->
+                    </div>
+                  </div>
+
+                  <!-- Room Activity Feed / Timeline -->
+                  <div>
+                    <h5 class="section-head" style="margin-bottom: 8px; font-size: 10px;">Workspace Activity</h5>
+                    <div class="activity-dot-line" id="consoleActivityFeed">
+                      <!-- Dynamic timeline bullets -->
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ═══ ADD CANDIDATE MODAL (FOR SIMULATION POOL) ═══ -->
+      <div id="addSimCandidateModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1100;align-items:center;justify-content:center;backdrop-filter: blur(2px);">
+        <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:400px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.2);display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3 style="font-size:16px;font-weight:700;">Add Candidate to Pool</h3>
+            <button id="closeSimCandidateModal" onclick="closeSimCandidateModal()" style="background:none;border:none;cursor:pointer;color:var(--subtext);font-size:18px;line-height:1;">✕</button>
+          </div>
+          
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Candidate Name *</label>
+            <input type="text" id="simCandNameInput" placeholder="e.g. Aarav Patel" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);">
+            <div id="simCandNameError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Candidate name is required</div>
+          </div>
+
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Candidate Email *</label>
+            <input type="email" id="simCandEmailInput" placeholder="e.g. aarav@gmail.com" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);">
+            <div id="simCandEmailError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Enter a valid email address</div>
+          </div>
+
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Recruiter Assigned Role *</label>
+            <select id="simCandRoleInput" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);cursor:pointer;">
+              <option value="Frontend Engineer">Frontend Engineer</option>
+              <option value="Backend Engineer">Backend Engineer</option>
+              <option value="Data Analyst">Data Analyst</option>
+              <option value="Product Designer">Product Designer</option>
+              <option value="Product Manager">Product Manager</option>
+              <option value="QA Engineer">QA Engineer</option>
+            </select>
+          </div>
+
+          <button class="topbar-btn primary" id="btnSubmitAddSimCand" onclick="handleSubmitAddSimCandidate()" style="width: 100%; justify-content: center; padding: 9px; font-size: 13px;">
+            Add to Pool
+          </button>
         </div>
       </div>
 
@@ -1870,6 +2507,12 @@
   function switchView(view) {
     _currentView = view;
 
+    // Clear any active chat simulator ticks when changing views
+    if (window._activeSimulationFeedInterval) {
+      window.clearInterval(window._activeSimulationFeedInterval);
+      window._activeSimulationFeedInterval = null;
+    }
+
     // Update nav active states
     document.querySelectorAll(".nav-item").forEach(function(item){
       item.classList.toggle("active", item.getAttribute("data-view")===view);
@@ -1880,6 +2523,7 @@
     var analyticsView= el("analyticsView");
     var settingsView = el("settingsView");
     var projectsView = el("projectsView");
+    var simWorkspaceView = el("simulationWorkspaceView");
     var sidePanel    = el("sidePanel");
 
     // Reset all
@@ -1887,6 +2531,7 @@
     if (analyticsView) analyticsView.classList.remove("visible");
     if (settingsView)  settingsView.classList.remove("visible");
     if (projectsView)  projectsView.classList.remove("visible");
+    if (simWorkspaceView) simWorkspaceView.classList.remove("visible");
 
     var titleMap = {
       dashboard:   {title:"Recruiter Dashboard", sub:"Build a Real-time Fraud Detection Dashboard"},
@@ -1896,6 +2541,7 @@
       interviews:  {title:"Interviews",           sub:"Scheduled interview pipeline"},
       settings:    {title:"Settings",             sub:"Preferences & integrations"},
       projects:    {title:"Projects",             sub:"Sprint project overview"},
+      simulationWorkspace: {title:"Simulation Workspace", sub:"Manage simulations and monitor live candidate activity"},
       messages:    {title:"Messages",             sub:""},
       notifications:{title:"Notifications",       sub:""}
     };
@@ -1949,6 +2595,9 @@
       if (projectsView) projectsView.classList.add("visible");
       if (sidePanel) sidePanel.style.display = "none";
       renderProjects();
+    } else if (view==="simulationWorkspace") {
+      if (simWorkspaceView) simWorkspaceView.classList.add("visible");
+      if (sidePanel) sidePanel.style.display = "none";
     } else if (view==="messages") {
       if (dashView) dashView.style.display = "block";
       if (sidePanel) sidePanel.style.display = "";
@@ -2383,7 +3032,12 @@
             '<span>Created: ' + safeCreatedAt + '</span>' +
           '</div>' +
         '</div>' +
-        '<div class="project-sim-hint"><i data-lucide="play-circle" style="width:13px;height:13px;"></i><span>Open simulation</span></div>' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:8px;">' +
+          '<div class="project-sim-hint"><i data-lucide="play-circle" style="width:13px;height:13px;"></i><span>Candidate View</span></div>' +
+          '<button class="topbar-btn primary open-sim-workspace-btn" data-id="' + safeId + '" style="padding: 4px 10px; font-size: 11.5px; border-radius: 6px; margin: 0; background: var(--indigo); border-color: var(--indigo);">' +
+            '<i data-lucide="settings" style="width:12px; height:12px; margin-right: 4px;"></i>Open Simulation' +
+          '</button>' +
+        '</div>' +
       '</div>';
     }).join("");
 
@@ -2397,7 +3051,7 @@
         launchProjectSimulation(this.getAttribute("data-id"));
       };
       card.onkeydown = function(e) {
-        if (e.target.closest(".project-action-btn")) return;
+        if (e.target.closest(".project-action-btn") || e.target.closest(".open-sim-workspace-btn")) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           launchProjectSimulation(this.getAttribute("data-id"));
@@ -2418,6 +3072,14 @@
         e.stopPropagation();
         var id = this.getAttribute("data-id");
         deleteProject(id);
+      };
+    });
+
+    document.querySelectorAll(".open-sim-workspace-btn").forEach(function(btn) {
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        var id = this.getAttribute("data-id");
+        openSimulationWorkspace(id);
       };
     });
   }
@@ -2626,6 +3288,638 @@
   /* ══════════════════════════════════════════════════════════
      INIT
   ══════════════════════════════════════════════════════════ */
+
+  /* ══════════════════════════════════════════════════════════
+     RECRUITER SIMULATION WORKSPACE EXTENSION
+  ══════════════════════════════════════════════════════════ */
+  var _simulations = [];
+  var _selectedSimProjectId = null;
+  var _simConfigType = "individual"; // "individual" | "group"
+  var _monitoredRoomId = null;
+
+  function loadSimulations() {
+    var stored = localStorage.getItem("dayzero_simulations");
+    if (stored) {
+      _simulations = JSON.parse(stored);
+    } else {
+      _simulations = [];
+    }
+  }
+
+  function saveSimulations() {
+    localStorage.setItem("dayzero_simulations", JSON.stringify(_simulations));
+  }
+
+  function getProjectCandidates(projectId) {
+    var stored = localStorage.getItem("dayzero_project_candidates_" + projectId);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    // Seed pool from general CANDIDATES
+    var pool = [];
+    var count = Math.min(CANDIDATES.length, 4);
+    for (var i = 0; i < count; i++) {
+      var cand = CANDIDATES[i];
+      pool.push({
+        id: cand.id,
+        name: cand.name,
+        email: cand.name.toLowerCase().replace(/\s+/g, "") + "@dayzero.ai",
+        avatar: cand.initials,
+        role: cand.topSkill + " Specialist",
+        status: "active"
+      });
+    }
+    saveProjectCandidates(projectId, pool);
+    return pool;
+  }
+
+  function saveProjectCandidates(projectId, pool) {
+    localStorage.setItem("dayzero_project_candidates_" + projectId, JSON.stringify(pool));
+  }
+
+  function openSimulationWorkspace(projectId) {
+    _selectedSimProjectId = String(projectId);
+    var project = findProjectById(projectId);
+    if (!project) {
+      showToast("Project not found", "error");
+      return;
+    }
+    
+    loadSimulations();
+    
+    if (el("simWorkspaceProjectTitle")) {
+      el("simWorkspaceProjectTitle").textContent = project.title + " — Simulation Workspace";
+    }
+    if (el("simWorkspaceProjectDesc")) {
+      el("simWorkspaceProjectDesc").textContent = "Recruiter simulation control deck for project: " + project.description;
+    }
+    
+    // Reset configuration states
+    setSimConfigType("individual");
+    closeMonitoringConsole();
+    
+    // Render components
+    renderPoolList();
+    renderCandidateChecklist();
+    renderActiveRooms();
+    updateWorkspaceStats();
+    
+    switchView("simulationWorkspace");
+    showToast("Opened simulation control panel", "success");
+  }
+
+  function renderPoolList() {
+    var container = el("simCandidatePoolList");
+    if (!container) return;
+    
+    var pool = getProjectCandidates(_selectedSimProjectId);
+    if (pool.length === 0) {
+      container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--hint); font-size: 12.5px;">Candidate pool is empty. Click "+ Add Candidate" to add candidates.</div>';
+      return;
+    }
+    
+    container.innerHTML = pool.map(function(c) {
+      var safeName = escapeHtml(c.name);
+      var safeEmail = escapeHtml(c.email);
+      var safeRole = escapeHtml(c.role);
+      var safeAvatar = escapeHtml(c.avatar);
+      var statusBadge = c.status === "active" ? "green" : c.status === "completed" ? "blue" : "amber";
+      
+      return '<div class="pool-cand-item">' +
+        '<div class="cand-avatar" style="background: var(--indigo-bg); color: var(--indigo); font-size: 12px; font-weight:700;">' + safeAvatar + '</div>' +
+        '<div class="pool-cand-info">' +
+          '<div class="pool-cand-name">' + safeName + '</div>' +
+          '<div class="pool-cand-meta">' + safeRole + ' · <span class="badge ' + statusBadge + '" style="font-size: 9px; padding: 1px 4px;">' + c.status + '</span></div>' +
+        '</div>' +
+        '<div class="pool-actions">' +
+          '<button class="pool-action-btn delete" onclick="handleRemoveCandidateFromPool(' + c.id + ')" title="Remove Candidate">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function renderCandidateChecklist() {
+    var container = el("simCandChecklist");
+    if (!container) return;
+    
+    var pool = getProjectCandidates(_selectedSimProjectId);
+    if (pool.length === 0) {
+      container.innerHTML = '<div style="padding: 10px; text-align: center; color: var(--hint); font-size: 11px;">No candidates available</div>';
+      return;
+    }
+    
+    container.innerHTML = pool.map(function(c) {
+      var safeName = escapeHtml(c.name);
+      var safeRole = escapeHtml(c.role);
+      return '<label class="checklist-item">' +
+        '<input type="checkbox" name="sim_candidates" value="' + c.id + '" style="cursor:pointer;">' +
+        '<span>' + safeName + ' <span style="font-size: 10px; color: var(--hint);">(' + safeRole + ')</span></span>' +
+      '</label>';
+    }).join("");
+  }
+
+  window.openSimCandidateModal = function() {
+    if (el("addSimCandidateModal")) {
+      el("addSimCandidateModal").style.display = "flex";
+      el("simCandNameInput").value = "";
+      el("simCandEmailInput").value = "";
+      el("simCandNameError").style.display = "none";
+      el("simCandEmailError").style.display = "none";
+      el("simCandNameInput").focus();
+    }
+  }
+
+  window.closeSimCandidateModal = function() {
+    if (el("addSimCandidateModal")) el("addSimCandidateModal").style.display = "none";
+  }
+
+  window.handleSubmitAddSimCandidate = function() {
+    var name = el("simCandNameInput").value.trim();
+    var email = el("simCandEmailInput").value.trim();
+    var role = el("simCandRoleInput").value;
+    
+    var valid = true;
+    if (!name) {
+      el("simCandNameError").style.display = "block";
+      valid = false;
+    } else {
+      el("simCandNameError").style.display = "none";
+    }
+    
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      el("simCandEmailError").style.display = "block";
+      valid = false;
+    } else {
+      el("simCandEmailError").style.display = "none";
+    }
+    
+    if (!valid) return;
+    
+    var pool = getProjectCandidates(_selectedSimProjectId);
+    var initials = name.split(" ").map(function(n) { return n[0]; }).join("").toUpperCase().slice(0, 2);
+    
+    var newCand = {
+      id: Date.now(),
+      name: name,
+      email: email,
+      avatar: initials || "C",
+      role: role,
+      status: "invited"
+    };
+    
+    pool.push(newCand);
+    saveProjectCandidates(_selectedSimProjectId, pool);
+    renderPoolList();
+    renderCandidateChecklist();
+    closeSimCandidateModal();
+    showToast("Candidate '" + name + "' added to pool", "success");
+    updateWorkspaceStats();
+  }
+
+  window.handleRemoveCandidateFromPool = function(id) {
+    var pool = getProjectCandidates(_selectedSimProjectId);
+    var cand = pool.find(function(c) { return c.id === id; });
+    var name = cand ? cand.name : "Candidate";
+    
+    if (confirm("Are you sure you want to remove " + name + " from the project candidate pool?")) {
+      pool = pool.filter(function(c) { return c.id !== id; });
+      saveProjectCandidates(_selectedSimProjectId, pool);
+      renderPoolList();
+      renderCandidateChecklist();
+      showToast("Removed candidate " + name, "warning");
+      updateWorkspaceStats();
+    }
+  }
+
+  window.setSimConfigType = function(type) {
+    _simConfigType = type;
+    if (el("typeIndivBtn") && el("typeGroupBtn")) {
+      el("typeIndivBtn").classList.toggle("active", type === "individual");
+      el("typeGroupBtn").classList.toggle("active", type === "group");
+    }
+    if (el("simTypeHint")) {
+      if (type === "individual") {
+        el("simTypeHint").textContent = "Choose exactly 1 candidate for individual workspace.";
+      } else {
+        el("simTypeHint").textContent = "Choose 2 to 4 candidates for group collaborative room.";
+      }
+    }
+  }
+
+  window.handleCreateSimRoom = function() {
+    var checkedCheckboxes = document.querySelectorAll('input[name="sim_candidates"]:checked');
+    var candIds = Array.from(checkedCheckboxes).map(function(cb) {
+      return parseInt(cb.value, 10);
+    });
+    
+    var pool = getProjectCandidates(_selectedSimProjectId);
+    var selectedCands = pool.filter(function(c) {
+      return candIds.indexOf(c.id) !== -1;
+    });
+    
+    if (_simConfigType === "individual" && selectedCands.length !== 1) {
+      alert("Please select exactly 1 candidate for an Individual Simulation.");
+      return;
+    }
+    if (_simConfigType === "group" && (selectedCands.length < 2 || selectedCands.length > 4)) {
+      alert("Please select between 2 and 4 candidates for a Group Simulation.");
+      return;
+    }
+    
+    // Update candidate status
+    selectedCands.forEach(function(c) {
+      c.status = "active";
+    });
+    saveProjectCandidates(_selectedSimProjectId, pool);
+    renderPoolList();
+    
+    // Create simulation object
+    var roomNumber = _simulations.filter(function(s) {
+      return String(s.projectId) === String(_selectedSimProjectId);
+    }).length + 1;
+    
+    var roomName = _simConfigType === "individual"
+      ? "Indiv Assessment — " + selectedCands[0].name
+      : "Group room #" + roomNumber + " — Slack Arena";
+      
+    var newSim = {
+      id: Date.now(),
+      projectId: _selectedSimProjectId,
+      simulationType: _simConfigType,
+      candidates: selectedCands,
+      createdAt: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString(),
+      status: "active",
+      workspaceChats: generateInitialMockChats(selectedCands, _simConfigType),
+      activityLogs: generateInitialMockActivity(selectedCands, _simConfigType)
+    };
+    
+    _simulations.push(newSim);
+    saveSimulations();
+    renderActiveRooms();
+    updateWorkspaceStats();
+    
+    // Clear checkboxes
+    checkedCheckboxes.forEach(function(cb) { cb.checked = false; });
+    
+    showToast("Created simulation: " + roomName, "success");
+    
+    // Auto-monitor the newly created simulation room
+    monitorSimulationRoom(newSim.id);
+  }
+
+  function generateInitialMockChats(candidates, type) {
+    var chats = [];
+    chats.push({
+      sender: "System",
+      text: "Simulation room created. Candidate workspace initialized.",
+      time: "12m ago",
+      isSystem: true
+    });
+    
+    candidates.forEach(function(c) {
+      chats.push({
+        sender: "System",
+        text: c.name + " (" + c.role + ") joined the workspace.",
+        time: "10m ago",
+        isSystem: true
+      });
+    });
+    
+    chats.push({
+      sender: "AI Assistant",
+      text: type === "individual"
+        ? "Welcome to DayZero Job Simulation workspace. Please read the project brief in your editor and initiate the first module tasks."
+        : "Welcome team. We have multiple deliverables to ship. I have populated the task allocation panel on your right. Please assign tasks and let's get started.",
+      time: "8m ago",
+      isAI: true
+    });
+    
+    if (type === "individual") {
+      chats.push({
+        sender: candidates[0].name,
+        avatar: candidates[0].avatar,
+        text: "Thanks, AI. I'm opening the project files now to understand the requirements.",
+        time: "5m ago"
+      });
+    } else {
+      chats.push({
+        sender: candidates[0].name,
+        avatar: candidates[0].avatar,
+        text: "Hi everyone! I'll take the lead on the main interface module.",
+        time: "5m ago"
+      });
+      if (candidates[1]) {
+        chats.push({
+          sender: candidates[1].name,
+          avatar: candidates[1].avatar,
+          text: "Sounds good, I'll grab the backend database connector setup and API integration.",
+          time: "4m ago"
+        });
+      }
+    }
+    
+    return chats;
+  }
+
+  function generateInitialMockActivity(candidates, type) {
+    var logs = [];
+    logs.push({ text: "Simulation room created", time: "12m ago" });
+    candidates.forEach(function(c) {
+      logs.push({ text: c.name + " joined room", time: "10m ago" });
+    });
+    logs.push({ text: "AI Assistant initialized", time: "8m ago" });
+    if (type === "individual") {
+      logs.push({ text: "Project brief viewed", time: "5m ago" });
+    } else {
+      logs.push({ text: "Task board synchronized", time: "6m ago" });
+      logs.push({ text: "Deliverable priority assigned", time: "4m ago" });
+    }
+    return logs;
+  }
+
+  function renderActiveRooms() {
+    var container = el("activeSimRoomsGrid");
+    if (!container) return;
+    
+    var filtered = _simulations.filter(function(s) {
+      return String(s.projectId) === String(_selectedSimProjectId);
+    });
+    
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1 / -1; padding: 32px; text-align: center; color: var(--hint); border: 1px dashed var(--border2); border-radius: var(--radius-lg);">' +
+        '<i data-lucide="monitor-play" style="width: 32px; height: 32px; color: var(--hint); margin: 0 auto 8px; display: block; opacity: 0.5;"></i>' +
+        '<p style="font-size: 12px; font-weight: 600; color: var(--text);">No simulations created yet</p>' +
+        '<p style="font-size: 11px; color: var(--subtext); margin-top: 4px;">Use the configurator on the left to start candidate simulation rooms.</p>' +
+        '</div>';
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+    
+    container.innerHTML = filtered.map(function(s) {
+      var safeTitle = s.simulationType === "individual"
+        ? "Individual Sim — " + escapeHtml(s.candidates[0].name)
+        : "Group Workspace #" + s.id.toString().slice(-4);
+        
+      var avatarsHtml = s.candidates.map(function(c) {
+        return '<div class="room-avatar-node" style="background: linear-gradient(135deg, #4f46e5, #3b82f6);" title="' + escapeHtml(c.name) + '">' +
+          escapeHtml(c.avatar) +
+          '</div>';
+      }).join("");
+      
+      var badgeClass = s.simulationType === "individual" ? "blue" : "indigo";
+      var activeClass = _monitoredRoomId === s.id ? " active-monitoring" : "";
+      
+      return '<div class="sim-room-card' + activeClass + '" id="simCardNode_' + s.id + '">' +
+        '<div class="room-header">' +
+          '<div>' +
+            '<div class="room-title">' + safeTitle + '</div>' +
+            '<span class="badge ' + badgeClass + '" style="font-size: 9px; padding: 2px 6px; margin-top: 4px;">' + s.simulationType + '</span>' +
+          '</div>' +
+          '<button class="pool-action-btn delete" onclick="handleDeleteSimRoom(' + s.id + ')" title="Delete Room">✕</button>' +
+        '</div>' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-top: 6px;">' +
+          '<div class="room-avatars">' + avatarsHtml + '</div>' +
+          '<button class="topbar-btn" onclick="monitorSimulationRoom(' + s.id + ')" style="padding: 4px 10px; font-size: 11px; margin: 0;">' +
+            '<i data-lucide="eye" style="width:12px; height:12px; margin-right: 4px;"></i>Monitor' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+    
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.handleDeleteSimRoom = function(roomId) {
+    if (confirm("Are you sure you want to delete this simulation room? All chat logs and activity history will be lost.")) {
+      if (_monitoredRoomId === roomId) {
+        closeMonitoringConsole();
+      }
+      _simulations = _simulations.filter(function(s) { return s.id !== roomId; });
+      saveSimulations();
+      renderActiveRooms();
+      updateWorkspaceStats();
+      showToast("Simulation room deleted", "warning");
+    }
+  }
+
+  window.closeMonitoringConsole = function() {
+    _monitoredRoomId = null;
+    if (el("simMonitoringConsole")) el("simMonitoringConsole").style.display = "none";
+    if (window._activeSimulationFeedInterval) {
+      window.clearInterval(window._activeSimulationFeedInterval);
+      window._activeSimulationFeedInterval = null;
+    }
+    renderActiveRooms();
+  }
+
+  window.monitorSimulationRoom = function(roomId) {
+    _monitoredRoomId = roomId;
+    var sim = _simulations.find(function(s) { return s.id === roomId; });
+    if (!sim) return;
+    
+    document.querySelectorAll(".sim-room-card").forEach(function(card) {
+      card.classList.remove("active-monitoring");
+    });
+    var activeCard = el("simCardNode_" + roomId);
+    if (activeCard) activeCard.classList.add("active-monitoring");
+    
+    if (el("simMonitoringConsole")) el("simMonitoringConsole").style.display = "flex";
+    
+    if (el("consoleRoomTitle")) {
+      el("consoleRoomTitle").textContent = sim.simulationType === "individual"
+        ? "Room #" + sim.id.toString().slice(-4) + " — " + sim.candidates[0].name + " Assessment"
+        : "Group Workspace #" + sim.id.toString().slice(-4) + " — Collaboration Deck";
+    }
+    
+    if (el("consoleRoomTypeBadge")) {
+      el("consoleRoomTypeBadge").textContent = sim.simulationType === "individual" ? "Individual Simulation" : "Group Simulation";
+      el("consoleRoomTypeBadge").className = "badge " + (sim.simulationType === "individual" ? "blue" : "indigo");
+    }
+    
+    if (el("groupContributionSection")) {
+      el("groupContributionSection").style.display = sim.simulationType === "group" ? "block" : "none";
+    }
+    
+    renderConsoleChat(sim);
+    renderConsoleActivity(sim);
+    if (sim.simulationType === "group") renderConsoleContributions(sim);
+    
+    if (window._activeSimulationFeedInterval) window.clearInterval(window._activeSimulationFeedInterval);
+    
+    window._activeSimulationFeedInterval = window.setInterval(function() {
+      tockSimulationActivity(roomId);
+    }, 10000); // dynamic simulation ticker
+    
+    showToast("Subscribed to silent live monitoring feed", "default");
+    
+    var chatBox = el("consoleChatMessages");
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function renderConsoleChat(sim) {
+    var container = el("consoleChatMessages");
+    if (!container) return;
+    
+    container.innerHTML = sim.workspaceChats.map(function(msg) {
+      if (msg.isSystem) {
+        return '<div class="chat-msg-item system-msg">' +
+          '<div class="chat-msg-text">' + escapeHtml(msg.text) + '</div>' +
+          '</div>';
+      }
+      
+      var avatarBg = msg.isAI ? "linear-gradient(135deg, #1e3a8a, #3b82f6)" : "linear-gradient(135deg, #4f46e5, #3b82f6)";
+      var senderClass = msg.isAI ? "ai-agent" : "";
+      var avatarText = msg.isAI ? "AI" : escapeHtml(msg.avatar || msg.sender.charAt(0));
+      var timeText = msg.time || "Just now";
+      
+      return '<div class="chat-msg-item">' +
+        '<div class="chat-msg-avatar" style="background: ' + avatarBg + ';">' + avatarText + '</div>' +
+        '<div class="chat-msg-content">' +
+          '<div class="chat-msg-header">' +
+            '<span class="chat-msg-sender ' + senderClass + '">' + escapeHtml(msg.sender) + '</span>' +
+            '<span class="chat-msg-time">' + escapeHtml(timeText) + '</span>' +
+          '</div>' +
+          '<div class="chat-msg-text">' + escapeHtml(msg.text) + '</div>' +
+        '</div>' +
+        '</div>';
+    }).join("");
+  }
+
+  function renderConsoleActivity(sim) {
+    var container = el("consoleActivityFeed");
+    if (!container) return;
+    
+    container.innerHTML = sim.activityLogs.slice().reverse().map(function(log) {
+      return '<div class="activity-dot-item">' +
+        '<div class="activity-dot-bullet"></div>' +
+        '<div>' +
+          '<div class="activity-dot-text">' + escapeHtml(log.text) + '</div>' +
+          '<div class="activity-dot-time">' + escapeHtml(log.time || "Just now") + '</div>' +
+        '</div>' +
+        '</div>';
+    }).join("");
+  }
+
+  function renderConsoleContributions(sim) {
+    var container = el("groupContributionList");
+    if (!container) return;
+    
+    var totalMsg = sim.workspaceChats.filter(function(m) { return !m.isSystem && !m.isAI; }).length || 1;
+    
+    var counts = {};
+    sim.candidates.forEach(function(c) { counts[c.name] = 0; });
+    sim.workspaceChats.forEach(function(m) {
+      if (counts[m.sender] !== undefined) counts[m.sender]++;
+    });
+    
+    var colors = ["var(--indigo)", "var(--blue)", "var(--green)", "var(--amber)"];
+    
+    container.innerHTML = sim.candidates.map(function(c, idx) {
+      var count = counts[c.name] || 0;
+      var pct = Math.round((count / totalMsg) * 100) || 15;
+      var barColor = colors[idx % colors.length];
+      
+      return '<div class="contrib-item">' +
+        '<div class="contrib-label-row">' +
+          '<span>' + escapeHtml(c.name) + '</span>' +
+          '<span>' + pct + '% (' + count + ' messages)</span>' +
+        '</div>' +
+        '<div class="contrib-bar">' +
+          '<div class="contrib-fill" style="width: ' + pct + '%; background: ' + barColor + ';"></div>' +
+        '</div>' +
+        '</div>';
+    }).join("");
+  }
+
+  function tockSimulationActivity(roomId) {
+    var sim = _simulations.find(function(s) { return s.id === roomId; });
+    if (!sim) return;
+    
+    var indivFlows = [
+      { sender: "AI Assistant", isAI: true, text: "Excellent, the main routing framework is up. Have you added unit coverage for edge cases?" },
+      { sender: sim.candidates[0].name, text: "Yes, I just added validation checks for null records and negative input. Running tests locally." },
+      { sender: "System", isSystem: true, text: "Candidate successfully triggered unit checks. 14/14 tests PASSED." },
+      { sender: sim.candidates[0].name, text: "All tests green! Completing module integration." },
+      { sender: "System", isSystem: true, text: "Workspace update: candidate submitted module draft file: app_controller_test.js" },
+      { sender: "AI Assistant", isAI: true, text: "Perfect. Quality metrics are in excellent standing. Proceed to final deployment validation." }
+    ];
+    
+    var groupFlows = [
+      { sender: sim.candidates[0].name, text: "I've uploaded the mock dashboard interface outline. Priya, does that match the backend endpoint JSON?" },
+      { sender: sim.candidates[1] ? sim.candidates[1].name : "Teammate", text: "Looks perfect! I've wired up the webhook handler. Let's run a joint sandbox test." },
+      { sender: "System", isSystem: true, text: "Collaborative Workspace: Sandbox validation initiated by teammate." },
+      { sender: sim.candidates[2] ? sim.candidates[2].name : "Teammate 2", text: "Wired in the auth parameters. Database security layers check out." },
+      { sender: "AI Assistant", isAI: true, text: "Team, overall task completion is at 82%. Excellent division of labor and execution velocity." },
+      { sender: "System", isSystem: true, text: "Project benchmark submitted by candidate team. Evaluated score: 94% on compliance." }
+    ];
+    
+    var dialogPool = sim.simulationType === "individual" ? indivFlows : groupFlows;
+    
+    var nonSystemCount = sim.workspaceChats.filter(function(m) { return m.sender !== "System"; }).length;
+    var nextMsgIdx = (nonSystemCount - 3) % dialogPool.length;
+    if (nextMsgIdx < 0) nextMsgIdx = 0;
+    
+    var newMsg = dialogPool[nextMsgIdx];
+    
+    var msgObj = {
+      sender: newMsg.sender,
+      text: newMsg.text,
+      time: new Date().toLocaleTimeString().slice(0, 5),
+      isSystem: !!newMsg.isSystem,
+      isAI: !!newMsg.isAI,
+      avatar: newMsg.sender.split(" ").map(function(x){return x[0];}).join("")
+    };
+    
+    sim.workspaceChats.push(msgObj);
+    
+    var timelineText = "";
+    if (msgObj.isSystem) timelineText = msgObj.text;
+    else if (msgObj.isAI) timelineText = "AI Suggestion: " + msgObj.text.slice(0, 32) + "...";
+    else timelineText = msgObj.sender + " discussed: " + msgObj.text.slice(0, 32) + "...";
+    
+    sim.activityLogs.push({
+      text: timelineText,
+      time: "Just now"
+    });
+    
+    saveSimulations();
+    
+    if (_monitoredRoomId === roomId) {
+      renderConsoleChat(sim);
+      renderConsoleActivity(sim);
+      if (sim.simulationType === "group") renderConsoleContributions(sim);
+      
+      var chatBox = el("consoleChatMessages");
+      if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  }
+
+  function updateWorkspaceStats() {
+    var filtered = _simulations.filter(function(s) {
+      return String(s.projectId) === String(_selectedSimProjectId);
+    });
+    
+    var total = filtered.length;
+    var group = filtered.filter(function(s) { return s.simulationType === "group"; }).length;
+    var indiv = total - group;
+    
+    var activeCands = 0;
+    filtered.forEach(function(s) {
+      activeCands += s.candidates.length;
+    });
+    
+    if (el("simStatTotalRooms")) el("simStatTotalRooms").textContent = total.toString();
+    if (el("simStatGroupRooms")) el("simStatGroupRooms").textContent = group.toString();
+    if (el("simStatIndivRooms")) el("simStatIndivRooms").textContent = indiv.toString();
+    if (el("simStatActiveCands")) el("simStatActiveCands").textContent = activeCands.toString();
+  }
+
+  // Hook up button inside pool panel
+  document.addEventListener("DOMContentLoaded", function() {
+    var addBtn = el("addSimCandidateBtn");
+    if (addBtn) addBtn.onclick = function() { openSimCandidateModal(); };
+  });
 
   function init() {
     // Show dashboard by default
