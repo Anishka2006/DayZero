@@ -4,13 +4,13 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   initNavbar();
+  initAuthModal();  // MOVED BEFORE SMOOTH SCROLL - This is important!
   initSmoothScroll();
   initRevealAnimation();
   initProgressBars();
   initButtons();
   initTimer();
   initModal();
-  initAuthModal();
   initSprintLinks();
 });
 
@@ -89,6 +89,15 @@ function initSmoothScroll() {
 
   links.forEach(link => {
     link.addEventListener("click", function (e) {
+      // SKIP if this is a modal trigger or auth button
+      if (this.getAttribute("href") === "#login" || 
+          this.getAttribute("href") === "#signup" ||
+          this.getAttribute("href") === "#sprint-room" ||
+          this.classList.contains("modal-close") ||
+          this.classList.contains("auth-btn")) {
+        return; // Don't prevent default, let other handlers take over
+      }
+
       e.preventDefault();
 
       const targetId = this.getAttribute("href");
