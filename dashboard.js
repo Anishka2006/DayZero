@@ -1086,6 +1086,19 @@ document.querySelectorAll(".project-card").forEach(card => {
     });
   }
 
+  // Add listeners to role tags so they can be selected
+  document.querySelectorAll('.role-tag').forEach(tag => {
+    tag.addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent clicking the card underneath
+      // Deselect siblings in the same card
+      const card = tag.closest('.project-card');
+      if(card) {
+        card.querySelectorAll('.role-tag').forEach(t => t.classList.remove('selected'));
+      }
+      tag.classList.add('selected');
+    });
+  });
+
   if (applyBtn && applyBtn.textContent.includes("Start 5-Day Sprint")) {
     applyBtn.addEventListener("click", () => {
       // Create Overlay
@@ -1108,13 +1121,140 @@ document.querySelectorAll(".project-card").forEach(card => {
       const modalContent = overlay.querySelector('.onboard-modal');
 
       const title = card.querySelector(".proj-title") ? card.querySelector(".proj-title").textContent : "Simulation";
+      const logoImg = card.querySelector("img");
+      const logoSrc = logoImg ? logoImg.src : "";
+      let selectedTag = card.querySelector(".role-tag.selected");
+      if (!selectedTag) selectedTag = card.querySelector(".role-tag");
+      const targetRole = selectedTag ? selectedTag.textContent.trim() : "Candidate";
+      
+      let rl = targetRole.toLowerCase();
+      let roleType = "Developer";
+      if(rl.includes("product") || rl.includes("pm") || rl.includes("manager")) roleType = "PM";
+      else if(rl.includes("design") || rl.includes("ux") || rl.includes("ui") || rl.includes("art")) roleType = "Designer";
+      else if(rl.includes("front")) roleType = "Frontend";
+      else if(rl.includes("back") || rl.includes("cloud") || rl.includes("devops") || rl.includes("infra")) roleType = "Backend";
+      else if(rl.includes("ml") || rl.includes("data") || rl.includes("ai")) roleType = "ML";
+
+      let day1Desc = "";
+      if(roleType === "PM") {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> A one-page Product Requirements Document (PRD) and Execution Timeline.</div>
+          <p class="task-context">Our engineering bandwidth is highly constrained. You must include:</p>
+          <ul class="task-requirements-list">
+            <li><strong>Risk Analysis:</strong> Identify top 3 technical and market risks.</li>
+            <li><strong>Success Metrics:</strong> Define 2 key KPIs for the MVP launch.</li>
+            <li><strong>Priority Matrix:</strong> Map MVP features against our limited bandwidth.</li>
+          </ul>
+        `;
+      } else if(roleType === "Designer") {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> High-fidelity wireframes or a functional Figma prototype.</div>
+          <p class="task-context">The team needs a clear visual direction before coding begins. You must include:</p>
+          <ul class="task-requirements-list">
+            <li><strong>User Flow:</strong> Map out the primary onboarding journey.</li>
+            <li><strong>Design Rationale:</strong> Explain your layout and typography choices.</li>
+            <li><strong>Component States:</strong> Include hover, active, and error states.</li>
+          </ul>
+        `;
+      } else if(roleType === "Frontend") {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> Responsive UI components and a deployed prototype.</div>
+          <p class="task-context">We need to ensure cross-device compatibility. You must include:</p>
+          <ul class="task-requirements-list">
+            <li><strong>Component Structure:</strong> Breakdown of reusable React/Vue elements.</li>
+            <li><strong>Accessibility:</strong> Ensure ARIA labels and keyboard navigation work.</li>
+            <li><strong>Deployment Link:</strong> Connect your GitHub repo and provide a live URL.</li>
+          </ul>
+        `;
+      } else if(roleType === "Backend") {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> System architecture document and core API routes.</div>
+          <p class="task-context">Latency and scalability are our biggest concerns right now. You must include:</p>
+          <ul class="task-requirements-list">
+            <li><strong>API Endpoints:</strong> Documentation for 3 core REST/GraphQL endpoints.</li>
+            <li><strong>DB Schema:</strong> Entity relationship diagram for user data.</li>
+            <li><strong>Architecture Diagram:</strong> Show how services communicate under load.</li>
+          </ul>
+        `;
+      } else if(roleType === "ML") {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> Model training approach and evaluation metrics.</div>
+          <p class="task-context">We need to improve our recommendation engine's accuracy. You must include:</p>
+          <ul class="task-requirements-list">
+            <li><strong>Dataset Handling:</strong> Explain how you will clean and split the data.</li>
+            <li><strong>Evaluation Metrics:</strong> Define precision, recall, and F1 score targets.</li>
+            <li><strong>Notebook Upload:</strong> Provide your Jupyter notebook with initial EDA.</li>
+          </ul>
+        `;
+      } else {
+        day1Desc = `
+          <div class="deliverable-callout"><i data-lucide="box" style="width: 16px; height: 16px; margin-right: 8px; color: #4f46e5;"></i><strong>Deliverable:</strong> A comprehensive one-page strategic brief.</div>
+          <ul class="task-requirements-list">
+            <li><strong>Recommendation:</strong> Clear executive summary of your proposed path.</li>
+            <li><strong>Risk Mitigation:</strong> Highlight potential blockers and solutions.</li>
+            <li><strong>Timeline:</strong> Provide a rough estimation for milestones.</li>
+          </ul>
+        `;
+      }
+
+      let uiPlaceholder = "";
+      let uiButtons = "";
+      if(roleType === "PM") {
+        uiPlaceholder = "PRD editor, sprint planning, metrics dashboard...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #3730a3; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="file-text" style="width:16px; height:16px; margin-right:8px;"></i> Notion PRD</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="pie-chart" style="width:16px; height:16px; margin-right:8px;"></i> Mixpanel</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff7ed, #ffedd5); color: #9a3412; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="layout" style="width:16px; height:16px; margin-right:8px;"></i> Linear Board</button>
+        `;
+      } else if(roleType === "Designer") {
+        uiPlaceholder = "Figma collaboration, asset uploads, prototype preview...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #5b21b6; border: 1px solid #ddd6fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="figma" style="width:16px; height:16px; margin-right:8px;"></i> Figma</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #1e40af; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="cloud-upload" style="width:16px; height:16px; margin-right:8px;"></i> Cloudinary</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fdf4ff, #fae8ff); color: #86198f; border: 1px solid #fbcfe8; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="play" style="width:16px; height:16px; margin-right:8px;"></i> Framer Pro</button>
+        `;
+      } else if(roleType === "ML") {
+        uiPlaceholder = "Notebook Upload, Model Parameters, Output Logs...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff7ed, #ffedd5); color: #9a3412; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="book-open" style="width:16px; height:16px; margin-right:8px;"></i> Colab Notebook</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="box" style="width:16px; height:16px; margin-right:8px;"></i> HuggingFace</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #1e40af; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="bar-chart-3" style="width:16px; height:16px; margin-right:8px;"></i> W&B Logs</button>
+        `;
+      } else if(roleType === "Frontend") {
+        uiPlaceholder = "GitHub sync, component tasks, deployment links...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); color: #0f172a; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="github" style="width:16px; height:16px; margin-right:8px;"></i> GitHub</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; border: 1px solid #334155; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="external-link" style="width:16px; height:16px; margin-right:8px;"></i> Vercel</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff1f2, #ffe4e6); color: #9f1239; border: 1px solid #fecdd3; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="layout-template" style="width:16px; height:16px; margin-right:8px;"></i> Storybook</button>
+        `;
+      } else if(roleType === "Backend") {
+        uiPlaceholder = "API testing, database schema, server logs...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff7ed, #ffedd5); color: #c2410c; border: 1px solid #fdba74; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="send" style="width:16px; height:16px; margin-right:8px;"></i> Postman</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #15803d; border: 1px solid #86efac; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="bar-chart-2" style="width:16px; height:16px; margin-right:8px;"></i> Datadog</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="database" style="width:16px; height:16px; margin-right:8px;"></i> Supabase</button>
+        `;
+      } else {
+        uiPlaceholder = "GitHub sync, component tasks, deployment links...";
+        uiButtons = `
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); color: #0f172a; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="github" style="width:16px; height:16px; margin-right:8px;"></i> GitHub</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; border: 1px solid #334155; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="external-link" style="width:16px; height:16px; margin-right:8px;"></i> Vercel</button>
+          <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff1f2, #ffe4e6); color: #9f1239; border: 1px solid #fecdd3; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="layout-template" style="width:16px; height:16px; margin-right:8px;"></i> Storybook</button>
+        `;
+      }
+      
+      let uName = "";
+      try {
+        const u = JSON.parse(localStorage.getItem("user"));
+        if (u && u.name) uName = u.name;
+      } catch(e) {}
 
       const sprintData = [
         {
           day: 1,
           header: "DAY 1 OF 5 · TASK BRIEF",
           title: "Welcome to DayZero – Let's Ship Something",
-          desc: "Your deliverable: a one-page decision brief on whether we should build a native mobile app (iOS/Android) or invest in a progressive web app (PWA) for our next quarter. Our engineering bandwidth is limited—we have 2 developers and can only pursue one path. Include: (1) a recommendation with reasoning, (2) three key risks for your chosen path, (3) success metrics we should track, and (4) a rough timeline estimate. Base your decision on our context: 60% of user sessions are on mobile web, our competitors just launched mobile apps, and our runway is 18 months. Don't overthink it—I value clear thinking over perfection.",
+          desc: day1Desc,
           teammateName: "Maya Chen",
           teammateRole: "SENIOR DESIGNER",
           teammateAvatar: "https://api.dicebear.com/7.x/notionists/svg?seed=Maya",
@@ -1163,6 +1303,433 @@ document.querySelectorAll(".project-card").forEach(card => {
       ];
 
       let currentDayIndex = -1; // -1 represents the onboarding screen
+      
+      window.initiateCollab = async function(type) {
+        const feed = document.getElementById("teamFeedContainer");
+        if(!feed) return;
+        
+        feed.innerHTML += `
+          <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 16px; animation: fadeIn 0.3s ease;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">You</div>
+            <div style="flex: 1;">
+              <div style="margin-bottom: 8px;">
+                <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">You</span>
+              </div>
+              <div style="color: #334155; font-size: 14px; line-height: 1.6;">
+                Initiated a ${type}... waiting for acceptance.
+              </div>
+            </div>
+          </div>
+        `;
+        feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+
+        if (type === 'Meet' || type === 'Screen Share') {
+            setTimeout(async () => {
+                const teammateNameEl = document.querySelector(".team-msg-card span");
+                const name = teammateNameEl && teammateNameEl.textContent !== "Nova" && teammateNameEl.textContent !== "You" ? teammateNameEl.textContent : "Teammate";
+                const imgEl = document.querySelector(".team-msg-card img");
+                const avatar = imgEl && !imgEl.src.includes("Nova") ? imgEl.src : "https://api.dicebear.com/7.x/notionists/svg?seed=Team";
+                
+                const sessionId = 'session_' + Date.now();
+                const gridTemplate = type === 'Screen Share' ? '2fr 1fr' : '1fr 1fr';
+                
+                feed.innerHTML += `
+                  <div class="team-msg-card" style="padding: 0; background: #0f172a; border-radius: 16px; margin-top: 16px; overflow: hidden; animation: fadeIn 0.3s ease; box-shadow: 0 12px 24px rgba(15,23,42,0.2);">
+                    <div style="padding: 12px 20px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                      <div style="color: #fff; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 8px #ef4444; animation: pulse 2s infinite;"></div>
+                        Live ${type}
+                      </div>
+                      <div style="color: #94a3b8; font-size: 12px; font-family: monospace;">ENCRYPTED P2P</div>
+                    </div>
+                    
+                    <div style="padding: 16px; display: grid; gap: 12px; grid-template-columns: ${gridTemplate}; min-height: 200px; background: #0f172a;">
+                      <div style="background: #1e293b; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; min-height: 180px;">
+                        <video id="local_${sessionId}" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+                        <div id="status_${sessionId}" style="position: absolute; color: #94a3b8; font-size: 13px;">Connecting...</div>
+                        <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; backdrop-filter: blur(4px);">You</div>
+                      </div>
+                      
+                      <div style="background: #1e293b; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px;">
+                        <img id="teammate_avatar_${sessionId}" src="${avatar}" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.2); animation: pulse 2s infinite; transition: all 0.2s;">
+                        <div id="teammate_mic_${sessionId}" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; backdrop-filter: blur(4px); display: flex; align-items: center; gap: 4px;">
+                          <i data-lucide="mic-off" style="width: 12px; height: 12px; color: #ef4444;"></i> ${name}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div style="padding: 16px; background: rgba(255,255,255,0.02); display: flex; justify-content: center; gap: 12px; border-top: 1px solid rgba(255,255,255,0.05);">
+                      <button id="mic_btn_${sessionId}" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"><i data-lucide="mic"></i></button>
+                      <button id="cam_btn_${sessionId}" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"><i data-lucide="video"></i></button>
+                      <button id="share_btn_${sessionId}" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"><i data-lucide="monitor-up"></i></button>
+                      <button id="end_${sessionId}" style="padding: 0 24px; height: 44px; border-radius: 22px; background: #ef4444; border: none; color: #fff; font-weight: 600; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3);" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">End Session</button>
+                    </div>
+                  </div>
+                `;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+                
+                let stream = null;
+
+                // Handle End Call logic FIRST so it always works even if media fails
+                const endSession = (e) => {
+                    const endBtn = document.getElementById(`end_${sessionId}`);
+                    if(!endBtn || endBtn.innerText === 'Ended') return;
+                    window.sessionActive = false;
+                    if(window.currentRecognition) {
+                        try { window.currentRecognition.stop(); } catch(err){}
+                    }
+                    if(stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    const card = endBtn.closest('.team-msg-card');
+                    if(card) {
+                        card.style.opacity = '0.5';
+                        card.style.pointerEvents = 'none';
+                    }
+                    endBtn.innerText = 'Ended';
+                    window.speechSynthesis.cancel(); 
+                    
+                    const summaries = [
+                        "We agreed to prioritize the core features discussed and start on the initial draft.",
+                        "We aligned on the risk factors and decided to pivot the current approach slightly.",
+                        "Good discussion on the latency issues. Proceeding with database indexing as a priority.",
+                        "Finalized the launch metrics and success criteria for the upcoming rollout."
+                    ];
+                    const randomSummary = summaries[Math.floor(Math.random() * summaries.length)];
+                    
+                    feed.innerHTML += `
+                      <div class="team-msg-card" style="display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; background: #fdf4ff; border: 1px solid #fbcfe8; border-radius: 12px; margin-top: 16px; color: #86198f; font-size: 14px; box-shadow: 0 4px 6px rgba(134,25,143,0.05); animation: fadeIn 0.4s ease;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+                          <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> AI Meeting Summary
+                        </div>
+                        <div style="line-height: 1.5; color: #701a75;">
+                          <strong>${type} ended.</strong> ${randomSummary} You can now update your submission with these notes.
+                        </div>
+                      </div>
+                    `;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+                };
+
+                document.getElementById(`end_${sessionId}`).addEventListener('click', endSession);
+
+                const shareBtn = document.getElementById(`share_btn_${sessionId}`);
+                if(shareBtn) {
+                    shareBtn.addEventListener('click', async () => {
+                        try {
+                            const newStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                            const videoEl = document.getElementById(`local_${sessionId}`);
+                            if(videoEl) {
+                                videoEl.srcObject = newStream;
+                                // Add listener to revert when screen sharing stops
+                                newStream.getVideoTracks()[0].onended = () => {
+                                    if(stream) videoEl.srcObject = stream;
+                                    shareBtn.style.background = 'rgba(255,255,255,0.1)';
+                                    shareBtn.style.color = '#fff';
+                                };
+                            }
+                            shareBtn.style.background = '#3b82f6';
+                            shareBtn.style.color = '#fff';
+                        } catch(err) {
+                            console.error("Screen share failed", err);
+                        }
+                    });
+                }
+
+                try {
+                    if (type === 'Meet') {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    } else if (type === 'Screen Share') {
+                        // Use only video for screen share to avoid audio capture errors on some systems
+                        stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    }
+                    
+                    const videoEl = document.getElementById(`local_${sessionId}`);
+                    const statusEl = document.getElementById(`status_${sessionId}`);
+                    if (statusEl) statusEl.style.display = 'none';
+
+                    if (videoEl && stream) {
+                        videoEl.srcObject = stream;
+                        
+                        const micBtn = document.getElementById(`mic_btn_${sessionId}`);
+                        const camBtn = document.getElementById(`cam_btn_${sessionId}`);
+                        let micEnabled = true;
+                        let camEnabled = true;
+
+                        if (micBtn && stream.getAudioTracks().length > 0) {
+                            micBtn.addEventListener('click', () => {
+                                micEnabled = !micEnabled;
+                                stream.getAudioTracks().forEach(t => t.enabled = micEnabled);
+                                micBtn.innerHTML = micEnabled ? '<i data-lucide="mic"></i>' : '<i data-lucide="mic-off"></i>';
+                                micBtn.style.background = micEnabled ? 'rgba(255,255,255,0.1)' : 'rgba(239,68,68,0.2)';
+                                micBtn.style.color = micEnabled ? '#fff' : '#ef4444';
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                            });
+                        } else if (micBtn) {
+                            micBtn.style.opacity = '0.5';
+                            micBtn.style.pointerEvents = 'none';
+                        }
+
+                        if (camBtn && stream.getVideoTracks().length > 0) {
+                            camBtn.addEventListener('click', () => {
+                                camEnabled = !camEnabled;
+                                stream.getVideoTracks().forEach(t => t.enabled = camEnabled);
+                                camBtn.innerHTML = camEnabled ? '<i data-lucide="video"></i>' : '<i data-lucide="video-off"></i>';
+                                camBtn.style.background = camEnabled ? 'rgba(255,255,255,0.1)' : 'rgba(239,68,68,0.2)';
+                                camBtn.style.color = camEnabled ? '#fff' : '#ef4444';
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                            });
+                        }
+
+                        // AI Voice-to-Voice Loop Setup
+                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        window.currentRecognition = null;
+                        let isListening = false;
+                        let isSpeaking = false;
+                        window.sessionActive = true;
+
+                        if (SpeechRecognition) {
+                            window.currentRecognition = new SpeechRecognition();
+                            window.currentRecognition.continuous = false;
+                            window.currentRecognition.interimResults = false;
+                            window.currentRecognition.lang = 'en-US';
+
+                            window.currentRecognition.onstart = () => {
+                                isListening = true;
+                                const teammateMic = document.getElementById(`teammate_mic_${sessionId}`);
+                                if(teammateMic) {
+                                    teammateMic.innerHTML = `<i data-lucide="ear" style="width: 12px; height: 12px; color: #3b82f6;"></i> Listening...`;
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                }
+                            };
+
+                            window.currentRecognition.onresult = async (event) => {
+                                const transcript = event.results[0][0].transcript;
+                                console.log("User said:", transcript);
+                                
+                                const teammateMic = document.getElementById(`teammate_mic_${sessionId}`);
+                                if(teammateMic) {
+                                    teammateMic.innerHTML = `<i data-lucide="loader" style="width: 12px; height: 12px; color: #f59e0b; animation: spin 1s linear infinite;"></i> Thinking...`;
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                }
+
+                                try {
+                                    const subText = document.getElementById('sprintSubmissionText') ? document.getElementById('sprintSubmissionText').value : "";
+                                    const roleContext = window.simulationUser ? window.simulationUser.role : "teammate";
+                                    
+                                    await new Promise(r => setTimeout(r, 1000));
+                                    
+                                    const res = await fetch('http://localhost:5000/api/chat', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ 
+                                            message: transcript,
+                                            system_prompt: `You are ${name}, a friendly AI teammate in a live voice call. The user just spoke to you over voice chat. Keep your response brief (1-2 short sentences maximum), conversational, and natural like a real spoken conversation. The user is in role: ${roleContext}. Their current draft is: ${subText}`
+                                        })
+                                    });
+                                    
+                                    const data = await res.json();
+                                    let reply = "I'm not sure what to say.";
+                                    if (data.choices && data.choices.length > 0) {
+                                        reply = data.choices[0].message.content;
+                                    } else if (data.reply) {
+                                        reply = data.reply;
+                                    }
+                                    speakResponse(reply);
+                                } catch (e) {
+                                    console.error(e);
+                                    speakResponse("Sorry, my connection broke for a second there. What did you say?");
+                                }
+                            };
+
+                            window.currentRecognition.onend = () => {
+                                isListening = false;
+                                if (window.sessionActive && !isSpeaking) {
+                                    try { window.currentRecognition.start(); } catch(e) {}
+                                }
+                            };
+                            
+                            window.currentRecognition.onerror = (e) => {
+                                console.error("Speech Rec Error:", e.error);
+                                isListening = false;
+                                if (window.sessionActive && !isSpeaking) {
+                                    setTimeout(() => { try { window.currentRecognition.start(); } catch(e) {} }, 1000);
+                                }
+                            };
+                        }
+
+                        const speakResponse = (msgText) => {
+                            isSpeaking = true;
+                            if(window.currentRecognition && isListening) {
+                                try { window.currentRecognition.stop(); } catch(e){}
+                            }
+
+                            const utterance = new SpeechSynthesisUtterance(msgText);
+                            utterance.rate = 1.0;
+                            utterance.pitch = 1.1;
+                            
+                            const teammateAvatar = document.getElementById(`teammate_avatar_${sessionId}`);
+                            const teammateMic = document.getElementById(`teammate_mic_${sessionId}`);
+                            
+                            utterance.onstart = () => {
+                                if(teammateAvatar) teammateAvatar.style.animation = 'pulse 0.4s infinite';
+                                if(teammateMic) {
+                                    teammateMic.innerHTML = `<i data-lucide="mic" style="width: 12px; height: 12px; color: #22c55e;"></i> ${name}`;
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                }
+                            };
+                            
+                            utterance.onend = () => {
+                                isSpeaking = false;
+                                if(teammateAvatar) teammateAvatar.style.animation = 'pulse 2s infinite';
+                                if(teammateMic) {
+                                    teammateMic.innerHTML = `<i data-lucide="mic-off" style="width: 12px; height: 12px; color: #ef4444;"></i> ${name}`;
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                }
+                                
+                                if (window.sessionActive && window.currentRecognition) {
+                                    try { window.currentRecognition.start(); } catch(e) {}
+                                }
+                            };
+                            
+                            window.speechSynthesis.speak(utterance);
+                        };
+
+                        setTimeout(() => {
+                            const subText = document.getElementById('sprintSubmissionText') ? document.getElementById('sprintSubmissionText').value : "";
+                            const currentRole = window.simulationUser ? window.simulationUser.role : "teammate";
+                            let initialMsg = "";
+                            if (subText.length < 10) {
+                                initialMsg = `Hey! I'm ${name}. I see you haven't started your draft yet. I'm listening, what do you want to brainstorm for the ${currentRole} tasks?`;
+                            } else {
+                                initialMsg = `Hey ${name} here. I am looking at your draft right now. This is a solid start on the ${currentRole} deliverables. I'm listening, tell me what we should discuss first?`;
+                            }
+                            speakResponse(initialMsg);
+                        }, 2000);
+                        
+                        // Handle native browser "Stop sharing" button
+                        if (stream.getVideoTracks().length > 0) {
+                            stream.getVideoTracks()[0].onended = endSession;
+                        }
+                    }
+                } catch(err) {
+                    console.error(err);
+                    const statusEl = document.getElementById(`status_${sessionId}`);
+                    if (statusEl) {
+                        statusEl.innerHTML = `
+                            <div style="color: #ef4444; font-size: 13px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                                <i data-lucide="alert-triangle" style="margin-bottom: 8px; width: 24px; height: 24px;"></i>
+                                Screen Share Cancelled
+                            </div>
+                        `;
+                    }
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }, 1000);
+        } else {
+            setTimeout(() => {
+              // Fallback
+            }, 2000);
+        }
+    };
+    window.handleRoleAction = function(btn) {
+        const action = btn.innerText.trim();
+        const textArea = document.getElementById('sprintSubmissionText');
+        
+        // 1. Create and show the Add Platform Link modal
+        const linkModal = document.createElement("div");
+        linkModal.innerHTML = `
+          <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+            <div style="background:#fff; padding:32px; border-radius:16px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); animation: fadeIn 0.2s ease-out;">
+              <h3 style="margin:0 0 8px; color:#0f172a; font-family:'Inter', sans-serif; font-size: 18px;">Connect ${action}</h3>
+              <p style="margin:0 0 20px; color:#64748b; font-size:13px;">Paste the link to your workspace, document, or repository to sync it.</p>
+              <input type="text" id="customLinkInput" placeholder="https://..." style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:24px; font-family:inherit; font-size:14px; outline:none; box-sizing:border-box; transition:border-color 0.2s;" onfocus="this.style.borderColor='#4f46e5'" onblur="this.style.borderColor='#cbd5e1'" />
+              <div style="display:flex; justify-content:flex-end; gap:12px;">
+                <button id="cancelLinkBtn" style="padding:10px 16px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; color:#475569; font-weight:600; font-size:14px; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Cancel</button>
+                <button id="confirmLinkBtn" style="padding:10px 20px; background:linear-gradient(135deg, #4f46e5, #3730a3); border:none; border-radius:8px; cursor:pointer; color:#fff; font-weight:600; font-size:14px; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 12px rgba(79,70,229,0.2);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 16px rgba(79,70,229,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(79,70,229,0.2)'">Sync Data</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(linkModal);
+        
+        // Focus the input automatically
+        setTimeout(() => document.getElementById('customLinkInput').focus(), 50);
+
+        document.getElementById('cancelLinkBtn').onclick = () => linkModal.remove();
+        
+        document.getElementById('confirmLinkBtn').onclick = () => {
+            const linkVal = document.getElementById('customLinkInput').value.trim();
+            if(!linkVal) {
+                // Shake animation for empty input
+                const inputEl = document.getElementById('customLinkInput');
+                inputEl.style.transform = 'translateX(-5px)';
+                setTimeout(() => inputEl.style.transform = 'translateX(5px)', 100);
+                setTimeout(() => inputEl.style.transform = 'translateX(-5px)', 200);
+                setTimeout(() => inputEl.style.transform = 'translateX(0)', 300);
+                return;
+            }
+            
+            linkModal.remove();
+            
+            // 2. Show the Syncing notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 24px;
+                right: 24px;
+                background: #ffffff;
+                border-radius: 12px;
+                padding: 16px 20px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                border: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 9999;
+                transform: translateX(120%);
+                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            `;
+            
+            notification.innerHTML = `
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <i data-lucide="check-circle" style="width: 24px; height: 24px;"></i>
+                </div>
+                <div>
+                    <p style="margin: 0; font-weight: 700; color: #0f172a; font-size: 14px;">${action} Syncing...</p>
+                    <p style="margin: 0; color: #64748b; font-size: 12px;">Tool data successfully linked to submission.</p>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+            
+            // 3. Add text to submission
+            if(textArea) {
+                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const currentVal = textArea.value;
+                const linkText = `\n[LINKED TOOL: ${action} @ ${timestamp}] - ${linkVal}\n`;
+                if(!currentVal.includes(linkText)) {
+                    textArea.value += linkText;
+                    const charCountSpan = document.getElementById("charCountSpan");
+                    if (charCountSpan) {
+                        charCountSpan.textContent = textArea.value.length + " chars";
+                    }
+                }
+            }
+            
+            // Remove notification after 4 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(120%)';
+                setTimeout(() => notification.remove(), 500);
+            }, 4000);
+        };
+    };
+
+
       window.sprintSubmissions = window.sprintSubmissions || [];
       window.simulationUser = window.simulationUser || { name: "", role: "" };
       window.activityLog = [];
@@ -1250,17 +1817,17 @@ document.querySelectorAll(".project-card").forEach(card => {
                 
                 <div style="position: relative; z-index: 1; width: 100%;">
                   <div style="width: 64px; height: 64px; background: #eff6ff; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: #3b82f6;">
-                    <i data-lucide="rocket" style="width: 32px; height: 32px;"></i>
+                    ${logoSrc ? `<img src="${logoSrc}" style="max-width: 32px; max-height: 32px; object-fit: contain;">` : `<i data-lucide="rocket" style="width: 32px; height: 32px;"></i>`}
                   </div>
                   <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 12px; color: #0f172a;">Simulation Entry</h1>
                   <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 32px;">Initialize your profile to begin the intensive product sprint. Your performance will be strictly monitored.</p>
                   
                   <div style="width: 100%; text-align: left; margin-bottom: 32px;">
                     <label style="display: block; font-size: 12px; letter-spacing: 1px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Full Name</label>
-                    <input type="text" id="simNameInput" placeholder="e.g. Jane Doe" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 20px; box-sizing: border-box;">
+                    <input type="text" id="simNameInput" value="${uName}" placeholder="e.g. Jane Doe" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 20px; box-sizing: border-box;">
                     
                     <label style="display: block; font-size: 12px; letter-spacing: 1px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Target Role</label>
-                    <input type="text" id="simRoleInput" placeholder="e.g. Senior Product Manager" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box;">
+                    <input type="text" id="simRoleInput" value="${targetRole}" placeholder="e.g. Senior Product Manager" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box;">
                   </div>
 
                   <button id="simStartBtn" style="width: 100%; background: #2563eb; color: #ffffff; border: none; border-radius: 12px; padding: 16px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
@@ -1340,30 +1907,29 @@ document.querySelectorAll(".project-card").forEach(card => {
         if(topbarRoleBadge) topbarRoleBadge.innerText = `${window.simulationUser.role || 'Enterprise'} Simulation`;
 
         modalContent.innerHTML = `
-          <div style="background: #f8fafc; color: #0f172a; text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
+          <div style="background: #f8fafc; color: #0f172a; text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: row; height: 100vh; overflow: hidden;">
             
-            <!-- Top / Task Brief Section -->
-            <div class="sprint-header-pane" style="padding: 40px 60px; border-bottom: 1px solid rgba(79, 70, 229, 0.15); background: linear-gradient(135deg, #ffffff 0%, #f4f6ff 100%); flex-shrink: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative; z-index: 10; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
+            <!-- Main Left Column -->
+            <div class="sprint-main-column" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #ffffff;">
+              <!-- Top / Task Brief Section -->
+              <div class="sprint-header-pane" style="padding: 32px 48px; border-bottom: 1px solid rgba(79, 70, 229, 0.1); background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); flex-shrink: 0; position: relative; z-index: 10; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
               <p style="color: var(--blue); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;"><i data-lucide="target" style="width: 16px; height: 16px;"></i> ${data.header}</p>
-              <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 16px; color: #0f172a; line-height: 1.2;">${data.title}</h1>
-              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0; max-width: none; width: 100%;">${data.desc}</p>
+              <div style="display:flex; align-items:center; gap:20px; margin: 0 0 20px;">${logoSrc ? `<div style="width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; flex-shrink: 0;"><img src="${logoSrc}" style="max-height:36px; max-width:36px; object-fit:contain;"></div>` : ""}<h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a; line-height: 1.1; margin:0; padding-top: 4px;">${data.title}</h1></div>
+              <div class="task-desc-container" style="color: #475569; font-size: 15px; line-height: 1.7; margin: 0; width: 100%; display: flex; flex-direction: column; gap: 8px;">${data.desc}</div>
             </div>
 
-            <div class="sprint-split-view">
               <!-- Left side: Submission Area -->
-              <div class="sprint-left-pane">
+              <div class="sprint-left-pane" style="padding: 32px 48px; flex: 1; display: flex; flex-direction: column;">
                 <p style="color: #64748b; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; font-weight: 700;">YOUR SUBMISSION</p>
-                <textarea id="sprintSubmissionText" placeholder="Write your PRD / deliverable... or post your code here" style="flex: 1; min-height: 200px; width: 100%; background: #fafbfe; border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 12px; color: #0f172a; padding: 24px; font-family: inherit; font-size: 15px; resize: none; outline: none; margin-bottom: 24px; box-shadow: inset 0 2px 8px rgba(79, 70, 229, 0.03); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(document.activeElement !== this) { this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03), 0 4px 12px rgba(79, 70, 229, 0.08)'; this.style.borderColor='rgba(79, 70, 229, 0.4)'; this.style.transform='translateY(-2px)' }" onmouseout="if(document.activeElement !== this) { this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03)'; this.style.borderColor='rgba(79, 70, 229, 0.2)'; this.style.transform='translateY(0)' }" onfocus="this.style.boxShadow='0 0 0 4px rgba(79, 70, 229, 0.15), 0 8px 24px rgba(79, 70, 229, 0.1)'; this.style.borderColor='var(--blue)'; this.style.background='#ffffff'; this.style.transform='translateY(-2px)'" onblur="this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03)'; this.style.borderColor='rgba(79, 70, 229, 0.2)'; this.style.background='#fafbfe'; this.style.transform='translateY(0)'"></textarea>
+                  <textarea id="sprintSubmissionText" placeholder="${uiPlaceholder}" style="height: 280px; width: 100%; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; color: #0f172a; padding: 24px; font-family: inherit; font-size: 15px; resize: vertical; outline: none; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03); transition: border-color 0.3s ease;"></textarea>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                    <button id="uploadCodeBtn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #3730a3; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(55,48,163,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="upload-cloud" style="width:16px; height:16px; margin-right:8px;"></i> Upload Code / Zip</button>
-                    <button id="addLinkBtn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(22,101,52,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="link" style="width:16px; height:16px; margin-right:8px;"></i> Add Platform Link</button>
-                    <button style="background: linear-gradient(135deg, #fdf4ff, #fae8ff); color: #86198f; border: 1px solid #fbcfe8; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(134,25,143,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'" onclick="alert('File browser opened to upload assets')"><i data-lucide="image" style="width:16px; height:16px; margin-right:8px;"></i> Creative Assets</button>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: 100%; margin-bottom: 8px;">
+                    ${uiButtons}
                   </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
                   <span id="charCountSpan" style="color: #64748b; font-size: 13px; font-family: monospace;">0 chars</span>
                   <div style="display: flex; gap: 12px; align-items: center;">
                     <button id="sprintProceedBtn" style="display: none; background: #ffffff; color: #4f46e5; border: 2px solid #4f46e5; border-radius: 8px; padding: 12px 24px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s ease;">
@@ -1375,10 +1941,16 @@ document.querySelectorAll(".project-card").forEach(card => {
                   </div>
                 </div>
               </div>
+            </div> <!-- End sprint-main-column -->
 
-              <!-- Right side: Teammate Feed -->
-              <div class="sprint-right-pane" id="teamFeedContainer">
-                <p style="color: #64748b; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 24px; font-weight: 700;">TEAMMATES</p>
+            <!-- Right side: Teammate Feed -->
+            <div class="sprint-right-pane" style="display: flex; flex-direction: column; position: relative;"><div id="teamFeedContainer" style="flex: 1; overflow-y: auto; padding-right: 8px; margin-bottom: 16px;">
+                <p style="color: #64748b; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; font-weight: 700;">TEAMMATES & COLLABORATION</p>
+                
+                <div class="collab-bar" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; background: #f8fafc; padding: 16px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15,23,42,0.02);">
+                  <button style="width: 100%; padding: 10px 8px; font-size: 13px; font-weight: 600; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; color: #0f172a; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#94a3b8'" onmouseout="this.style.background='#fff'; this.style.borderColor='#cbd5e1'" onclick="window.initiateCollab('Meet')">🎥 Live Meet</button>
+                  <button id="askAiManagerBtn" style="width: 100%; margin-top: 4px; padding: 12px 16px; font-size: 14px; font-weight: 700; border-radius: 10px; border: none; background: linear-gradient(135deg, #4f46e5, #3730a3); color: #fff; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(79, 70, 229, 0.35)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(79, 70, 229, 0.2)'">🤖 Ask AI Manager</button>
+                </div>
                 
                 <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 12px rgba(15,23,42,0.03); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-4px) scale(1.01)'; this.style.boxShadow='0 16px 32px -8px rgba(79, 70, 229, 0.2)'; this.style.borderColor='rgba(79, 70, 229, 0.4)'; this.style.background='#f4f6ff';" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(15,23,42,0.03)'; this.style.borderColor='#e2e8f0'; this.style.background='#ffffff';">
                   <img src="${data.teammateAvatar}" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(79, 70, 229, 0.2); background: linear-gradient(135deg, #f8fafc, #f1f5f9); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.3s ease;" onmouseover="this.style.transform='rotate(5deg) scale(1.1)'" onmouseout="this.style.transform='rotate(0) scale(1)'">
@@ -1393,58 +1965,184 @@ document.querySelectorAll(".project-card").forEach(card => {
                   </div>
                 </div>
               </div>
+              <div class="chat-input-wrapper" style="margin-top: auto; position: relative; z-index: 10;">
+                <input type="text" id="feedChatInput" placeholder="Message team..." style="width: 100%; padding: 14px 20px; padding-right: 50px; border: 1px solid #cbd5e1; border-radius: 24px; font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; box-shadow: 0 4px 12px rgba(0,0,0,0.03);" onfocus="this.style.borderColor='#4f46e5'" onblur="this.style.borderColor='#cbd5e1'">
+                <button id="feedChatBtn" style="position: absolute; right: 8px; top: 8px; background: #4f46e5; color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                  <i data-lucide="send" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </div>
             </div>
 
           </div>
         `;
         if (typeof lucide !== 'undefined') lucide.createIcons();
         
+        // --- ADDED TEAM CHAT LOGIC ---
+        const chatBtn = document.getElementById("feedChatBtn");
+        const chatInput = document.getElementById("feedChatInput");
+        if(chatBtn && chatInput) {
+            const sendMsg = async () => {
+                const msg = chatInput.value.trim();
+                if(!msg) return;
+                
+                chatInput.value = "";
+                const feed = document.getElementById("teamFeedContainer");
+                
+                // Add user message
+                feed.innerHTML += `
+                  <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-top: 16px; animation: fadeIn 0.3s ease;">
+                    <div style="width: 48px; height: 48px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 8px rgba(37,99,235,0.3);">You</div>
+                    <div style="flex: 1;">
+                      <div style="margin-bottom: 8px;">
+                        <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">You</span>
+                      </div>
+                      <div style="color: #334155; font-size: 14px; line-height: 1.6;">
+                        ${msg}
+                      </div>
+                    </div>
+                  </div>
+                `;
+                feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                // Call the API
+                try {
+                    const currentProj = localStorage.getItem("currentProjectTitle") || "Software Project";
+                    const currentRole = localStorage.getItem("currentProjectRole") || "Candidate";
+                    const textAreaEl = document.getElementById('sprintSubmissionText');
+                    const currentDraft = textAreaEl ? textAreaEl.value.trim() : "";
+                    const draftContext = currentDraft ? ` The user's current draft submission is: "${currentDraft}".` : "";
+                    const sysPrompt = `You are Nova, an AI Manager on the ${currentProj} project. The user is a ${currentRole} doing a simulation.${draftContext} Give a helpful, concise answer in 1-3 sentences. Keep it highly professional and relevant to software development. Answer their question directly. If their draft submission is gibberish or poor quality and they ask for a review, point it out strictly. Do not use asterisks or formatting.`;
+                    
+                    const response = await fetch("http://localhost:5000/api/chat", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            model: "llama-3.1-8b-instant",
+                            response_format: { type: "json_object" },
+                            messages: [
+                                { role: "system", content: sysPrompt + ' Return JSON like: { "reply": "your answer" }' },
+                                { role: "user", content: msg }
+                            ]
+                        })
+                    });
+                    const data = await response.json();
+                    let aiReply = "I am analyzing the request and will follow up shortly.";
+                    
+                    if (data.choices && data.choices.length > 0) {
+                        try {
+                            const parsed = JSON.parse(data.choices[0].message.content);
+                            if (parsed.reply) aiReply = parsed.reply;
+                        } catch(err) {
+                            aiReply = data.choices[0].message.content; // fallback if not json
+                        }
+                    } else if (data.response) {
+                        aiReply = data.response;
+                    }
+                    
+                    // remove "AI Teammate: " if it prepends it
+                    aiReply = aiReply.replace(/^AI Teammate:\s*/i, '').replace(/^Nova:\s*/i, '');
+                    
+                    feed.innerHTML += `
+                      <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 12px rgba(15,23,42,0.03); margin-top: 16px; animation: fadeIn 0.3s ease;">
+                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova&colors=1e40af" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid rgba(79, 70, 229, 0.2); background: linear-gradient(135deg, #f8fafc, #f1f5f9); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                        <div>
+                          <div style="margin-bottom: 8px;">
+                            <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Nova</span>
+                            <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; font-weight: 600;">AI MANAGER</span>
+                          </div>
+                          <div style="color: #334155; font-size: 15px; line-height: 1.6;">
+                            ${aiReply}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    
+                    // also use text-to-speech so it feels real!
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(aiReply);
+                        utterance.rate = 1.05;
+                        utterance.pitch = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                } catch(e) {
+                    console.error("Chat error", e);
+                }
+            };
+            
+            chatBtn.addEventListener("click", sendMsg);
+            chatInput.addEventListener("keypress", (e) => {
+                if(e.key === "Enter") sendMsg();
+            });
+        }
+        
+            const askBtn = document.getElementById('askAiManagerBtn');
+            if(askBtn) {
+                askBtn.addEventListener('click', () => {
+                    if(chatInput) {
+                        chatInput.focus();
+                        chatInput.value = "Review my current progress and give me feedback.";
+                        sendMsg();
+                    }
+                });
+            }
+        // --- END TEAM CHAT LOGIC ---
+
         const textArea = document.getElementById("sprintSubmissionText");
         const charCountSpan = document.getElementById("charCountSpan");
         textArea.addEventListener("input", () => {
           charCountSpan.textContent = textArea.value.length + " chars";
         });
 
-        // Setup real file uploader
-        document.getElementById("uploadCodeBtn").addEventListener("click", () => {
-          const fileInput = document.createElement("input");
-          fileInput.type = "file";
-          fileInput.onchange = (e) => {
-            if (e.target.files.length > 0) {
-              textArea.value += `\n[Uploaded File: ${e.target.files[0].name}]`;
-              charCountSpan.textContent = textArea.value.length + " chars";
-            }
-          };
-          fileInput.click();
+        // Setup real file uploader for all upload buttons
+        document.querySelectorAll(".sim-upload-btn").forEach(upBtn => {
+          upBtn.addEventListener("click", () => {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.onchange = (e) => {
+              if (e.target.files.length > 0) {
+                textArea.value += `\n[Uploaded File: ${e.target.files[0].name}]`;
+                charCountSpan.textContent = textArea.value.length + " chars";
+              }
+            };
+            fileInput.click();
+          });
         });
 
-        // Setup custom link modal
-        document.getElementById("addLinkBtn").addEventListener("click", () => {
-          const linkModal = document.createElement("div");
-          linkModal.innerHTML = `
-            <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:99999; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-              <div style="background:#fff; padding:32px; border-radius:16px; width:400px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); animation: fadeIn 0.2s ease-out;">
-                <h3 style="margin:0 0 16px; color:#0f172a; font-family:'Inter', sans-serif;">Add Platform Link</h3>
-                <input type="text" id="customLinkInput" placeholder="https://github.com/..." style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:24px; font-family:inherit; outline:none; box-sizing:border-box;" />
-                <div style="display:flex; justify-content:flex-end; gap:12px;">
-                  <button id="cancelLinkBtn" style="padding:10px 16px; background:#f1f5f9; border:none; border-radius:8px; cursor:pointer; color:#475569; font-weight:600;">Cancel</button>
-                  <button id="confirmLinkBtn" style="padding:10px 16px; background:var(--blue); border:none; border-radius:8px; cursor:pointer; color:#fff; font-weight:600;">Add Link</button>
+        const askAiBtn = document.getElementById("askAiManagerBtn");
+        if(askAiBtn) {
+          askAiBtn.addEventListener("click", () => {
+            const feed = document.getElementById("teamFeedContainer");
+            if(!feed) return;
+            
+            askAiBtn.innerHTML = `<i data-lucide="loader-2" class="icon-sm pulse"></i> Asking...`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            
+            setTimeout(() => {
+              askAiBtn.innerHTML = `🤖 Ask AI Manager`;
+              feed.innerHTML += `
+              <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(15,23,42,0.02); margin-top: 16px; animation: fadeIn 0.5s ease; cursor: pointer;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #cbd5e1; background: #ffffff; flex-shrink: 0;">
+                <div style="flex: 1;">
+                  <div style="margin-bottom: 8px;">
+                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Nova</span>
+                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">AI MANAGER</span>
+                  </div>
+                  <div style="color: #334155; font-size: 14px; line-height: 1.6;">
+                    <strong>Live Review:</strong> I reviewed your progress so far. Consider focusing on the ${roleType === 'PM' ? 'risk analysis and PWA tradeoffs' : roleType === 'Designer' ? 'mobile offline UX flows' : 'database indexing and API latency'} because our engineering bandwidth is limited.
+                  </div>
                 </div>
               </div>
-            </div>
-          `;
-          document.body.appendChild(linkModal);
-          document.getElementById('cancelLinkBtn').onclick = () => linkModal.remove();
-          document.getElementById('confirmLinkBtn').onclick = () => {
-             const l = document.getElementById('customLinkInput').value.trim();
-             if(l) {
-                textArea.value += `\n[Platform Link: ${l}]`;
-                charCountSpan.textContent = textArea.value.length + " chars";
-             }
-             linkModal.remove();
-          };
-          document.getElementById('customLinkInput').focus();
-        });
+              `;
+              feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+            }, 1500);
+          });
+        }
+        
+        // Setup custom link modal for all link buttons removed to use handleRoleAction
 
         document.getElementById("sprintSubmitBtn").addEventListener("click", async () => {
           const val = textArea.value.trim();
@@ -1462,105 +2160,210 @@ document.querySelectorAll(".project-card").forEach(card => {
 
           const currentPressure = document.body.className.includes("pressure-high") ? "High" : document.body.className.includes("pressure-low") ? "Low" : "Medium";
           
-          let reply = "Solid update. Let's proceed to the next phase.";
-          let skillAnalysis = "Submission logged. Monitoring consistency and accuracy.";
-          try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s for review
-              const res = await fetch("http://localhost:5000/api/chat", {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" },
-                signal: controller.signal,
-                body: JSON.stringify({
-                  message: "Review my submission: " + val,
-                  system_prompt: `You are evaluating a tech simulation. Act as two entities: 1. ${data.teammateName}, a ${data.teammateRole}. 2. Nova, the strict AI Manager. Current pressure: ${currentPressure}. Review their latest submission. If the submission is short, wrong, or gibberish, ${data.teammateName} should act stressed/impatient. Nova must perform a micro skill analysis based on their exact text. Return ONLY JSON: { "teammate_reply": "1-2 conversational sentences", "nova_analysis": "1-2 sentences of professional skill analysis grading their actual code/text." }`
-                })
-              });
-              const rd = await res.json();
-              if (rd.choices && rd.choices.length > 0) {
-                 const parsed = JSON.parse(rd.choices[0].message.content);
-                 if (parsed.teammate_reply) reply = parsed.teammate_reply;
-                 if (parsed.nova_analysis) skillAnalysis = parsed.nova_analysis;
+          // Helper to check if a submission is obvious gibberish or keyboard smash
+          const isGibberish = (text) => {
+              const cleanText = text.trim();
+              if (cleanText.length < 5) return true;
+              
+              // No spaces and long string -> definitely keyboard smash
+              if (!cleanText.includes(" ") && cleanText.length > 15) return true;
+              
+              // Contains word segments that are too long without being paths or URLs
+              const words = cleanText.split(/\s+/);
+              for (let word of words) {
+                  if (word.length > 22 && !word.startsWith("http") && !word.startsWith("/") && !word.includes("\\")) {
+                      return true;
+                  }
               }
-              clearTimeout(timeoutId);
-          } catch(e) {
-              console.error("Sprint review error:", e);
-          }
+              
+              // Low ratio of vowels to consonants in alphanumeric text
+              const vowels = (cleanText.match(/[aeiouyAEIOUY]/g) || []).length;
+              const letters = (cleanText.match(/[a-zA-Z]/g) || []).length;
+              if (letters > 10 && vowels / letters < 0.15) {
+                  return true;
+              }
+              
+              return false;
+          };
 
+          let aiReview;
 
-          const feed = document.getElementById("teamFeedContainer");
-          if(feed) {
-             feed.innerHTML += `
-              <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #fdf4ff; border: 1px solid #fbcfe8; border-radius: 12px; box-shadow: 0 4px 6px rgba(217,70,239,0.05); margin-top: 24px; animation: fadeIn 0.3s ease; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 15px -3px rgba(217,70,239,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(217,70,239,0.05)'">
-                <img src="${data.teammateAvatar}" alt="${data.teammateName}" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #fbcfe8; background: #ffffff; flex-shrink: 0;">
-                <div style="flex: 1;">
-                  <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">${data.teammateName}</span>
-                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">${data.teammateRole}</span>
-                  </div>
-                  <div style="color: #86198f; font-size: 15px; line-height: 1.6; font-weight: 500;">
-                    ${reply}
-                  </div>
-                </div>
-              </div>
-
-              <!-- AI Manager Review Below Teammate -->
-              <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(15,23,42,0.02); margin-top: 16px; animation: fadeIn 0.5s ease; cursor: pointer;">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #cbd5e1; background: #ffffff; flex-shrink: 0;">
-                <div style="flex: 1;">
-                  <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Nova</span>
-                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">AI MANAGER</span>
-                  </div>
-                  <div style="color: #334155; font-size: 14px; line-height: 1.6;">
-                    <strong>Skill Analysis:</strong> ${skillAnalysis}
-                  </div>
-                </div>
-              </div>
-             `;
+          if (isGibberish(val)) {
+              // Direct client-side rejection with 0.0/10 score to prevent API clutter / JSON failure
+              aiReview = {
+                  score: "0.0/10",
+                  decision: "Needs Improvement",
+                  strengths: ["Submission registered"],
+                  weaknesses: ["Submission appears to be gibberish or a keyboard smash", "Does not contain any coherent plan or structural information"],
+                  manager_feedback: "Your submission appears to be gibberish and does not contain any useful information for evaluation. Please resubmit a coherent, well-formatted document or explanation directly addressing the task."
+              };
+          } else {
+              // Strict fallback score in case of parser/API failure
+              aiReview = {
+                  score: "1.0/10",
+                  decision: "Needs Improvement",
+                  strengths: ["Submission logged"],
+                  weaknesses: ["Could not parse AI response", "Technical evaluation failed"],
+                  manager_feedback: "I am unable to provide a full review at this time. Please check your connection or resubmit."
+              };
+              
+              try {
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s for full review
+                  const res = await fetch("http://localhost:5000/api/chat", {
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                      model: "llama-3.1-8b-instant",
+                      response_format: { type: "json_object" },
+                      messages: [
+                        { 
+                            role: "system", 
+                            content: `You are evaluating a tech simulation for the ${localStorage.getItem("currentProjectTitle") || "Software Project"}. The user is acting as a ${localStorage.getItem("currentProjectRole") || "Candidate"}. Act as Nova, the strict AI Manager. Current pressure: ${currentPressure}. Review their latest submission including any linked tools. CRITICAL: If the submission is short, wrong, poor quality, or gibberish, you MUST be extremely strict and give a very low score (0.0/10 to 2.0/10), decision "Needs Improvement", and document it. Return ONLY JSON: { "score": "X/10", "decision": "Approved" or "Needs Improvement", "strengths": ["point 1", "point 2"], "weaknesses": ["point 1", "point 2"], "manager_feedback": "2-3 sentences of strict professional feedback" }` 
+                        },
+                        { role: "user", content: "Review my submission: " + val }
+                      ]
+                    })
+                  });
+                  const rd = await res.json();
+                  if (rd.choices && rd.choices.length > 0) {
+                     let contentStr = rd.choices[0].message.content;
+                     const startIdx = contentStr.indexOf('{');
+                     const endIdx = contentStr.lastIndexOf('}');
+                     if (startIdx !== -1 && endIdx !== -1) {
+                         contentStr = contentStr.substring(startIdx, endIdx + 1);
+                     }
+                     try {
+                         aiReview = JSON.parse(contentStr);
+                     } catch(err) {
+                         console.error("JSON parse failed on AI response:", contentStr);
+                         aiReview.manager_feedback = "Parse Error. Raw Output: " + contentStr.substring(0, 50) + "...";
+                     }
+                  } else if (rd.error) {
+                     console.error("API Error:", rd.error);
+                     aiReview.manager_feedback = "API Error: " + (rd.error.message || JSON.stringify(rd.error));
+                  }
+                  clearTimeout(timeoutId);
+              } catch(e) {
+                  console.error("Sprint review error:", e);
+                  aiReview.manager_feedback = "Network error or timeout. Please check your connection.";
+              }
           }
 
           if (typeof logActivity === 'function') {
-            logActivity(currentDayIndex + 1, window.currentDayPrompt || data.desc, data.title, val, reply, skillAnalysis, currentPressure, 3);
+            logActivity(currentDayIndex + 1, window.currentDayPrompt || data.desc, data.title, val, aiReview.manager_feedback, aiReview.score, currentPressure, 3);
             updateActivitySummary();
           }
 
-          btn.disabled = false;
-          let timeLeft = 30;
           
-          if (window.sprintTimerInterval) clearInterval(window.sprintTimerInterval);
-          if (window.sprintTimeout) clearTimeout(window.sprintTimeout);
-          
-          btn.innerHTML = `Advance (${timeLeft}s) or Update <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>`;
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-          
-          const proceedBtn = document.getElementById("sprintProceedBtn");
-          if(proceedBtn) {
-            proceedBtn.style.display = "block";
-            proceedBtn.onclick = () => {
-              if (window.sprintTimerInterval) clearInterval(window.sprintTimerInterval);
-              if (window.sprintTimeout) clearTimeout(window.sprintTimeout);
-              currentDayIndex++;
-              renderInteractiveDay();
-            };
-          }
-
-          window.sprintTimerInterval = setInterval(() => {
-             timeLeft--;
-             if(timeLeft > 0) {
-               btn.innerHTML = `Advance (${timeLeft}s) or Update <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>`;
-             } else {
-               clearInterval(window.sprintTimerInterval);
+          // INJECT REVIEW INTO SIDEBAR FEED
+          const feed = document.getElementById("teamFeedContainer");
+          if(feed) {
+             const isApproved = aiReview.decision && aiReview.decision.toLowerCase().includes("approve");
+             const badgeColor = isApproved ? "#166534" : "#9f1239";
+             const badgeBg = isApproved ? "#f0fdf4" : "#fff1f2";
+             const badgeBorder = isApproved ? "#bbf7d0" : "#fecdd3";
+             const decisionText = isApproved ? "Approved ✅" : "Needs Improvement ⚠️";
+             
+             let strengthsHtml = "";
+             if(aiReview.strengths && Array.isArray(aiReview.strengths)) {
+                 aiReview.strengths.forEach(s => strengthsHtml += `<li style="margin-bottom:4px;">${s}</li>`);
              }
-          }, 1000);
+             let weaknessesHtml = "";
+             if(aiReview.weaknesses && Array.isArray(aiReview.weaknesses)) {
+                 aiReview.weaknesses.forEach(w => weaknessesHtml += `<li style="margin-bottom:4px;">${w}</li>`);
+             }
 
-          window.sprintTimeout = setTimeout(() => {
-            currentDayIndex++;
-            renderInteractiveDay();
-          }, 30000);
+             // We will append a premium card directly into the feed
+             const reviewCardHtml = `
+              <div class="team-msg-card" style="display: flex; flex-direction: column; gap: 12px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 8px 16px rgba(15,23,42,0.04); margin-top: 16px; animation: fadeIn 0.4s ease;">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid #cbd5e1; background: #ffffff;">
+                    <div>
+                      <div style="font-weight: 700; font-size: 14px; color: #0f172a;">Nova</div>
+                      <div style="font-size: 11px; color: #64748b; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">AI Manager</div>
+                    </div>
+                  </div>
+                  <div style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 13px;">
+                    ${aiReview.score || "N/A"}
+                  </div>
+                </div>
+                
+                <div style="font-weight: 700; font-size: 15px; color: ${badgeColor}; margin-top: 8px;">
+                  ${decisionText}
+                </div>
+                
+                <div style="color: #334155; font-size: 14px; line-height: 1.6; margin-bottom: 8px;">
+                  ${aiReview.manager_feedback || "Review completed."}
+                </div>
+                
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+                  <strong style="font-size: 13px; color: #166534; display: block; margin-bottom: 6px;">Strengths</strong>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #475569;">${strengthsHtml || "<li>None</li>"}</ul>
+                </div>
+                
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                  <strong style="font-size: 13px; color: #9f1239; display: block; margin-bottom: 6px;">Needs Improvement</strong>
+                  <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #475569;">${weaknessesHtml || "<li>None</li>"}</ul>
+                </div>
+                
+                <div id="dynamicReviewActions" style="display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Actions will be bound here -->
+                </div>
+              </div>
+             `;
+             
+             // Create a temporary container to convert string to DOM elements so we can attach events
+             const tempDiv = document.createElement("div");
+             tempDiv.innerHTML = reviewCardHtml;
+             const cardEl = tempDiv.firstElementChild;
+             
+             const actionsContainer = cardEl.querySelector("#dynamicReviewActions");
+             
+             const advanceDay = () => {
+                actionsContainer.innerHTML = `<span style="font-size: 13px; color: #64748b; font-style: italic;">Proceeded to next phase.</span>`;
+                btn.innerHTML = `Advance (${30}s) or Update <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>`;
+                btn.disabled = false;
+                currentDayIndex++;
+                renderInteractiveDay();
+             };
+             
+             const improveSubmission = () => {
+                actionsContainer.innerHTML = `<span style="font-size: 13px; color: #64748b; font-style: italic;">Awaiting resubmission...</span>`;
+                btn.innerHTML = `Resubmit Work <i data-lucide="refresh-cw" style="width:16px; height:16px;"></i>`;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+                btn.disabled = false;
+             };
+
+             if(isApproved) {
+                const proceedBtn = document.createElement("button");
+                proceedBtn.style.cssText = "background: linear-gradient(135deg, #4f46e5, #3730a3); color: #ffffff; border: none; border-radius: 8px; padding: 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: 100%; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);";
+                proceedBtn.innerHTML = `Proceed to Day ${currentDayIndex + 2}`;
+                proceedBtn.onclick = advanceDay;
+                actionsContainer.appendChild(proceedBtn);
+             } else {
+                const improveBtn = document.createElement("button");
+                improveBtn.style.cssText = "background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-weight: 600; font-size: 13px; cursor: pointer; width: 100%; margin-bottom: 4px;";
+                improveBtn.innerHTML = `Improve Submission`;
+                improveBtn.onclick = improveSubmission;
+                
+                const proceedAnywayBtn = document.createElement("button");
+                proceedAnywayBtn.style.cssText = "background: transparent; color: #64748b; border: none; font-size: 13px; cursor: pointer; width: 100%; text-decoration: underline;";
+                proceedAnywayBtn.innerHTML = `Proceed Anyway`;
+                proceedAnywayBtn.onclick = advanceDay;
+                
+                actionsContainer.appendChild(improveBtn);
+                actionsContainer.appendChild(proceedAnywayBtn);
+             }
+             
+             feed.appendChild(cardEl);
+             feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
+             if (typeof lucide !== 'undefined') lucide.createIcons();
+          }
         });
       };
-
       // Start the interactive sprint
       renderInteractiveDay();
 
@@ -2328,3 +3131,58 @@ if (welcomePopup) {
   if (closeWelcome) closeWelcome.addEventListener("click", dismissWelcome);
   if (startSimBtn) startSimBtn.addEventListener("click", dismissWelcome);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Make sure project cards and role tags are fully interactive
+    const projectCards = document.querySelectorAll('.project-card');
+    
+    projectCards.forEach(card => {
+        // Handle role tag selection
+        const tags = card.querySelectorAll('.role-tag');
+        if(tags.length > 0) {
+            // Select the first one by default if none selected
+            if(!card.querySelector('.role-tag.selected')) {
+                tags[0].classList.add('selected');
+            }
+            
+            tags.forEach(tag => {
+                tag.style.cursor = 'pointer';
+                tag.addEventListener('click', (e) => {
+                    e.stopPropagation(); // prevent card click
+                    tags.forEach(t => t.classList.remove('selected'));
+                    tag.classList.add('selected');
+                });
+            });
+        }
+        
+        // Handle Start Sprint Button
+        const startBtn = card.querySelector('.primary-btn');
+        if(startBtn) {
+            startBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Get project details
+                const title = card.querySelector('.proj-title') ? card.querySelector('.proj-title').innerText : 'Project';
+                const selectedTag = card.querySelector('.role-tag.selected');
+                const targetRole = selectedTag ? selectedTag.textContent.trim() : "Candidate";
+                
+                // Save context
+                localStorage.setItem("currentProjectTitle", title);
+                localStorage.setItem("currentProjectRole", targetRole);
+                
+                // Navigate to simulation view
+                const mainContent = document.getElementById("mainContent");
+                const simView = document.getElementById("simView");
+                if(mainContent) mainContent.classList.remove("active");
+                if(simView) {
+                    simView.classList.add("active");
+                    // Call the function to render the interactive day
+                    if(typeof renderInteractiveDay === 'function') {
+                        renderInteractiveDay(1, title, targetRole);
+                    }
+                }
+            });
+        }
+    });
+});

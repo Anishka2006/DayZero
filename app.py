@@ -7,8 +7,12 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)  # Enable CORS for frontend interaction
+
+@app.route('/')
+def serve_index():
+    return app.send_static_file('index.html')
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
@@ -52,6 +56,13 @@ def chat():
         return jsonify(response.json())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route("/api/simulation/start", methods=["POST", "OPTIONS"])
+def start_simulation():
+    return {"success": True, "message": "Simulation started"}, 200
+
+@app.route("/api/sessions", methods=["GET", "OPTIONS"])
+def get_sessions():
+    return {"success": True, "sessions": []}, 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
