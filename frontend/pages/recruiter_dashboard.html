@@ -514,11 +514,16 @@
       transition: all 0.2s ease-in-out;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
       position: relative;
+      cursor: pointer;
     }
     .project-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.04);
       border-color: var(--border2);
+    }
+    .project-card:focus-visible {
+      outline: 2px solid var(--indigo);
+      outline-offset: 2px;
     }
     .project-title-row {
       display: flex;
@@ -591,6 +596,15 @@
     .project-action-btn.delete:hover {
       background: var(--red-bg);
       color: var(--red);
+    }
+    .project-sim-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      color: var(--indigo);
+      font-size: 12px;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -1041,7 +1055,7 @@
 
 <!-- ═══ INVITE MODAL ═══ -->
 <div id="inviteModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.5);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:400px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:440px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.2);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <h3 style="font-size:16px;font-weight:700;">Invite Candidate</h3>
       <button id="closeModal" style="background:none;border:none;cursor:pointer;color:var(--subtext);font-size:18px;line-height:1;">✕</button>
@@ -1056,7 +1070,7 @@
       <input type="email" id="inviteEmail" placeholder="e.g. rahul@example.com" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;">
       <div id="inviteEmailError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Valid email is required</div>
     </div>
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:10px;">
       <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Role</label>
       <select id="inviteRole" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;background:var(--surface);outline:none;">
         <option>Frontend Engineer</option>
@@ -1066,6 +1080,13 @@
         <option>Product Designer</option>
         <option>QA Engineer</option>
       </select>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Project *</label>
+      <select id="inviteProject" style="width:100%;padding:9px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;background:var(--surface);outline:none;">
+        <option value="">Select a project</option>
+      </select>
+      <div id="inviteProjectError" style="color:var(--red);font-size:11px;margin-top:3px;display:none;">Project is required</div>
     </div>
     <button id="inviteSubmit" style="width:100%;padding:10px;background:var(--indigo);color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background 0.15s;">Send Invite</button>
   </div>
@@ -1227,6 +1248,18 @@
   }
 
   function el(id) { return document.getElementById(id); }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function(char) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char];
+    });
+  }
 
   /* ══════════════════════════════════════════════════════════
      TOAST SYSTEM  (queued)
@@ -1660,6 +1693,55 @@
      INVITE MODAL
   ══════════════════════════════════════════════════════════ */
 
+  function populateInviteProjectOptions(selectedProjectId) {
+    var select = el("inviteProject");
+    if (!select) return;
+
+    var companyProjects = getCompanyProjects();
+    if (!companyProjects.length) {
+      select.innerHTML = '<option value="">Add a project first</option>';
+      select.disabled = true;
+      return;
+    }
+
+    select.disabled = false;
+    select.innerHTML = '<option value="">Select a project</option>' + companyProjects.map(function(project) {
+      return '<option value="' + escapeHtml(project.id) + '">' + escapeHtml(project.title) + '</option>';
+    }).join("");
+
+    if (selectedProjectId) {
+      select.value = String(selectedProjectId);
+    }
+  }
+
+  function saveInviteRecord(invite) {
+    var key = "recruiter_invites";
+    var invites = window.storageUtils ? window.storageUtils.get(key) : null;
+    if (!Array.isArray(invites)) {
+      try {
+        invites = JSON.parse(localStorage.getItem(key) || "[]");
+      } catch (error) {
+        invites = [];
+      }
+    }
+
+    invites.unshift(invite);
+    if (window.storageUtils) {
+      window.storageUtils.set(key, invites);
+    } else {
+      localStorage.setItem(key, JSON.stringify(invites));
+    }
+
+    ACTIVITY_SEED.unshift({
+      icon: "send",
+      color: "#6366f1",
+      bg: "#eef2ff",
+      text: "<strong>" + escapeHtml(invite.name) + "</strong> invited to " + escapeHtml(invite.projectTitle),
+      time: "just now"
+    });
+    renderActivityFeed();
+  }
+
   function initInviteModal() {
     var modal     = el("inviteModal");
     var openBtn   = el("inviteBtn");
@@ -1667,8 +1749,14 @@
     var submitBtn = el("inviteSubmit");
     if (!modal) return;
 
-    function openModal() { modal.style.display="flex"; el("inviteName").focus(); }
+    function openModal() {
+      populateInviteProjectOptions();
+      modal.style.display="flex";
+      el("inviteName").focus();
+    }
     function closeModal(){ modal.style.display="none"; clearInviteErrors(); }
+
+    window.openInviteModal = openModal;
 
     if (openBtn)  openBtn.addEventListener("click", openModal);
     if (closeBtn) closeBtn.addEventListener("click", closeModal);
@@ -1679,6 +1767,9 @@
       submitBtn.addEventListener("click", function(){
         var name  = el("inviteName").value.trim();
         var email = el("inviteEmail").value.trim();
+        var projectSelect = el("inviteProject");
+        var selectedProjectId = projectSelect ? projectSelect.value : "";
+        var assignedProject = findProjectById(selectedProjectId);
         var valid = true;
 
         if (!name) {
@@ -1700,22 +1791,42 @@
           el("inviteEmail").style.borderColor="";
         }
 
+        if (!assignedProject) {
+          el("inviteProjectError").style.display="block";
+          projectSelect.style.borderColor="var(--red)";
+          valid = false;
+        } else {
+          el("inviteProjectError").style.display="none";
+          projectSelect.style.borderColor="";
+        }
+
         if (!valid) return;
 
         var role = el("inviteRole").value;
-        showToast("Invite sent to "+name+" for "+role+" role","success");
+        saveInviteRecord({
+          id: Date.now(),
+          name: name,
+          email: email,
+          role: role,
+          projectId: assignedProject.id,
+          projectTitle: assignedProject.title,
+          companyId: currentCompany,
+          invitedAt: new Date().toISOString()
+        });
+        showToast("Invite sent to "+name+" for "+role+" on "+assignedProject.title,"success");
         closeModal();
         el("inviteName").value  = "";
         el("inviteEmail").value = "";
+        if (projectSelect) projectSelect.value = "";
       });
     }
   }
 
   function clearInviteErrors() {
-    ["inviteNameError","inviteEmailError"].forEach(function(id){
+    ["inviteNameError","inviteEmailError","inviteProjectError"].forEach(function(id){
       if(el(id)) el(id).style.display="none";
     });
-    ["inviteName","inviteEmail"].forEach(function(id){
+    ["inviteName","inviteEmail","inviteProject"].forEach(function(id){
       if(el(id)) el(id).style.borderColor="";
     });
   }
@@ -1934,9 +2045,14 @@
       if (e.key==="i"||e.key==="I") {
         var modal = el("inviteModal");
         if (modal && modal.style.display!=="flex") {
-          modal.style.display="flex";
-          var ni = el("inviteName");
-          if (ni) ni.focus();
+          if (window.openInviteModal) {
+            window.openInviteModal();
+          } else {
+            populateInviteProjectOptions();
+            modal.style.display="flex";
+            var ni = el("inviteName");
+            if (ni) ni.focus();
+          }
         }
         return;
       }
@@ -2043,6 +2159,171 @@
     });
   }
 
+  function findProjectById(projectId) {
+    var idText = String(projectId || "");
+    return projects.find(function(project) {
+      return String(project.id) === idText;
+    }) || null;
+  }
+
+  function slugifyProjectValue(value) {
+    return String(value || "project")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 42) || "project";
+  }
+
+  function inferProjectRole(project) {
+    var text = [project.title, project.description, project.techStack].join(" ").toLowerCase();
+    if (/\b(qa|test|testing|quality|release blocker)\b/.test(text)) return "QA Engineer";
+    if (/\b(api|backend|server|node|express|aws|lambda|python|mongo|database|postgres|redis|docker)\b/.test(text)) return "Backend Engineer";
+    if (/\b(data|analytics|dashboard|fraud|ml|model|llm|openai|score|metric)\b/.test(text)) return "Data Analyst";
+    if (/\b(design|designer|ux|ui|prototype|figma)\b/.test(text)) return "Product Designer";
+    if (/\b(product|strategy|growth|roadmap|launch)\b/.test(text)) return "Product Manager";
+    return "Frontend Engineer";
+  }
+
+  function projectSkills(project, role) {
+    var techSkills = String(project.techStack || "")
+      .split(",")
+      .map(function(skill) { return skill.trim(); })
+      .filter(Boolean);
+    var roleDefaults = {
+      "Backend Engineer": ["API design", "Reliability", "Debugging"],
+      "Data Analyst": ["Metrics", "Data quality", "Insight synthesis"],
+      "Product Designer": ["UX clarity", "Interaction design", "Handoff"],
+      "Product Manager": ["Prioritization", "Tradeoffs", "Stakeholder update"],
+      "QA Engineer": ["Risk isolation", "Test coverage", "Release judgment"],
+      "Frontend Engineer": ["UI implementation", "Accessibility", "State management"]
+    };
+    var combined = techSkills.concat(roleDefaults[role] || roleDefaults["Frontend Engineer"]);
+    var seen = {};
+    return combined.filter(function(skill) {
+      var key = skill.toLowerCase();
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).slice(0, 6);
+  }
+
+  function projectWorkspaceFiles(project, role, skills) {
+    var slug = slugifyProjectValue(project.title);
+    var skillLines = skills.map(function(skill) { return "- " + skill; }).join("\n");
+    return [
+      {
+        id: slug + "-project-brief",
+        name: slug + "_project_brief.md",
+        kind: "brief",
+        type: "brief",
+        language: "markdown",
+        content: [
+          "# " + project.title,
+          "",
+          "Company: " + (recruiter ? recruiter.company : "DayZero"),
+          "Recruiter-assigned role: " + role,
+          "Deadline: " + (project.deadline || "TBD"),
+          "Status: " + (project.status || "Active"),
+          "",
+          "## Project Context",
+          project.description || "Work through the assigned recruiter project.",
+          "",
+          "## Tech Stack",
+          project.techStack || "To be confirmed",
+          "",
+          "## Skills to Demonstrate",
+          skillLines
+        ].join("\n")
+      },
+      {
+        id: slug + "-handoff",
+        name: slug + "_candidate_handoff.md",
+        kind: "brief",
+        type: "brief",
+        language: "markdown",
+        content: [
+          "# Candidate Handoff",
+          "",
+          "- First decision:",
+          "- Tradeoff:",
+          "- Validation evidence:",
+          "- Follow-up owner:"
+        ].join("\n")
+      }
+    ];
+  }
+
+  function projectTaskPayload(project, roleOverride) {
+    var role = roleOverride || inferProjectRole(project);
+    var skills = projectSkills(project, role);
+    var taskId = "recruiter-project-" + slugifyProjectValue(project.id);
+    var workspaceFiles = projectWorkspaceFiles(project, role, skills);
+    return {
+      id: taskId,
+      sourceProjectId: project.id,
+      company: recruiter ? recruiter.company : "DayZero",
+      companyId: currentCompany,
+      logo: recruiter && recruiter.company ? recruiter.company.charAt(0).toUpperCase() : "D",
+      label: project.title,
+      title: project.title,
+      taskTitle: project.title,
+      description: project.description,
+      scenario: project.description,
+      role: role,
+      candidateRole: role,
+      difficulty: project.status || "Active Project",
+      status: project.status,
+      deadline: project.deadline,
+      time: "5 days",
+      teamSize: "4",
+      skills: skills,
+      techStack: project.techStack,
+      files: workspaceFiles.map(function(file) { return file.name; }),
+      workspaceFiles: workspaceFiles
+    };
+  }
+
+  function clearProjectSimulationState(taskId) {
+    [
+      "dayzeroSimulationSession::",
+      "dayzeroWorkspaceState::",
+      "dayzeroTimelineState::"
+    ].forEach(function(prefix) {
+      localStorage.removeItem(prefix + taskId);
+    });
+    localStorage.removeItem("dayzero_orchestrator_state");
+    sessionStorage.removeItem("dayzero_session_data");
+  }
+
+  function launchProjectSimulation(projectId, roleOverride) {
+    var project = findProjectById(projectId);
+    if (!project) {
+      showToast("Project not found", "error");
+      return;
+    }
+
+    var payload = projectTaskPayload(project, roleOverride);
+    var serialized = JSON.stringify(payload);
+    clearProjectSimulationState(payload.id);
+    localStorage.setItem("dayzero_task_id", payload.id);
+    localStorage.setItem("selectedTaskId", payload.id);
+    sessionStorage.setItem("dayzero_task_id", payload.id);
+    sessionStorage.setItem("dayzero_role", payload.role);
+    sessionStorage.setItem("dayzero_difficulty", payload.difficulty || "Active Project");
+    localStorage.setItem("dayzero_selected_task_details", serialized);
+    sessionStorage.setItem("dayzero_selected_task_details", serialized);
+    localStorage.setItem("userRole", payload.role);
+    localStorage.setItem("userExperience", "Intermediate");
+    localStorage.setItem("simulationType", "5-day Sprint");
+    localStorage.setItem("candidateSetupComplete", "true");
+    localStorage.setItem("userName", recruiter && recruiter.name ? recruiter.name : "Recruiter Preview");
+
+    showToast("Opening simulation for " + project.title, "default", 900);
+    window.setTimeout(function() {
+      window.location.href = "simulation.html";
+    }, 250);
+  }
+
   function renderProjects() {
     var grid = el("projectsGrid");
     if (!grid) return;
@@ -2066,36 +2347,43 @@
     grid.innerHTML = filtered.map(function(p) {
       var badgeClass = p.status === "Active" ? "green" : p.status === "Planning" ? "amber" : "blue";
       var techTags = p.techStack ? p.techStack.split(",").map(function(t) {
-        return '<span class="tech-tag">' + t.trim() + '</span>';
+        return '<span class="tech-tag">' + escapeHtml(t.trim()) + '</span>';
       }).join("") : "";
+      var safeTitle = escapeHtml(p.title);
+      var safeDescription = escapeHtml(p.description);
+      var safeStatus = escapeHtml(p.status);
+      var safeDeadline = escapeHtml(p.deadline);
+      var safeCreatedAt = escapeHtml(p.createdAt);
+      var safeId = escapeHtml(p.id);
 
-      return '<div class="project-card" data-id="' + p.id + '">' +
+      return '<div class="project-card" data-id="' + safeId + '" role="button" tabindex="0" aria-label="Open simulation for ' + safeTitle + '">' +
         '<div class="project-title-row">' +
           '<div>' +
-            '<h3 class="project-title">' + p.title + '</h3>' +
-            '<span class="badge ' + badgeClass + '" style="margin-top: 6px; display: inline-block;">' + p.status + '</span>' +
+            '<h3 class="project-title">' + safeTitle + '</h3>' +
+            '<span class="badge ' + badgeClass + '" style="margin-top: 6px; display: inline-block;">' + safeStatus + '</span>' +
           '</div>' +
           '<div class="project-actions">' +
-            '<button class="project-action-btn edit-proj-btn" data-id="' + p.id + '" title="Edit Project">' +
+            '<button class="project-action-btn edit-proj-btn" data-id="' + safeId + '" title="Edit Project">' +
               '<i data-lucide="edit-3" style="width:14px; height:14px;"></i>' +
             '</button>' +
-            '<button class="project-action-btn delete delete-proj-btn" data-id="' + p.id + '" title="Delete Project">' +
+            '<button class="project-action-btn delete delete-proj-btn" data-id="' + safeId + '" title="Delete Project">' +
               '<i data-lucide="trash-2" style="width:14px; height:14px;"></i>' +
             '</button>' +
           '</div>' +
         '</div>' +
-        '<p class="project-desc" style="margin-top: 8px;">' + p.description + '</p>' +
+        '<p class="project-desc" style="margin-top: 8px;">' + safeDescription + '</p>' +
         '<div class="project-tech-stack" style="margin-top: 12px;">' + techTags + '</div>' +
         '<div class="project-footer">' +
           '<div class="project-meta-item">' +
             '<i data-lucide="calendar" style="width:12px; height:12px;"></i>' +
-            '<span>Deadline: ' + p.deadline + '</span>' +
+            '<span>Deadline: ' + safeDeadline + '</span>' +
           '</div>' +
           '<div class="project-meta-item">' +
             '<i data-lucide="clock" style="width:12px; height:12px;"></i>' +
-            '<span>Created: ' + p.createdAt + '</span>' +
+            '<span>Created: ' + safeCreatedAt + '</span>' +
           '</div>' +
         '</div>' +
+        '<div class="project-sim-hint"><i data-lucide="play-circle" style="width:13px;height:13px;"></i><span>Open simulation</span></div>' +
       '</div>';
     }).join("");
 
@@ -2104,10 +2392,23 @@
   }
 
   function bindProjectEvents() {
+    document.querySelectorAll(".project-card").forEach(function(card) {
+      card.onclick = function() {
+        launchProjectSimulation(this.getAttribute("data-id"));
+      };
+      card.onkeydown = function(e) {
+        if (e.target.closest(".project-action-btn")) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          launchProjectSimulation(this.getAttribute("data-id"));
+        }
+      };
+    });
+
     document.querySelectorAll(".edit-proj-btn").forEach(function(btn) {
       btn.onclick = function(e) {
         e.stopPropagation();
-        var id = parseInt(this.getAttribute("data-id"), 10);
+        var id = this.getAttribute("data-id");
         openProjectModal(id);
       };
     });
@@ -2115,17 +2416,17 @@
     document.querySelectorAll(".delete-proj-btn").forEach(function(btn) {
       btn.onclick = function(e) {
         e.stopPropagation();
-        var id = parseInt(this.getAttribute("data-id"), 10);
+        var id = this.getAttribute("data-id");
         deleteProject(id);
       };
     });
   }
 
   function deleteProject(id) {
-    var p = projects.find(function(proj) { return proj.id === id; });
+    var p = findProjectById(id);
     if (!p) return;
     if (confirm("Are you sure you want to delete the project '" + p.title + "'?")) {
-      projects = projects.filter(function(proj) { return proj.id !== id; });
+      projects = projects.filter(function(proj) { return String(proj.id) !== String(id); });
       saveProjects();
       renderProjects();
       showToast("Project '" + p.title + "' deleted", "warning");
@@ -2149,7 +2450,7 @@
     clearProjectErrors();
 
     if (editId) {
-      var p = projects.find(function(proj) { return proj.id === editId; });
+      var p = findProjectById(editId);
       if (p) {
         idInput.value = p.id;
         titleInput.value = p.title;
@@ -2257,8 +2558,8 @@
 
         if (idInput) {
           // Edit existing
-          var editId = parseInt(idInput, 10);
-          var p = projects.find(function(proj) { return proj.id === editId; });
+          var editId = idInput;
+          var p = findProjectById(editId);
           if (p) {
             p.title = title;
             p.description = desc;
@@ -2320,6 +2621,7 @@
 
   // Expose globally
   window.openProjectModal = openProjectModal;
+  window.launchProjectSimulation = launchProjectSimulation;
 
   /* ══════════════════════════════════════════════════════════
      INIT
