@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | Live Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/simulation.css?v=6" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="sim-reference-shell">
+    <aside class="reference-sidebar">
+      <div class="reference-brand">
+        <div class="brand-logo">
+          <i data-lucide="zap"></i>
+        </div>
+        <div>
+          <h1 id="companyName">Northstar Pay</h1>
+          <p id="sprintLabel"></p>
+        </div>
+      </div>
+
+      <section class="sidebar-block">
+        <p class="sidebar-title">Channels</p>
+        <div id="channelList" class="channel-stack"></div>
+      </section>
+
+      <section class="sidebar-block teammate-block">
+        <p class="sidebar-title">Teammates</p>
+        <div id="teammateList" class="teammate-stack"></div>
+      </section>
+
+      <div class="sidebar-self">
+        <div class="self-avatar" id="selfAvatar">Y</div>
+        <div>
+          <strong id="currentUserName">You</strong>
+          <p id="currentUserRole">Candidate</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="chat-surface">
+      <header class="chat-topbar">
+        <div class="topic-row">
+          <span class="topic-hash">#</span>
+          <div class="topic-copy">
+            <h2 id="channelTitle">launch-otp</h2>
+            <p id="scenarioTitle">Ship the OTP onboarding before investor demo</p>
+          </div>
+        </div>
+
+        <div class="chat-topbar-actions">
+          <div class="demo-pill">
+            <span>DEMO IN</span>
+            <strong id="countdownTimer">30:00</strong>
+          </div>
+          <button type="button" class="workspace-jump-btn" id="workspaceJumpBtn">
+            <i data-lucide="code-xml"></i>
+            <span>Workspace</span>
+          </button>
+          <button type="button" class="primary-footer-btn scene-submit-btn" id="submitSceneBtn">
+            <i data-lucide="arrow-right"></i>
+            <span>Submit</span>
+          </button>
+          <button type="button" class="icon-lite-btn" id="refreshSceneBtn" aria-label="Refresh">
+            <i data-lucide="rotate-ccw"></i>
+          </button>
+          <button type="button" class="icon-lite-btn" id="notifySceneBtn" aria-label="Alerts">
+            <i data-lucide="bell"></i>
+          </button>
+        </div>
+      </header>
+
+      <section id="teamChat" class="reference-chat-feed" aria-live="polite"></section>
+      <div id="typingIndicator" class="reference-typing hidden"></div>
+
+      <div class="reference-composer-wrap">
+        <div class="reference-composer">
+          <textarea id="candidateMessageInput" rows="1" placeholder="Message #launch-otp"></textarea>
+          <button id="sendMessageBtn" class="reference-send-btn" type="button" aria-label="Send">
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+        <p class="reference-composer-note">Press <kbd>Enter</kbd> to send - <kbd>Shift+Enter</kbd> newline</p>
+      </div>
+    </main>
+
+    <section class="workspace-surface" id="workspaceSurface">
+      <header class="workspace-topbar">
+        <div class="workspace-heading">
+          <i data-lucide="braces"></i>
+          <h2 id="workspaceTitle">Workspace</h2>
+          <span class="shared-badge">shared</span>
+        </div>
+
+        <div class="workspace-people">
+          <span class="mini-avatar avatar-a">A</span>
+          <span class="mini-avatar avatar-r">R</span>
+          <span class="mini-avatar avatar-m">M</span>
+          <button type="button" class="icon-lite-btn" id="peopleBtn" aria-label="People">
+            <i data-lucide="users"></i>
+          </button>
+          <button type="button" class="icon-lite-btn" id="closeWorkspaceBtn" aria-label="Close">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </header>
+
+      <div id="workspaceTabs" class="reference-tabs"></div>
+
+      <div class="reference-editor-shell">
+        <textarea id="codeEditor" spellcheck="false"></textarea>
+      </div>
+
+      <footer class="workspace-footer">
+        <div class="workspace-footer-meta">
+          <span id="wordCount">0 lines - 0 chars</span>
+          <span id="saveStatus">Saved</span>
+        </div>
+
+        <div class="workspace-footer-actions">
+          <button id="saveDraftBtn" class="footer-btn" type="button">
+            <i data-lucide="save"></i>
+            <span>Save</span>
+          </button>
+          <button id="shareWorkspaceBtn" class="footer-btn" type="button">
+            <i data-lucide="play"></i>
+            <span>Share with team</span>
+          </button>
+          <button id="submitWorkspaceBtn" class="primary-footer-btn" type="button">
+            <i data-lucide="arrow-right"></i>
+            <span>Submit</span>
+          </button>
+        </div>
+      </footer>
+
+      <div class="workspace-tip-row">
+        <p id="workspaceTip">Tip: edit the code, then tell Asha or Ravi in #launch-otp what you changed.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="hidden-support">
+    <span id="priorityBadge"></span>
+    <span id="crisisStatus"></span>
+    <span id="phaseLabel"></span>
+    <span id="taskDeadline"></span>
+    <span id="taskOutput"></span>
+    <span id="taskUpdate"></span>
+    <span id="testStatus"></span>
+    <span id="activeFileName"></span>
+    <span id="workspaceHelper"></span>
+    <p id="scenarioSummary"></p>
+    <ul id="taskRequirements"></ul>
+    <ul id="taskAcceptance"></ul>
+    <div id="quickPrompts"></div>
+    <div id="timelineList"></div>
+    <button id="insertOutlineBtn" type="button"></button>
+    <button id="runTestsBtn" type="button"></button>
+    <button id="requestCritiqueBtn" type="button"></button>
+    <button id="submitBtn" type="button"></button>
+    <button id="triggerCrisisBtn" type="button"></button>
+  </div>
+
+  <div id="crisisModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Live Crisis</p>
+          <h3>Pressure spike incoming</h3>
+        </div>
+        <button id="closeCrisisModalBtn" class="icon-lite-btn" type="button" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <p id="crisisModalText">Leadership just tightened the demo window. Do you want the room to absorb the crisis now?</p>
+      <div class="modal-actions">
+        <button id="cancelCrisisBtn" class="footer-btn" type="button">Not now</button>
+        <button id="confirmCrisisBtn" class="primary-footer-btn" type="button">Handle crisis</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+  <script src="../js/simulation.js?v=6"></script>
+</body>
+</html>

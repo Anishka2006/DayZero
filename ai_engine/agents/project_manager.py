@@ -1,4 +1,4 @@
-from ai_engine.llm import ask_ai
+from ai_engine.core.llm import ask_ai
 def create_prd():
     prompt = "Create a short PRD for a SaaS feature."
 

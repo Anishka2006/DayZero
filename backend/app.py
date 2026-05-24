@@ -1,127 +1,237 @@
-from flask import Flask, request, jsonify
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-import psycopg2
-from werkzeug.security import generate_password_hash, check_password_hash
-import os
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from ai_engine.core.llm import chat_completion, extract_text, has_openrouter_config
+from backend.services.orchestrator import evaluate_work, get_session, handle_agent_event, start_simulation
+
+load_dotenv()
+
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for frontend interaction
 
-# =========================
-# 🔗 DATABASE CONNECTION (SUPABASE)
-# =========================
-import os
-import psycopg2
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-db = psycopg2.connect(
-    host=os.getenv("DB_HOST"),
-    port=os.getenv("DB_PORT"),  
-    database=os.getenv("DB_NAME"),
-    user=os.getenv("DB_USER"),
-    password=os.getenv("DB_PASSWORD")
-)
-
-cursor = db.cursor()
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    if not GROQ_API_KEY:
+        return jsonify({"error": "API Key not configured on server"}), 500
 
 
-# =========================
-# 📝 SIGNUP
-# =========================
-@app.route("/signup", methods=["POST"])
-def signup():
-    data = request.get_json()
+@app.route("/api/chat", methods=["POST"])
+def chat() -> tuple:
+    incoming = request.get_json(silent=True) or {}
 
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
+    if "messages" in incoming:
+        messages = incoming.get("messages") or []
+        model = incoming.get("model")
+        max_tokens = int(incoming.get("max_tokens") or 180)
+        temperature = float(incoming.get("temperature") or 0.7)
+        response_format = incoming.get("response_format")
+    else:
+        user_message = str(incoming.get("message") or "")
+        system_prompt = str(incoming.get("system_prompt") or "You are a helpful assistant.")
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
+        model = incoming.get("model")
+        max_tokens = int(incoming.get("max_tokens") or 180)
+        temperature = float(incoming.get("temperature") or 0.7)
+        response_format = incoming.get("response_format")
 
-    if not name or not email or not password:
-        return jsonify({"error": "All fields required"}), 400
-
-    # check existing user
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    existing_user = cursor.fetchone()
-
-    if existing_user:
-        return jsonify({"error": "User already exists"}), 409
-
-    # hash password
-    hashed_password = generate_password_hash(password)
-
-    cursor.execute(
-        "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-        (name, email, hashed_password)
+    response = chat_completion(
+        messages=messages,
+        model=model,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        response_format=response_format,
     )
-    db.commit()
+    if not response:
+        return jsonify({"error": "OpenRouter request failed or API key is missing."}), 503
 
-    return jsonify({
-        "message": "Signup successful",
-        "user": {
-            "name": name,
-            "email": email
+    return jsonify(response), 200
+
+
+@app.route("/api/simulation/start", methods=["GET", "POST"])
+def api_start_simulation() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    role = request.args.get("role") or payload.get("role")
+    task_id = request.args.get("task_id") or payload.get("task_id")
+    participant_name = request.args.get("participant_name") or payload.get("participant_name")
+    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    return jsonify(data), 200
+
+
+@app.route("/start-simulation", methods=["POST"])
+def legacy_start_simulation() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    role = payload.get("role")
+    task_id = payload.get("task_id")
+    participant_name = payload.get("participant_name")
+    data = start_simulation(task_id=task_id, role=role, participant_name=participant_name)
+    return (
+        jsonify(
+            {
+                "task": data["task_text"],
+                "session_id": data["session_id"],
+                "task_id": data["task"]["id"],
+                "task_data": data["task"],
+                "initial_messages": data["initial_messages"],
+                "memory": data["memory"],
+                "scores": data["scores"],
+                "phase": data["phase"],
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/api/sessions", methods=["POST"])
+def api_create_session() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = start_simulation(
+        task_id=payload.get("task_id"),
+        role=payload.get("role"),
+        participant_name=payload.get("participant_name"),
+    )
+    return jsonify(data), 200
+
+
+@app.route("/api/sessions/<session_id>", methods=["GET"])
+def api_get_session(session_id: str) -> tuple:
+    session = get_session(session_id)
+    if not session:
+        return jsonify({"error": "Session not found."}), 404
+    return jsonify(session), 200
+
+
+@app.route("/api/sessions/<session_id>/chat", methods=["POST"])
+def api_session_chat(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "candidate_message",
+            "candidate_message": payload.get("message"),
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": payload.get("code"),
         }
-    }), 200
+    )
+    return jsonify(data), 200
 
 
-# =========================
-# 🔐 LOGIN
-# =========================
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-
-    email = data.get("email")
-    password = data.get("password")
-
-    cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-    user = cursor.fetchone()
-
-    if not user:
-        return jsonify({"error": "User not found"}), 401
-
-    stored_password = user[3]
-
-    if not check_password_hash(stored_password, password):
-        return jsonify({"error": "Invalid password"}), 401
-
-    return jsonify({
-        "message": "Login successful",
-        "user": {
-            "id": user[0],
-            "name": user[1],
-            "email": user[2]
+@app.route("/api/sessions/<session_id>/tests", methods=["POST"])
+def api_session_tests(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "run_tests",
+            "candidate_message": payload.get("message") or "I ran the latest checks.",
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": payload.get("code"),
+            "test_results": payload.get("test_results") or {},
         }
-    }), 200
+    )
+    return jsonify(data), 200
 
 
-# =========================
-# 📞 DEMO REQUEST
-# =========================
-@app.route("/request-demo", methods=["POST"])
-def request_demo():
-    data = request.get_json()
+@app.route("/api/sessions/<session_id>/submit", methods=["POST"])
+def api_session_submit(session_id: str) -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or payload.get("code") or "")
+    data = handle_agent_event(
+        {
+            "session_id": session_id,
+            "event_type": "submit_solution",
+            "candidate_message": submission[:700],
+            "candidate_name": payload.get("candidate_name"),
+            "active_file": payload.get("active_file"),
+            "workspace_snapshot": payload.get("workspace_snapshot"),
+            "code": submission,
+        }
+    )
+    return jsonify(data.get("report") or data), 200
 
-    name = data.get("name")
-    phone = data.get("phone")
 
-    if not name or not phone:
-        return jsonify({"error": "All fields required"}), 400
+@app.route("/api/agent/event", methods=["POST"])
+def api_agent_event() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    data = handle_agent_event(payload)
+    return jsonify(data), 200
 
-    try:
-        cursor.execute(
-            "INSERT INTO demo_requests (name, phone) VALUES (%s, %s)",
-            (name, phone)
+
+@app.route("/submit-task", methods=["POST"])
+def submit_task() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or "")
+    role = str(payload.get("role") or "Frontend")
+    session_id = payload.get("session_id")
+
+    if session_id:
+        result = handle_agent_event(
+            {
+                "session_id": session_id,
+                "event_type": "submit_solution",
+                "candidate_message": submission[:700],
+                "code": submission,
+                "phase": "submission",
+            }
         )
-        db.commit()
+        report = result.get("report") or {}
+        return (
+            jsonify(
+                {
+                    "score": report.get("overall_score", 0),
+                    "feedback": report.get("summary") or result.get("message") or "",
+                    "report": report,
+                }
+            ),
+            200,
+        )
 
-        return jsonify({"message": "Demo request submitted"}), 200
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({"error": "Failed to submit demo"}), 500
+    evaluation = evaluate_work(submission=submission, role=role)
+    return jsonify(evaluation), 200
 
 
-# =========================
-# 🏁 RUN SERVER
-# =========================
+@app.route("/api/evaluate", methods=["POST"])
+def api_evaluate() -> tuple:
+    payload = request.get_json(silent=True) or {}
+    submission = str(payload.get("submission") or payload.get("code") or "")
+    role = str(payload.get("role") or "Frontend")
+    evaluation = evaluate_work(submission=submission, role=role)
+    return jsonify(evaluation), 200
+
+
+@app.route("/api/ping-llm", methods=["GET"])
+def ping_llm() -> tuple:
+    if not has_openrouter_config():
+        return jsonify({"ok": False, "message": "OPENROUTER_API_KEY is missing."}), 200
+
+    response = chat_completion(
+        messages=[{"role": "user", "content": "Reply with the single word ready."}],
+        max_tokens=10,
+        temperature=0,
+    )
+    if not response:
+        return jsonify({"ok": False, "message": "OpenRouter request failed."}), 200
+
+    return jsonify({"ok": True, "reply": extract_text(response) or "ready"}), 200
+
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, port=5000)

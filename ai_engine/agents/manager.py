@@ -1,5 +1,5 @@
 import random
-from ai_engine.llm import ask_ai
+from ai_engine.core.llm import ask_ai
 
 def day1_onboarding():
     prompt = """
@@ -86,7 +86,7 @@ def day4_crisis():
 
 
 import json
-from ai_engine.llm import ask_ai
+from ai_engine.core.llm import ask_ai
 
 def parse_json(text):
     try:
@@ -138,7 +138,7 @@ def evaluate_with_ai(context):
         }
 
 import json
-from ai_engine.llm import ask_ai
+from ai_engine.core.llm import ask_ai
 
 
 def parse_json(text):

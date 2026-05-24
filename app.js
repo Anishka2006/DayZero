@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initAuthModal();
 });
 
+const AUTH_BASE_URL = "https://dayzeroauth.onrender.com";
+
 /* =====================================
    1. NAVBAR SCROLL EFFECT
 ===================================== */
@@ -97,11 +99,7 @@ function animateBar(selector, value) {
 ===================================== */
 function initButtons() {
   // Contact Buttons
-
-  // Contact Buttons
-  const contactBtns = document.querySelectorAll(
-    'a[href="#contact"]'
-  );
+  const contactBtns = document.querySelectorAll('a[href="#contact"]');
 
   contactBtns.forEach(btn => {
     btn.addEventListener("click", e => {
@@ -183,21 +181,30 @@ function showToast(message, type = "success") {
 
 /* =====================================
    7. TIMER FUNCTION
+   FIX: Persists countdown in localStorage
+   so it does not reset on every page refresh
 ===================================== */
 function initTimer() {
   const timerElement = document.getElementById("countdown-timer");
   if (!timerElement) return;
 
-  let totalSeconds = 18 * 60 + 22; // 18:22
+  // Use saved time if available, otherwise start fresh at 18:22
+  let totalSeconds = parseInt(localStorage.getItem("timerSeconds")) || (18 * 60 + 22);
 
   setInterval(() => {
-    if (totalSeconds <= 0) return;
+    if (totalSeconds <= 0) {
+      timerElement.innerText = "0:00";
+      localStorage.removeItem("timerSeconds");
+      return;
+    }
+
     totalSeconds--;
-    
+    localStorage.setItem("timerSeconds", totalSeconds);
+
     let m = Math.floor(totalSeconds / 60);
     let s = totalSeconds % 60;
-    
-    timerElement.innerText = `${m}:${s < 10 ? '0' + s : s}`;
+
+    timerElement.innerText = `${m}:${s < 10 ? "0" + s : s}`;
   }, 1000);
 }
 
@@ -209,7 +216,7 @@ function initModal() {
   const closeBtn = document.getElementById("modal-close-btn");
   const form = document.getElementById("registration-form");
   const modalTitle = document.getElementById("modal-title");
-  
+
   if (!modal) return;
 
   function openModal(title) {
@@ -226,35 +233,21 @@ function initModal() {
     if (e.target === modal) closeModal();
   });
 
- form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  // Sets required localStorage keys before redirecting to roles page
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-  const name = document.getElementById("reg-name").value;
-  const phone = document.getElementById("reg-phone").value;
+    const name = document.getElementById("reg-name").value;
 
-  try {
-    const res = await fetch("https://dayzero-1.onrender.com/request-demo", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name, phone })
-    });
+    // Store name + placeholder user object + default role
+    // so the dashboard has the data it needs when it loads
+    localStorage.setItem("userName", name);
+    localStorage.setItem("user", JSON.stringify({ name }));
+    localStorage.setItem("role", "candidate");
 
-    const data = await res.json();
-
-    if (res.ok) {
-      showToast("Demo request sent! ");
-      form.reset();
-      closeModal();
-    } else {
-     showToast(data.error || "Failed ❌", "error");
-    }
-
-  } catch (err) {
-    showToast("Server error ⚠️");
-  }
-});
+    // Redirect to Roles page
+    window.location.href = "frontend/pages/roles.html";
+  });
 
   // Trigger modal on Get Started
   const getStartedBtns = document.querySelectorAll('a[href="#get-started"]');
@@ -281,13 +274,16 @@ function initModal() {
 function initAuthModal() {
   const authModal = document.getElementById("auth-modal");
   const authClose = document.getElementById("auth-close-btn");
-  
+
   const loginBtns = document.querySelectorAll('a[href="#login"]');
   const signupBtns = document.querySelectorAll('a[href="#signup"]');
-  
+
   const tabLogin = document.getElementById("tab-login");
   const tabSignup = document.getElementById("tab-signup");
-  
+
+  const roleBtns = document.querySelectorAll(".role-btn");
+  const roleInput = document.getElementById("auth-role");
+
   const sideTitle = document.getElementById("auth-side-title");
   const sideDesc = document.getElementById("auth-side-desc");
   const nameGroup = document.getElementById("auth-name-group");
@@ -299,6 +295,33 @@ function initAuthModal() {
 
   if (!authModal) return;
 
+  let currentMode = "login"; // track mode
+
+  /* =============================
+     ROLE SELECTION
+  ============================= */
+  roleBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      roleBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const role = btn.dataset.role;
+      roleInput.value = role;
+
+      // Dynamic text update
+      if (role === "recruiter") {
+        sideTitle.innerText = currentMode === "login" ? "Welcome Recruiter" : "Hire Smarter";
+        sideDesc.innerText = "Access candidates and manage hiring efficiently.";
+      } else {
+        sideTitle.innerText = currentMode === "login" ? "Welcome Back" : "Join DayZero";
+        sideDesc.innerText = "Explore opportunities and grow your career.";
+      }
+    });
+  });
+
+  /* =============================
+     MODAL OPEN/CLOSE
+  ============================= */
   function openAuth(mode) {
     authModal.classList.add("active");
     setAuthMode(mode);
@@ -308,41 +331,56 @@ function initAuthModal() {
     authModal.classList.remove("active");
   }
 
+  /* =============================
+     LOGIN / SIGNUP SWITCH
+  ============================= */
   function setAuthMode(mode) {
+    currentMode = mode;
+
     if (mode === "login") {
       tabLogin.classList.add("active");
       tabSignup.classList.remove("active");
-      sideTitle.innerText = "Welcome Back";
-      sideDesc.innerText = "Sign in to access your dashboard and continue where you left off.";
+
       nameGroup.style.display = "none";
       nameInput.removeAttribute("required");
+
       submitBtn.innerText = "Log In";
       switchPrompt.innerText = "Don't have an account?";
       switchLink.innerText = "Sign Up";
     } else {
       tabSignup.classList.add("active");
       tabLogin.classList.remove("active");
-      sideTitle.innerText = "Join DayZero";
-      sideDesc.innerText = "Create an account to start experiencing skill-based hiring.";
+
       nameGroup.style.display = "block";
       nameInput.setAttribute("required", "true");
+
       submitBtn.innerText = "Create Account";
       switchPrompt.innerText = "Already have an account?";
       switchLink.innerText = "Log In";
     }
   }
 
+  /* =============================
+     EVENT LISTENERS
+  ============================= */
   authClose.addEventListener("click", closeAuth);
+
   authModal.addEventListener("click", (e) => {
     if (e.target === authModal) closeAuth();
   });
 
   loginBtns.forEach(btn => {
-    btn.addEventListener("click", e => { e.preventDefault(); openAuth("login"); });
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      openAuth("login");
+    });
   });
 
   signupBtns.forEach(btn => {
-    btn.addEventListener("click", e => { e.preventDefault(); openAuth("signup"); });
+    btn.addEventListener("click", e => {
+      e.preventDefault();
+      openAuth("signup");
+    });
   });
 
   tabLogin.addEventListener("click", () => setAuthMode("login"));
@@ -350,84 +388,86 @@ function initAuthModal() {
 
   switchLink.addEventListener("click", (e) => {
     e.preventDefault();
-    if (tabLogin.classList.contains("active")) setAuthMode("signup");
-    else setAuthMode("login");
+    setAuthMode(currentMode === "login" ? "signup" : "login");
   });
 
+  /* =============================
+     FORM SUBMIT
+     FIX: Disable button during API call
+     to prevent duplicate submissions and
+     show loading feedback to the user
+  ============================= */
   authForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const isLogin = tabLogin.classList.contains("active");
+    const isLogin = currentMode === "login";
+    const role = roleInput.value;
 
-  const name = document.getElementById("auth-name").value;
-  const email = document.getElementById("auth-email").value;
-  const password = document.getElementById("auth-password").value;
+    const name = nameInput.value;
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
 
-  const url = isLogin
-    ? "https://dayzero-1.onrender.com/login"
-    : "https://dayzero-1.onrender.com/signup";
+    const url = isLogin
+      ? `${AUTH_BASE_URL}/login`
+      : `${AUTH_BASE_URL}/signup`;
 
-  const body = isLogin
-    ? { email, password }
-    : { name, email, password };
+    const body = isLogin
+      ? { email, password, role }
+      : { name, email, password, role };
 
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Please wait...";
 
-let data;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
 
-try {
-  data = await res.json();
-} catch {
-  data = { error: "Invalid server response" };
-}
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = { error: "Invalid server response" };
+      }
 
-console.log("STATUS:", res.status);
-console.log("DATA:", data);
+      console.log("STATUS:", res.status);
+      console.log("DATA:", data);
 
-if (res.ok) {
-  showToast(data.message || "Success ", "success");
+      if (res.ok) {
+        showToast(data.message || "Success 🎉", "success");
 
-  localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("role", data.user?.role || role);
 
-  authForm.reset();
-  closeAuth();
+        authForm.reset();
+        closeAuth();
 
-  setTimeout(() => {
-    window.location.href = "dashboard.html";
-  }, 1000);
+        setTimeout(() => {
+          window.location.href =
+            (data.user?.role || role) === "recruiter"
+              ? "frontend/pages/recruiter_dashboard.html"
+              : "frontend/pages/dashboard.html";
+        }, 1000);
 
-} else {
-  showToast(data.error || "Something went wrong ❌", "error");
-}
+      } else {
+        showToast(data.error || "Something went wrong ❌", "error");
 
-    
+        // Re-enable button on failure so user can try again
+        submitBtn.disabled = false;
+        submitBtn.innerText = isLogin ? "Log In" : "Create Account";
+      }
 
-  } catch (err) {
-    showToast("An error occurred. Please try again.", "error");
-  }
-});
-}
+    } catch (err) {
+      showToast("Network error. Please try again.", "error");
 
-function selectRole(role) {
-    // 1. Save the role in the browser's memory
-    localStorage.setItem('userRole', role);
-    
-    // 2. Alert the user (optional)
-    alert("Role selected: " + role + ". Initializing your manager...");
-    
-    // 3. Send them to the dashboard
-    window.location.href = "dashboard.html";
-}
-
-function finishSimulation() {
-    const finalScore = 88; // This would come from your AI evaluation
-    localStorage.setItem('lastScore', finalScore);
-    window.location.href = 'results.html';
+      // Re-enable button on network error
+      submitBtn.disabled = false;
+      submitBtn.innerText = isLogin ? "Log In" : "Create Account";
+    }
+  });
 }

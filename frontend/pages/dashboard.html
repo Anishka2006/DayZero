@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DayZero Simulation Dashboard</title>
-  <link rel="stylesheet" href="dashboard.css?v=2" />
+  <link rel="stylesheet" href="../css/dashboard.css?v=2" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="light">
@@ -56,7 +56,7 @@
           </button>
 
           <button class="exit-btn">Exit Simulation</button>
-          <div class="avatar">R</div>
+          <div class="avatar" id="studentAvatar"></div>
         </div>
       </header>
 
@@ -105,7 +105,9 @@
             </div>
 
             <div class="task-actions">
-              <button class="primary-btn" id="authSkillBtn">Authenticate Skill to Proceed</button>
+              <button class="primary-btn start-sim" data-task-id="security-patch">
+  Start Security Simulation
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -154,8 +156,12 @@
             </div>
 
             <div class="task-actions">
-              <button class="primary-btn">Start Task</button>
-              <button class="secondary-btn">Continue</button>
+              <button class="primary-btn start-sim" data-task-id="mobile-growth">
+  Start Simulation
+</button>
+<button class="secondary-btn start-sim" data-task-id="mobile-growth">
+  Continue
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -197,7 +203,9 @@
             </div>
 
             <div class="task-actions">
-              <button class="secondary-btn">Start When Ready</button>
+             <button class="secondary-btn start-sim" data-task-id="docs-update">
+  Start When Ready
+</button>
               <select class="secondary-btn" style="appearance: auto; padding-right: 24px; cursor: pointer;">
                 <option value="" disabled selected>Open with...</option>
                 <option value="vscode">VS Code Remote</option>
@@ -838,10 +846,10 @@
               <div class="profile-header">
                 <div class="profile-hero-bg"></div>
                 <div class="profile-hero-content">
-                  <div class="profile-avatar-premium">RY</div>
+                  <div class="profile-avatar-premium" id="candidateAvatar"></div>
                   <div class="profile-identity">
-                    <h2>Richa Yadav</h2>
-                    <p class="profile-title">Product Manager Candidate</p>
+                    <h2 id="candidateName"></h2>
+                    <p class="profile-title" id="candidateRole"></p>
                     <p class="profile-location"><i data-lucide="map-pin" class="icon-xs"></i> India &nbsp;|&nbsp; <i data-lucide="graduation-cap" class="icon-xs"></i> Army Institute of Technology, Pune</p>
                   </div>
                   <div class="profile-actions">
@@ -1041,6 +1049,12 @@
 
         </aside>
       </main>
+      <div style="padding: 20px;">
+        <textarea 
+          placeholder="Write your solution here..." 
+          style="width: 100%; height: 120px; padding: 12px; border-radius: 8px; border: 1px solid #ccc;">
+        </textarea>
+      </div>
 
       <!-- Submission bar -->
       <div class="submission-bar">
@@ -1164,7 +1178,20 @@
       </div>
     </div>
   </div>
+<script src="../js/dashboard.js"></script>
 
-  <script src="dashboard.js"></script>
+<script>
+  document.querySelectorAll(".start-sim").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const taskId = btn.dataset.taskId;
+      localStorage.setItem("dayzero_task_id", taskId);
+      window.location.href = "simulation.html";
+    });
+  });
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+</script>
 </body>
 </html>
