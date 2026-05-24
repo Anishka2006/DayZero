@@ -1876,7 +1876,7 @@ function renderMission() {
   channelTitle.textContent = `#${state.mission.channel}`;
   priorityBadge.textContent = state.mission.priority;
   crisisStatus.textContent = state.mission.crisisStatus;
-  phaseLabel.textContent = "Intro";
+  phaseLabel.textContent = "Live Sprint";
   scenarioTitle.textContent = state.mission.headline;
   scenarioSummary.textContent = state.mission.summary;
   taskDeadline.textContent = `${state.mission.deadlineMinutes} mins`;
@@ -2037,10 +2037,12 @@ function renderChatMessage(rawMessage) {
 function rerenderChat() {
   teamChat.innerHTML = "";
   const visibleMessages = visibleMessageStore().filter(shouldShowMessage);
-  if (!visibleMessages.length && !isTeamChannel(state.currentChannel)) {
+  if (!visibleMessages.length) {
     const emptyState = document.createElement("div");
     emptyState.className = "chat-empty-state";
-    emptyState.textContent = "No private messages yet. Start the conversation.";
+    emptyState.textContent = isTeamChannel(state.currentChannel)
+      ? "Task loaded. Send the first work update when you are ready."
+      : "No private messages yet. Start the conversation.";
     teamChat.appendChild(emptyState);
     return;
   }
@@ -2252,12 +2254,18 @@ function chatTaskContext(selectedChannel, selectedAgent) {
   };
 }
 
+function isTransientBackendErrorMessage(message) {
+  const text = String(message && (message.message || message.content || "") || "").trim();
+  return text.includes("Live teammate response is temporarily unavailable");
+}
+
 function normalizeIncomingAgentMessages(messages, channel, targetAgent = null) {
   const normalizedChannel = normalizeChannelId(channel);
   const dmMode = !isTeamChannel(normalizedChannel);
   return (Array.isArray(messages) ? messages : [])
     .map((message) => sanitizeRoomMessage(message))
     .filter((message) => !isHiddenEvaluatorPayload(message))
+    .filter((message) => !isTransientBackendErrorMessage(message))
     .filter((message) => {
       const speaker = agentForSpeakerName(message.speaker_name || message.name);
       if (String(message.role || "").toLowerCase() === "user") {
@@ -2674,8 +2682,12 @@ function evaluationChecklist() {
 }
 
 function updatePhase(nextPhase) {
-  if (!nextPhase) return;
-  phaseLabel.textContent = nextPhase.charAt(0).toUpperCase() + nextPhase.slice(1);
+  const rawPhase = String(nextPhase || "").trim().toLowerCase();
+  if (!rawPhase) return;
+  const normalizedPhase = rawPhase === "intro" ? "planning" : rawPhase;
+  phaseLabel.textContent = normalizedPhase
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function storeSessionId(sessionId) {
@@ -2746,6 +2758,25 @@ async function fetchSession(sessionId) {
   return response.json();
 }
 
+function consumePreparedSession() {
+  const raw = sessionStorage.getItem("dayzero_session_data");
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.session_id) {
+      return null;
+    }
+    sessionStorage.removeItem("dayzero_session_data");
+    return payload;
+  } catch (error) {
+    sessionStorage.removeItem("dayzero_session_data");
+    return null;
+  }
+}
+
 function hydrateFromSession(payload) {
   if (payload.report && payload.status === "completed") {
     window.clearInterval(state.countdownHandle);
@@ -2767,22 +2798,24 @@ function hydrateFromSession(payload) {
   state.timeline = Array.isArray(payload.memory && payload.memory.timeline) ? payload.memory.timeline.slice() : loadTimelineState();
   state.timeline.forEach((entry) => state.timelineKeys.add(uniqueTimelineKey(entry)));
   renderTimeline();
-  updatePhase(payload.phase || (payload.memory && payload.memory.phase) || "intro");
+  updatePhase(payload.phase || (payload.memory && payload.memory.phase) || "planning");
   resetCountdown(payload);
 
   const messages = payload.messages || payload.initial_messages || [];
   if (messages.length) {
     const hasCandidateMessage = messages.some((message) => String(message.role || "").toLowerCase() === "user");
-    const introOnly = !hasCandidateMessage && messages.length <= 5;
-    if (introOnly) {
+    const openingOnly = !hasCandidateMessage && messages.length <= 5;
+    if (openingOnly) {
       appendMessagesSequentially(messages, 350, 850);
     } else {
       messages.forEach(appendChatMessage);
     }
+  } else {
+    rerenderChat();
   }
 }
 
-function introMessagesForMission() {
+function openingMessagesForMission() {
   const agents = state.agents && state.agents.length ? state.agents : agentsForMission(state.mission);
   const byId = (id) => agents.find((mate) => mate.id === id) || null;
   const pm = byId("pm") || agents[0] || agentById("pm");
@@ -2810,16 +2843,105 @@ function introMessagesForMission() {
       speaker_title: anchor.title,
       avatar: anchor.avatar,
       channel: "team",
-      message: `I am starting with ${firstFile.name}. That should show where the risky behavior lives.`,
+      message: `Starting with ${firstFile.name}. That should show where the risky behavior lives.`,
     },
     {
       speaker_name: qa.name,
       speaker_title: qa.title,
       avatar: qa.avatar,
       channel: "team",
-      message: `I will keep release risk visible. The first thing to prove is: ${state.mission.summary}`,
+      message: `Keeping release risk visible. The first thing to prove is: ${state.mission.summary}`,
     },
   ].slice(0, 2);
+}
+
+function localAgentForMessage(text, targetAgent = null) {
+  if (targetAgent) {
+    return targetAgent;
+  }
+
+  const mentioned = agentMentionedIn(text);
+  if (mentioned) {
+    return mentioned;
+  }
+
+  const lowered = String(text || "").toLowerCase();
+  let preferredId = "pm";
+  if (/\b(test|bug|fail|edge|qa|rollback|proof|validate|check)\b/.test(lowered)) {
+    preferredId = "qa";
+  } else if (/\b(data|metric|analytics|dashboard|sql|csv|experiment|score|report)\b/.test(lowered)) {
+    preferredId = "data";
+  } else if (/\b(ui|ux|design|screen|copy|mobile|layout|loading|state)\b/.test(lowered)) {
+    preferredId = "designer";
+  } else if (/\b(api|backend|server|database|retry|token|endpoint|error|code|patch|cache|queue)\b/.test(lowered)) {
+    preferredId = "backend";
+  }
+
+  return (state.agents || []).find((agent) => agent.id === preferredId)
+    || agentById(preferredId)
+    || (state.agents || [])[0]
+    || agentById("pm");
+}
+
+function localReplyForAgent(agent, text) {
+  const focusFile = bestFileForAgent(agent);
+  const fileName = focusFile.name || "task_brief.md";
+  const lowered = String(text || "").toLowerCase();
+  const needsHelp = /\b(help|what should i do|what do i do|where to start|how to start|next step)\b/.test(lowered);
+
+  if (needsHelp) {
+    return `Start with ${fileName}. Make one task-specific decision, name the tradeoff, and give the room one proof point.`;
+  }
+
+  switch (agent && agent.id) {
+    case "backend":
+      return `Use ${fileName} to pin down the failing request, error, retry, or rollback path. Smallest safe behavior first; cleanup can wait.`;
+    case "designer":
+      return `In ${fileName}, make the confusing state obvious: what happened, what the user can do next, and why the flow is safe.`;
+    case "qa":
+      return `For ${fileName}, prove the messy path before signoff. I want one edge case, the retest signal, and the rollback watch item.`;
+    case "data":
+      return `Tie the call to one signal in ${fileName}. Name the caveat too, so the room does not overclaim the metric.`;
+    case "pm":
+    default:
+      return `Keep the scope tight for ${state.mission.headline}. Make the first decision, say what waits, and attach one proof point.`;
+  }
+}
+
+function localFallbackMessagesFor(text, channel, targetAgent = null) {
+  const normalizedChannel = normalizeChannelId(channel || "team");
+  const primary = localAgentForMessage(text, targetAgent);
+  const messageChannel = targetAgent ? agentChannelId(targetAgent) : normalizedChannel;
+  const messages = [
+    {
+      speaker_name: primary.name,
+      speaker_title: primary.title,
+      avatar: primary.avatar,
+      role: "agent",
+      channel: messageChannel,
+      message: localReplyForAgent(primary, text),
+      created_at: new Date().toISOString(),
+    },
+  ];
+
+  const needsSecondVoice = isTeamChannel(normalizedChannel)
+    && /\b(risk|safe|ship|demo|deadline|blocked|bug|fail|rollback|urgent|proof|validate)\b/.test(String(text || "").toLowerCase());
+  if (needsSecondVoice) {
+    const qa = (state.agents || []).find((agent) => agent.id === "qa") || agentById("qa");
+    if (qa && qa.id !== primary.id) {
+      messages.push({
+        speaker_name: qa.name,
+        speaker_title: qa.title,
+        avatar: qa.avatar,
+        role: "agent",
+        channel: "team",
+        message: localReplyForAgent(qa, text),
+        created_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  return messages.slice(0, 2);
 }
 
 function seedLocalRoom() {
@@ -2839,7 +2961,7 @@ function seedLocalRoom() {
   state.timeline.forEach((entry) => state.timelineKeys.add(uniqueTimelineKey(entry)));
   renderTimeline();
   appendMessagesSequentially(
-    introMessagesForMission().map((message) => ({ ...message, created_at: new Date().toISOString() })),
+    openingMessagesForMission().map((message) => ({ ...message, created_at: new Date().toISOString() })),
     350,
     850
   );
@@ -2847,6 +2969,20 @@ function seedLocalRoom() {
 }
 
 async function startOrResumeSession() {
+  const preparedSession = consumePreparedSession();
+  if (preparedSession) {
+    try {
+      storeSessionId(preparedSession.session_id);
+      setLiveBackendMode(true);
+      hydrateFromSession(preparedSession);
+      scrollChatToBottom();
+      showToast("Room ready.");
+      return;
+    } catch (error) {
+      storeSessionId(null);
+    }
+  }
+
   const storedSessionId = localStorage.getItem(sessionStorageKey());
   try {
     let payload;
@@ -2956,20 +3092,13 @@ async function sendRoomMessage(rawText, targetChannel = null) {
     console.error("Room chat backend error:", error);
     hideTyping();
     setLiveBackendMode(false);
-    appendChatMessage({
-      speaker_name: "System",
-      speaker_title: "Backend",
-      role: "system",
-      avatar: "!",
-      message: `Backend chat failed: ${error.message || "unknown error"}. Check the Flask logs; no local teammate reply was generated.`,
-      created_at: new Date().toISOString(),
-      channel,
-    });
+    appendMessagesSequentially(localFallbackMessagesFor(text, channel, targetAgent), 180, 420);
     addTimelineEvent({
-      title: "Backend chat failed",
-      description: "No hardcoded teammate reply was used. Check the backend logs for the provider or route error.",
+      title: "Local teammate fallback",
+      description: "Live backend chat was unavailable, so the room used task-specific local teammate replies.",
       created_at: new Date().toISOString(),
     });
+    showToast("Live backend unavailable. Using local teammate replies.");
   }
 }
 
@@ -3034,15 +3163,8 @@ async function runChecks() {
     console.error("Run checks backend error:", error);
     hideTyping();
     setLiveBackendMode(false);
-    appendChatMessage({
-      speaker_name: "System",
-      speaker_title: "Backend",
-      role: "system",
-      avatar: "!",
-      message: `Backend checks response failed: ${error.message || "unknown error"}. Check Flask logs; no local teammate reply was generated.`,
-      created_at: new Date().toISOString(),
-      channel,
-    });
+    appendMessagesSequentially(localFallbackMessagesFor(summary, channel, targetAgent), 180, 420);
+    showToast("Live backend unavailable. Checks handled locally.");
   }
 }
 

@@ -13,7 +13,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from ai_engine.core.llm import chat_completion, extract_text, has_groq_config
+from ai_engine.core.llm import (
+    chat_completion,
+    configured_provider,
+    default_model_for,
+    extract_text,
+    has_llm_config,
+)
 from backend.services.orchestrator import (
     evaluate_work,
     get_session,
@@ -55,9 +61,12 @@ def home():
 
 @app.route("/health", methods=["GET"])
 def health():
+    provider = configured_provider()
     return jsonify({
         "ok": True,
-        "groq_configured": has_groq_config()
+        "llm_configured": has_llm_config(),
+        "llm_provider": provider,
+        "llm_model": default_model_for(provider) if provider else None,
     }), 200
 
 
@@ -86,15 +95,17 @@ def chat():
 
     if not response:
         app.logger.warning(
-            "api_chat provider=groq status=failed model=%s messages=%s",
+            "api_chat provider=%s status=failed model=%s messages=%s",
+            configured_provider() or "none",
             incoming.get("model") or "default",
             len(messages),
         )
-        return jsonify({"error": "Groq request failed or API key missing."}), 503
+        return jsonify({"error": "LLM request failed or API key missing."}), 503
 
     app.logger.info(
-        "api_chat provider=groq status=ok model=%s messages=%s reply_chars=%s",
-        response.get("model") or incoming.get("model") or "default",
+        "api_chat provider=%s status=ok model=%s messages=%s reply_chars=%s",
+        response.get("_dayzero_provider") or configured_provider() or "unknown",
+        response.get("_dayzero_model") or response.get("model") or incoming.get("model") or "default",
         len(messages),
         len(extract_text(response) or ""),
     )
@@ -390,10 +401,10 @@ def api_save_observer_note(session_id: str):
 
 @app.route("/api/ping-llm", methods=["GET"])
 def ping_llm():
-    if not has_groq_config():
+    if not has_llm_config():
         return jsonify({
             "ok": False,
-            "message": "GROQ_API_KEY is missing."
+            "message": "No LLM provider is configured."
         }), 200
 
     response = chat_completion(
@@ -404,11 +415,13 @@ def ping_llm():
     )
 
     if not response:
-        return jsonify({"ok": False, "message": "Groq request failed."}), 200
+        return jsonify({"ok": False, "message": "LLM request failed."}), 200
 
     return jsonify({
         "ok": True,
-        "reply": extract_text(response) or "ready"
+        "reply": extract_text(response) or "ready",
+        "provider": response.get("_dayzero_provider") or configured_provider(),
+        "model": response.get("_dayzero_model") or default_model_for(configured_provider()),
     }), 200
 
 

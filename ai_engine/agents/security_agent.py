@@ -47,13 +47,13 @@ class SecurityAgent(BaseAgent):
 
         if event_type == "candidate_message" and event.get("candidate_introduction_detected"):
             return self._two_sentences(
-                "I am Zara, security. I will watch for abuse vectors and auth risks.",
+                "Security is watching for abuse vectors and auth risks.",
                 f"For {task_title}, the most sensitive data or permission needs to stay visible.",
             )
 
         if event_type == "candidate_message" and not memory.get("candidate_introduced"):
             return self._two_sentences(
-                f"I am starting from {focus_file} and the active security boundary.",
+                f"Start from {focus_file} and the active security boundary.",
                 "Smallest safe mitigation matters more than a broad rewrite.",
             )
 

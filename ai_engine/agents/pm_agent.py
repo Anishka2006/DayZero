@@ -67,7 +67,7 @@ class PMAgent(BaseAgent):
             )
 
         if event_type == "candidate_message" and event.get("candidate_introduction_detected"):
-            greeting = f"Thanks, {candidate_name}." if candidate_name else "Thanks for the intro."
+            greeting = f"Got it, {candidate_name}." if candidate_name else "Got it."
             return self._two_sentences(
                 f"{greeting} For {task.get('title', 'this task')}, start with the smallest decision that unblocks the room.",
                 "Keep the ship-now path separate from polish or follow-up work.",

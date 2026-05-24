@@ -1,13 +1,17 @@
-const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "https://madap.onrender.com";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:5000";
+const API_BASE_URL = localStorage.getItem("dayzero_api_base") || DEFAULT_API_BASE_URL;
+
+localStorage.setItem("dayzero_api_base", API_BASE_URL);
 
 const LOADING_MESSAGES = [
-  "Initializing workspace...",
-  "Syncing teammates...",
-  "Loading files...",
-  "Connecting channels...",
-  "Preparing simulation room...",
-  "Reviewing architecture...",
-  "Starting sprint...",
+  "Initializing simulation workspace...",
+  "Syncing teammates and project context...",
+  "Loading company files, sprint board, and active blockers...",
+  "AI teammates are reviewing the task brief...",
+  "Preparing live work environment...",
+  "Observer agent connected silently...",
+  "Building your SkillRecord evaluation pipeline...",
+  "Simulation room ready.",
 ];
 
 let currentMessageIndex = 0;
@@ -16,6 +20,7 @@ let progressInterval = null;
 let startTime = Date.now();
 let fallbackTimer = null;
 let errorTimer = null;
+let loadingRunId = 0;
 
 const statusText = document.getElementById("statusText");
 const progressFill = document.getElementById("progressFill");
@@ -79,8 +84,17 @@ function rotateLoadingMessages() {
   }, 300);
 }
 
+function setStatus(message) {
+  if (!statusText || !message) return;
+  statusText.textContent = message;
+  statusText.classList.remove("fade-out");
+  statusText.classList.add("fade-in");
+}
+
 function startMessageRotation() {
-  rotateLoadingMessages();
+  currentMessageIndex = 0;
+  setStatus(LOADING_MESSAGES[currentMessageIndex]);
+  currentMessageIndex = 1;
   messageInterval = setInterval(rotateLoadingMessages, 2500);
 }
 
@@ -133,6 +147,25 @@ function cleanup() {
   if (errorTimer) clearTimeout(errorTimer);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      cache: "no-store",
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function resetStoredSimulationRun(taskId) {
   if (!taskId) return;
 
@@ -150,7 +183,7 @@ function resetStoredSimulationRun(taskId) {
 
 function selectedTaskContext(taskId) {
   try {
-    const raw = localStorage.getItem("dayzero_selected_task_details");
+    const raw = sessionStorage.getItem("dayzero_selected_task_details") || localStorage.getItem("dayzero_selected_task_details");
     if (!raw) return null;
 
     const parsed = JSON.parse(raw);
@@ -160,10 +193,47 @@ function selectedTaskContext(taskId) {
   }
 }
 
+async function wakeBackendService() {
+  const attempts = [
+    { timeout: 8000, delay: 900 },
+    { timeout: 12000, delay: 1400 },
+    { timeout: 16000, delay: 2200 },
+    { timeout: 20000, delay: 0 },
+  ];
+
+  let lastError = null;
+
+  for (let index = 0; index < attempts.length; index += 1) {
+    const attempt = attempts[index];
+    if (index > 0) {
+      setStatus("AI teammates are reviewing the task brief...");
+    }
+
+    try {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/health`, { method: "GET" }, attempt.timeout);
+      if (response.ok) {
+        setStatus("Preparing live work environment...");
+        hideFallback();
+        return true;
+      }
+      lastError = new Error(`Health check returned ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    showFallback("Waiting for the local simulation backend. Start it with python backend/app.py if it is not running.");
+    if (attempt.delay) {
+      await sleep(attempt.delay);
+    }
+  }
+
+  throw lastError || new Error("Backend health check failed.");
+}
+
 async function initializeSession() {
-  const taskId = sessionStorage.getItem("dayzero_task_id");
-  const role = sessionStorage.getItem("dayzero_role");
-  const difficulty = sessionStorage.getItem("dayzero_difficulty");
+  const taskId = sessionStorage.getItem("dayzero_task_id") || localStorage.getItem("dayzero_task_id");
+  const role = sessionStorage.getItem("dayzero_role") || localStorage.getItem("userRole");
+  const difficulty = sessionStorage.getItem("dayzero_difficulty") || localStorage.getItem("userExperience");
   const taskContext = selectedTaskContext(taskId);
   const backendTaskId = TASK_TO_BACKEND_TASK_ID[taskId] || taskId;
 
@@ -173,14 +243,13 @@ async function initializeSession() {
   }
 
   localStorage.setItem("dayzero_task_id", taskId);
+  sessionStorage.setItem("dayzero_task_id", taskId);
   resetStoredSimulationRun(taskId);
 
   try {
-    // First, call health endpoint to wake up Render
-    await fetch(`${API_BASE_URL}/health`, { method: "GET" });
+    await wakeBackendService();
 
-    // Then create session
-    const response = await fetch(`${API_BASE_URL}/api/sessions`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -190,7 +259,7 @@ async function initializeSession() {
         participant_name: localStorage.getItem("userName") || "Candidate",
         task_context: taskContext,
       }),
-    });
+    }, 18000);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -213,12 +282,14 @@ function navigateToSimulation(sessionData) {
 }
 
 async function startLoadingSequence() {
+  cleanup();
+  const runId = ++loadingRunId;
   startMessageRotation();
   startProgressAnimation();
 
   // Show fallback after 8 seconds
   fallbackTimer = setTimeout(() => {
-    showFallback("Render is waking up the simulation service...");
+    showFallback("Waiting for the local simulation backend...");
   }, 8000);
 
   // Show error after 20 seconds
@@ -229,14 +300,20 @@ async function startLoadingSequence() {
   try {
     const sessionData = await initializeSession();
 
-    if (sessionData) {
+    if (sessionData && runId === loadingRunId) {
       cleanup();
+      setStatus("Simulation room ready.");
+      if (progressFill) {
+        progressFill.style.width = "100%";
+      }
+      await sleep(450);
       navigateToSimulation(sessionData);
     }
   } catch (error) {
+    if (runId !== loadingRunId) return;
     cleanup();
     hideFallback();
-    showError("Could not initialize simulation. Please retry.");
+    showError("Could not connect to the local backend or initialize the simulation. Please retry.");
   }
 }
 

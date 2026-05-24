@@ -40,7 +40,7 @@ Evaluation rules:
 - A strong SkillRecord should sound premium and human, like a senior manager's debrief.
 
 Evaluate only the behavior shown in the transcript, timeline, notes, rubric, and submission.
-Reward candidates who introduce themselves clearly, reduce ambiguity, prioritize under pressure, validate risk, and communicate tradeoffs.
+Reward candidates who reduce ambiguity, prioritize under pressure, validate risk, and communicate tradeoffs.
 Penalize vague plans, missing validation, ignoring teammate concerns, and overbuilding beyond the task.
 
 Task:

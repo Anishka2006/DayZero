@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ai_engine.core.llm import ask_ai
+from ai_engine.core.llm import ask_ai, configured_provider, default_model_for
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,16 @@ class BaseAgent(ABC):
         scores: dict[str, int],
     ) -> str | None:
         prompt = self._build_user_prompt(event, memory, scores)
+        provider = configured_provider() or "none"
+        logger.info(
+            "agent_llm_request agent=%s name=%s provider=%s model=%s event=%s channel=%s",
+            self.id,
+            self.name,
+            provider,
+            default_model_for(provider) if provider != "none" else "none",
+            self._event_type(event),
+            event.get("channel_id") or "team",
+        )
         response = ask_ai(
             prompt=prompt,
             system_prompt=self._build_system_prompt(event),
@@ -172,7 +182,7 @@ class BaseAgent(ABC):
             f"- Room timeline: {room.get('timeline') or []}\n"
             f"- Current crisis: {crisis_event or '(none)'}\n"
             f"- Candidate message: {candidate_message}\n"
-            f"- Current phase: {memory.get('phase', 'intro')}\n"
+            f"- Current phase: {memory.get('phase', 'planning')}\n"
             f"- Current skill focus: {event.get('skill_focus') or memory.get('skill_focus') or 'communication'}\n"
             f"- Candidate introduced: {memory.get('candidate_introduced', False)}\n"
             f"- Candidate name: {memory.get('candidate_name') or event.get('candidate_name') or '(unknown)'}\n"

@@ -1145,14 +1145,14 @@ def _welcome_message(agent: dict[str, str], task: dict[str, Any]) -> str:
     name = agent["name"]
     title = task["title"]
     if name == "Asha":
-        return f"Hey, I am Asha. For {title}, I will keep us honest on user impact, priority, and the success metric."
+        return f"For {title}, user impact, priority, and the success metric need to stay visible."
     if name == "Ravi":
-        return f"Ravi here. I will watch feasibility, implementation risk, and the smallest change that can safely ship."
+        return "Engineering is watching feasibility, implementation risk, and the smallest change that can safely ship."
     if name == "Mira":
-        return "Mira here. I will push for clear frontend states, readable UX, and accessible handoff details."
+        return "Design is watching for clear frontend states, readable UX, and accessible handoff details."
     if name == "Leah":
-        return "Leah here. I will keep metrics, trends, and experiment caveats honest."
-    return "Kenji here. I will press on edge cases, validation, and rollback before we call the work done."
+        return "Metrics, trends, and experiment caveats need to stay honest."
+    return "QA will press on edge cases, validation, and rollback before we call the work done."
 
 
 def _dm_welcome_message(agent: dict[str, str], task: dict[str, Any]) -> str:

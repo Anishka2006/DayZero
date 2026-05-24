@@ -714,6 +714,29 @@ function clearCandidateSimulationState() {
   localStorage.removeItem("dayzero_task_id");
   localStorage.removeItem("selectedTaskId");
   localStorage.removeItem("dayzero_selected_task_details");
+  sessionStorage.removeItem("dayzero_task_id");
+  sessionStorage.removeItem("dayzero_role");
+  sessionStorage.removeItem("dayzero_difficulty");
+  sessionStorage.removeItem("dayzero_selected_task_details");
+  sessionStorage.removeItem("dayzero_session_data");
+}
+
+function queueSimulationLoading(taskId, taskPayload) {
+  if (!taskId) return;
+
+  const payload = taskPayload && typeof taskPayload === "object" ? taskPayload : {};
+  localStorage.setItem("dayzero_task_id", taskId);
+  localStorage.setItem("selectedTaskId", taskId);
+  sessionStorage.setItem("dayzero_task_id", taskId);
+  sessionStorage.setItem("dayzero_role", payload.role || getCandidateRole());
+  sessionStorage.setItem("dayzero_difficulty", payload.difficulty || localStorage.getItem("userExperience") || "Intermediate");
+  sessionStorage.removeItem("dayzero_session_data");
+
+  if (Object.keys(payload).length) {
+    const serialized = JSON.stringify(payload);
+    localStorage.setItem("dayzero_selected_task_details", serialized);
+    sessionStorage.setItem("dayzero_selected_task_details", serialized);
+  }
 }
 
 refreshLucideIcons();
@@ -894,7 +917,7 @@ crisisOptions.forEach(option => {
           candidate_message: candidateResponse,
           memory: orchestratorState.memory || {},
           scores: orchestratorState.scores || {},
-          phase: orchestratorState.phase || "intro"
+          phase: orchestratorState.phase || "planning"
         })
       });
       const data = await response.json();
@@ -1033,20 +1056,22 @@ function renderTaskGrid() {
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = "Preparing Room...";
-      localStorage.setItem('dayzero_task_id', taskId);
-      localStorage.setItem('selectedTaskId', taskId);
       try {
         const taskPayload = await taskPayloadWithWorkspaceFiles(selectedTask);
         if (taskPayload) {
-          localStorage.setItem('dayzero_selected_task_details', JSON.stringify(taskPayload));
+          queueSimulationLoading(taskId, taskPayload);
+        } else {
+          queueSimulationLoading(taskId, selectedTask);
         }
-        window.location.href = 'simulation.html';
+        window.location.href = 'loading.html';
       } catch (error) {
         console.warn("Could not attach workspace files to selected task", error);
         if (selectedTask) {
-          localStorage.setItem('dayzero_selected_task_details', JSON.stringify(selectedTask));
+          queueSimulationLoading(taskId, selectedTask);
+        } else {
+          queueSimulationLoading(taskId);
         }
-        window.location.href = 'simulation.html';
+        window.location.href = 'loading.html';
       } finally {
         btn.disabled = false;
         btn.textContent = originalText;
@@ -1250,7 +1275,7 @@ if (exitBtn) {
 refreshLucideIcons();
 
 // Sprint console logic.
-const SPRINT_CONSOLE_MODEL = "llama-3.1-8b-instant";
+const SPRINT_CONSOLE_MODEL = "x-ai/grok-4.3";
 
 const managerStyleSelect = document.getElementById("managerStyleSelect");
 const managerMsgs = document.getElementById("managerMsgs");
@@ -1531,7 +1556,7 @@ openRequestedSprintConsole();
 if (managerStyleSelect) {
   managerStyleSelect.addEventListener("change", () => {
     addManagerMessage(`System Notice: AI Mentor personality reconfigured to [${managerStyleSelect.value}].`, false);
-    simulateAiResponse(`Hi, please introduce yourself using your new ${managerStyleSelect.value} personality in one sentence.`);
+    simulateAiResponse(`Reply in a ${managerStyleSelect.value} tone with one task-focused next step. Do not ask for personal background.`);
   });
 }
 
@@ -3349,7 +3374,7 @@ async function initializeLiveSimulation(forceRefresh = false) {
     task: data.task || null,
     memory: data.memory || {},
     scores: data.scores || {},
-    phase: data.phase || "intro",
+    phase: data.phase || "planning",
     role,
     initial_messages: data.initial_messages || []
   });
@@ -3403,7 +3428,7 @@ async function handleTeamChatSend() {
           candidate_message: userText,
           memory: orchestratorState.memory || {},
           scores: orchestratorState.scores || {},
-          phase: orchestratorState.phase || "intro",
+          phase: orchestratorState.phase || "planning",
           role: getCandidateRole()
         })
       });
@@ -3416,7 +3441,7 @@ async function handleTeamChatSend() {
         memory: data.memory || {},
         scores: data.scores || {},
         role: getCandidateRole(),
-        phase: data.phase || "intro"
+        phase: data.phase || "planning"
       });
       updateTaskFromSimulation(data.task);
       appendTeamChatMessage(

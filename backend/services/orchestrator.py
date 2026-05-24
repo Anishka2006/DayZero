@@ -29,7 +29,7 @@ DEFAULT_MEMORY = {
     "failed_tests": [],
     "passed_tests": [],
     "timeline": [],
-    "phase": "intro",
+    "phase": "planning",
     "last_agent": None,
     "last_agents": [],
     "decisions": [],
@@ -415,6 +415,13 @@ class SimulationOrchestrator:
             self._message_payload(entry, created_at=_utc_now())
             for entry in initial_messages
         ]
+        logger.info(
+            "simulation_start session=%s task=%s phase=%s opening_agents=%s",
+            session_id,
+            task.get("title"),
+            memory["phase"],
+            ",".join(entry.get("name", "") for entry in initial_messages),
+        )
 
         observer_note = "Room opened with task-specific team context and active workspace files."
 
@@ -462,7 +469,7 @@ class SimulationOrchestrator:
             "observer_notes": list(session.get("observer_notes") or []),
             "submission": session.get("submission") or "",
             "participant_name": session.get("participant_name") or "You",
-            "phase": session["memory"].get("phase", "intro"),
+            "phase": session["memory"].get("phase", "planning"),
             "simulation_done": session["memory"].get("simulation_done", False),
         }
 
@@ -1068,7 +1075,7 @@ class SimulationOrchestrator:
                 "role": anchor.role,
                 "avatar": anchor.avatar,
                 "message": (
-                    f"I am starting with {focus_file}. "
+                    f"Starting with {focus_file}. "
                     "That should tell us where the risky behavior is showing up."
                 ),
             },
@@ -1079,7 +1086,7 @@ class SimulationOrchestrator:
                     "name": "Kenji",
                     "role": "QA Engineer",
                     "avatar": "K",
-                    "message": f"I will keep an eye on release risk. The first thing to prove is: {first_blocker}",
+                    "message": f"Keeping an eye on release risk. The first thing to prove is: {first_blocker}",
                 }
             )
         unique: list[dict[str, Any]] = []
@@ -1091,117 +1098,6 @@ class SimulationOrchestrator:
             seen.add(name)
             unique.append(message)
         return unique
-
-        legacy_messages = [
-            {
-                "name": "Asha",
-                "role": "Product Manager",
-                "avatar": "A",
-                "message": (
-                    f"Hey, I am Asha, PM for {task['company']}. "
-                    f"We are in #{task['channel']} and it is already moving: {room.get('severity', 'active')} pressure, {task['deadline']} mins."
-                ),
-            },
-            {
-                "name": "Ravi",
-                "role": "Engineering Lead",
-                "avatar": "R",
-                "message": f"I am Ravi on engineering. I am looking at {self._first_workspace_file(task, 'code')} first because that is where the risky path shows up.",
-            },
-            {
-                "name": "Kenji",
-                "role": "QA Engineer",
-                "avatar": "K",
-                "message": (
-                    "Kenji from QA here. I am fine moving fast, but I need proof before we call this safe. "
-                    f"Blocker: {first_blocker}"
-                ),
-            },
-        ]
-
-        if task.get("domain") in ("frontend", "design", "pm"):
-            messages.insert(
-                2,
-                {
-                    "name": "Mira",
-                    "role": "Product Designer",
-                    "avatar": "M",
-                    "message": f"Mira from design. I am watching what the user actually sees in {self._first_workspace_file(task, 'brief')}.",
-                },
-            )
-
-        # Do not insert a visible evaluator message; the evaluator remains silent and unnamed.
-
-        messages.append(
-            {
-                "name": "Asha",
-                "role": "Product Manager",
-                "avatar": "A",
-                "message": "Before we jump in, give us a quick intro and the first call you want the room to make.",
-            }
-        )
-
-        return legacy_messages
-
-        return [
-            {
-                "name": "Asha",
-                "role": "Product Manager",
-                "avatar": "A",
-                "message": (
-                    f"Hi, I am Asha, the product manager for {task['company']}. "
-                    f"We are in #{task['channel']}; before we jump in, please introduce yourself and how you approach this kind of work."
-                ),
-            },
-            {
-                "name": "Ravi",
-                "role": "Engineering Lead",
-                "avatar": "R",
-                "message": "I am Ravi, engineering lead. I will watch contracts, failure modes, and what can ship safely.",
-            },
-            {
-                "name": "Mira",
-                "role": "Product Designer",
-                "avatar": "M",
-                "message": "I am Mira, product designer. I will keep the user-facing path clear, calm, and trustworthy.",
-            },
-            {
-                "name": "Kenji",
-                "role": "QA Engineer",
-                "avatar": "K",
-                "message": (
-                    "I am Kenji, QA engineer. I will press on edge cases and proof before we call anything done. "
-                    f"Current issue: {task['problem']}"
-                ),
-            },
-        ]
-
-        return [
-            {
-                "name": "Asha",
-                "role": "Product Manager",
-                "avatar": "A",
-                "message": f"hey, welcome. we are in #{task['channel']} and this is already moving.",
-            },
-            {
-                "name": "Ravi",
-                "role": "Engineering Lead",
-                "avatar": "R",
-                "message": f"quick scope note: stabilize {task['title'].lower()} before redesigning anything.",
-            },
-            {
-                "name": "Mira",
-                "role": "Product Designer",
-                "avatar": "M",
-                "message": "please don’t overbuild the whole thing. make the broken path feel trustworthy first.",
-            },
-            {
-                "name": "Kenji",
-                "role": "QA Engineer",
-                "avatar": "K",
-                "message": f"i can reproduce the risky path. current issue: {task['problem']}",
-            },
-        ]
 
     def _first_workspace_file(self, task: dict[str, Any], preferred_kind: str | None = None) -> str:
         files = task.get("workspace_files") or []
@@ -1265,7 +1161,6 @@ class SimulationOrchestrator:
 
         if original_message and (extracted_name or self._candidate_intro_like(original_message)):
             memory["candidate_introduced"] = True
-            event["candidate_introduction_detected"] = True
 
         plan_signal = any(token in message for token in ("plan", "first", "then", "priority", "i'll", "i will", "ship"))
         if plan_signal:
@@ -1342,9 +1237,6 @@ class SimulationOrchestrator:
         message = str(event.get("candidate_message") or "").lower()
         event_type = str(event.get("event_type") or "")
 
-        if event.get("candidate_introduction_detected"):
-            self._bump(scores, "communication", 4)
-
         if any(token in message for token in ("plan", "first", "then", "priority")):
             self._bump(scores, "leadership", 8)
             self._bump(scores, "communication", 5)
@@ -1401,7 +1293,6 @@ class SimulationOrchestrator:
                 **event,
                 "room_context": rolling_context[-5:],
                 "candidate_name": memory.get("candidate_name") or session.get("participant_name") or "",
-                "requires_candidate_intro": False,
                 "skill_focus": memory.get("skill_focus") or event.get("skill_focus"),
                 "question_allowed": question_allowed,
                 "speaker_position": index + 1,
@@ -1717,7 +1608,6 @@ class SimulationOrchestrator:
     ) -> str:
         event_type = str(event.get("event_type") or "")
         should_observe = event_type in ("crisis_triggered", "tests_failed", "tests_passed", "submit_solution")
-        should_observe = should_observe or bool(event.get("candidate_introduction_detected"))
         should_observe = should_observe or bool(event.get("plan_signal_detected"))
         should_observe = should_observe or bool(event.get("clarification_signal_detected"))
         should_observe = should_observe or bool(event.get("tradeoff_signal_detected"))
@@ -1726,11 +1616,7 @@ class SimulationOrchestrator:
         if not should_observe:
             return ""
 
-        observer_event = {**event, "room_context": room_context}
-        if event.get("candidate_introduction_detected"):
-            observer_event["event_type"] = "candidate_introduction"
-
-        return self.observer_agent.generate_response(observer_event, memory, scores)
+        return self.observer_agent.generate_response({**event, "room_context": room_context}, memory, scores)
 
     def _skill_focus_for(self, memory: dict[str, Any], event: dict[str, Any]) -> str:
         event_type = str(event.get("event_type") or "")
@@ -1761,25 +1647,12 @@ class SimulationOrchestrator:
         if target_agent and self._agent_visible_for_task(target_agent, task):
             return [target_agent]
 
-        if (
-            event_type == "candidate_message"
-            and not memory.get("candidate_introduced")
-            and int(memory.get("user_message_count", 0)) <= 1
-        ):
-            return [self.pm_agent] if self._agent_visible_for_task(self.pm_agent, task) else [self._role_anchor_agent(task)]
-
         direct_agent = self._directly_addressed_agent(message)
         if direct_agent and self._agent_visible_for_task(direct_agent, task):
             return [direct_agent]
 
         if any(token in message for token in ("score", "scoring", "report", "rubric", "submission", "feedback", "skillrecord", "evaluation", "grade")):
             return [self.data_agent] if self._agent_visible_for_task(self.data_agent, task) else [self.pm_agent if self._agent_visible_for_task(self.pm_agent, task) else self._role_anchor_agent(task)]
-
-        if event.get("candidate_introduction_detected"):
-            anchor = self._role_anchor_agent(task)
-            lineup = [self.pm_agent, anchor]
-            visible = [agent for agent in self._unique_agents(lineup) if self._agent_visible_for_task(agent, task)]
-            return (visible or [anchor])[:2]
 
         if event_type == "submit_solution":
             return [self.pm_agent]
@@ -1805,40 +1678,6 @@ class SimulationOrchestrator:
                 return self._unique_agents([ranked[0], second])[:count]
 
         return ranked[:count] or [self.pm_agent]
-
-        if event_type == "submit_solution":
-            return [self.pm_agent, self.qa_agent, self.backend_agent]
-
-        if event_type in ("tests_failed", "tests_passed", "run_tests"):
-            return [self.qa_agent, self.backend_agent]
-
-        if event_type == "crisis_triggered":
-            return [self.pm_agent, self.backend_agent, self.qa_agent]
-
-        if event_type == "candidate_message" and not memory.get("candidate_introduced"):
-            return [self.pm_agent]
-
-        if event.get("candidate_introduction_detected"):
-            return [self.pm_agent, self.backend_agent]
-
-        direct_agent = self._directly_addressed_agent(message)
-        if direct_agent:
-            return [direct_agent]
-
-        if self._asks_everyone(message):
-            return [self.pm_agent, self.backend_agent, self.designer_agent, self.qa_agent]
-
-        if self._asks_for_help(message):
-            return [self.pm_agent, self.backend_agent, self.qa_agent]
-
-        primary = self._select_primary_agent(event, memory)
-
-        if self._needs_discussion(message):
-            second = self._second_agent_for(primary, message)
-            if second and second.id != primary.id:
-                return [primary, second]
-
-        return [primary]
 
     def _agent_by_id(self, agent_id: Any) -> Any | None:
         normalized = str(agent_id or "").strip().lower()
@@ -2274,10 +2113,6 @@ class SimulationOrchestrator:
     def _safe_fallback_for(self, agent: Any, event: dict[str, Any]) -> str:
         message = str(event.get("candidate_message") or "").lower()
         greeting = any(word in message for word in ("hello", "hi", "hey"))
-        needs_intro = bool(event.get("requires_candidate_intro"))
-
-        if needs_intro:
-            return "quick intro first, then we will move into the task"
 
         if agent.id == self.pm_agent.id:
             return "hey, start with the safest next step" if greeting else "pick the next step and keep scope small"
@@ -2300,7 +2135,7 @@ class SimulationOrchestrator:
         event_type = str(event.get("event_type") or "")
 
         if event_type == "simulation_start":
-            return "intro"
+            return "planning"
 
         if event_type == "crisis_triggered":
             return "crisis"
@@ -2311,16 +2146,13 @@ class SimulationOrchestrator:
         if event_type == "submit_solution":
             return "submitted"
 
-        if not memory.get("candidate_introduced") and int(memory.get("user_message_count", 0)) <= 1:
-            return "intro"
-
         if memory.get("candidate_plan_shared"):
             return "planning"
 
         if memory.get("asked_clarification"):
             return "discovery"
 
-        return "discovery" if event.get("candidate_introduction_detected") else memory.get("phase") or "intro"
+        return memory.get("phase") or "planning"
 
     def _timeline_event_for(
         self,
@@ -2344,9 +2176,6 @@ class SimulationOrchestrator:
             title = "Crisis triggered"
             crisis = event.get("crisis_event") or {}
             description = crisis.get("message") if isinstance(crisis, dict) else "Room moved into incident mode."
-        elif event.get("candidate_introduction_detected"):
-            title = "Candidate introduced themself"
-            description = "Candidate gave an intro and the room moved toward first decisions."
         elif messages:
             title = "Room updated"
             names = ", ".join(msg.get("speaker_name", "") for msg in messages if msg.get("speaker_name"))

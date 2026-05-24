@@ -27,7 +27,7 @@ class ObserverAgent(BaseAgent):
         message = self._message_lower(event)
 
         if event_type == "candidate_introduction":
-            return "signal=communication | evidence=candidate introduced themself and framed their role | watch=whether the intro turns into a concrete first decision"
+            return "signal=communication | evidence=candidate shared role context | watch=whether that context turns into a concrete first decision"
 
         if event_type == "crisis_triggered":
             return "signal=adaptability | evidence=pressure changed during the room | watch=whether the candidate narrows scope and names an owner"
