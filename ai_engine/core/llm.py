@@ -9,6 +9,8 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
+mongo_uri = os.getenv("MONGO_URI")
+jwt_secret = os.getenv("JWT_SECRET")
 
 logger = logging.getLogger(__name__)
 

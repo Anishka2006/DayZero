@@ -1809,6 +1809,20 @@ function initLogoutFlow() {
   if (sidebarLogout) sidebarLogout.addEventListener("click", handleLogout);
   if (drawerLogout) drawerLogout.addEventListener("click", handleLogout);
   if (navLogout) navLogout.addEventListener("click", handleLogout);
+async function loadProfile() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const response = await fetch(
+    `http://127.0.0.1:5001/api/user-profile?email=${user.email}`
+  );
+
+  const data = await response.json();
+
+  document.getElementById("candidateName").innerText = data.name;
+  document.getElementById("candidateRole").innerText = data.role;
+
+  document.getElementById("candidateAvatar").innerText =
+    data.name.split(" ").map(w => w[0]).join("");
 }
 
 function initSettingsPanel() {
@@ -2101,6 +2115,7 @@ function initFilesPanel() {
 }
 
 initFilesPanel();
+
 
 async function simulateAiResponse(userMessage) {
   advanceCalendarProgress();

@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:5000";
-const API_BASE_URL = localStorage.getItem("dayzero_api_base") || DEFAULT_API_BASE_URL;
+const API_BASE_URL = "https://madap.onrender.com" || DEFAULT_API_BASE_URL;
 
 localStorage.setItem("dayzero_api_base", API_BASE_URL);
 
