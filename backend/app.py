@@ -1,13 +1,59 @@
 from __future__ import annotations
-
+from flask import Flask, request, jsonify
 import os
 import sys
 import logging
 from pathlib import Path
-
-from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+from db import users_collection
+from pymongo import MongoClient
+from datetime import datetime
+
+app = Flask(__name__)
+
+app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
+CORS(app)
+
+
+@app.route("/api/user-profile", methods=["GET"])
+def get_user_profile():
+
+    email = request.args.get("email")
+
+    user = users_collection.find_one({
+        "email": email
+    })
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": "User not found"
+        }), 404
+
+    user.pop("password_hash", None)
+
+    user["_id"] = str(user["_id"])
+
+    return jsonify(user)
+from flask import request, jsonify
+import uuid
+
+
+@app.route("/api/signup", methods=["POST"])
+def signup():
+    data = request.get_json()
+
+    user = {
+        "_id": str(uuid.uuid4()),
+        "name": data["name"],
+        "email": data["email"],
+        "password": data["password"]
+    }
+
+    # TODO: insert into MongoDB here
+    return jsonify({"message": "User created", "user": user})
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -42,10 +88,69 @@ logging.basicConfig(
     force=True,
 )
 
-app = Flask(__name__)
 
-app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
-CORS(app)
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client["dayzero"]
+users_collection = mongo_db["users"]
+
+def update_candidate_mongodb_score(email_or_name: str | None, report: dict, submission_text: str):
+    try:
+        query = {}
+        if email_or_name:
+            query = {"$or": [{"email": email_or_name.lower().strip()}, {"name": email_or_name}]}
+        
+        user = None
+        if query:
+            user = users_collection.find_one(query)
+            
+        if not user:
+            user = users_collection.find_one(sort=[("joinedMs", -1)])
+            
+        if user:
+            overall_score = report.get("overall_score", 50)
+            skill_scores = report.get("skill_scores", {})
+            
+            skills = {
+                "Leadership": skill_scores.get("role_judgment", 50),
+                "Communication": skill_scores.get("communication", 50),
+                "Execution": skill_scores.get("technical_reasoning", 50),
+                "ProblemSolving": skill_scores.get("problem_solving", 50),
+                "Adaptability": skill_scores.get("collaboration", 50)
+            }
+            
+            top_skill = max(skills.items(), key=lambda x: x[1])[0]
+            
+            status = "On Track"
+            if overall_score >= 85:
+                status = "Shortlisted"
+            elif overall_score < 65:
+                status = "At Risk"
+                
+            users_collection.update_one(
+                {"_id": user["_id"]},
+                {"$set": {
+                    "score": overall_score,
+                    "progress": 100,
+                    "topSkill": top_skill,
+                    "status": status,
+                    "skills": skills,
+                    "submission": submission_text
+                }, "$push": {
+                    "sessions": {
+                        "report": report,
+                        "submittedAt": datetime.utcnow().isoformat()
+                    }
+                }}
+            )
+            app.logger.info(f"Updated candidate scores in MongoDB for: {user.get('email')}")
+        else:
+            app.logger.warning("No candidate found in MongoDB to update scores.")
+    except Exception as e:
+        app.logger.error(f"Failed to update candidate scores in MongoDB: {str(e)}")
+
+
 
 DEFAULT_FAST_MAX_TOKENS = 160
 
@@ -283,6 +388,10 @@ def api_session_submit(session_id: str):
         "code": submission,
     })
 
+    report = data.get("report") or data
+    email_or_name = payload.get("user_email") or payload.get("candidate_name") or ""
+    update_candidate_mongodb_score(email_or_name, report, submission)
+
     app.logger.info(
         "session_submit response session=%s report=%s overall=%s",
         session_id,
@@ -290,7 +399,8 @@ def api_session_submit(session_id: str):
         (data.get("report") or {}).get("overall_score"),
     )
 
-    return jsonify(data.get("report") or data), 200
+    return jsonify(report), 200
+
 
 
 @app.route("/api/agent/event", methods=["POST"])
@@ -352,6 +462,24 @@ def api_evaluate():
     evaluation = evaluate_work(submission=submission, role=role)
     return jsonify(evaluation), 200
 
+'''
+users_collection.update_one(
+    {"email": user_email},
+    {
+        "$set": {
+            "score": final_score,
+            "progress": 100,
+            "status": "shortlisted" if final_score >= 85 else "on-track",
+            "topSkill": top_skill,
+            "skills": skill_breakdown
+        },
+
+        "$push": {
+            "sessions": session_data
+        }
+    }
+)
+''' 
 
 @app.route("/api/sessions/<session_id>/skill-record", methods=["GET"])
 def api_get_skill_record(session_id: str):
@@ -427,4 +555,4 @@ def ping_llm():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
+    app.run(debug=False, host="0.0.0.0", port=int(os.getenv("PORT", 5001)))

@@ -1439,21 +1439,23 @@ function advanceCalendarProgress() {
 }
 
 async function loadProfile() {
-  const response = await fetch("http://127.0.0.1:5000/api/user-profile");
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const response = await fetch(
+    `http://127.0.0.1:5001/api/user-profile?email=${user.email}`
+  );
+
   const data = await response.json();
 
   document.getElementById("candidateName").innerText = data.name;
-
   document.getElementById("candidateRole").innerText = data.role;
 
   document.getElementById("candidateAvatar").innerText =
-      data.name
-          .split(" ")
-          .map(word => word[0])
-          .join("");
+    data.name.split(" ").map(w => w[0]).join("");
 }
 
 loadProfile();
+
 
 async function simulateAiResponse(userMessage) {
   advanceCalendarProgress();
