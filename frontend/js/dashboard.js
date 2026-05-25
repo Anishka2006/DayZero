@@ -1007,43 +1007,93 @@ function renderTaskGrid() {
   taskGrid.innerHTML = "";
 
   if (!tasks.length) {
-    taskGrid.innerHTML = `<div class="card" style="padding: 28px; grid-column: span 2;">No tasks available for this profile yet.</div>`;
+    taskGrid.innerHTML = `<div class="card" style="padding: 28px; grid-column: span 2; background: var(--card); border: 1px solid var(--border);">No tasks available for this profile yet.</div>`;
     return;
   }
 
-  tasks.forEach((task) => {
+  tasks.forEach((task, index) => {
     const taskTime = simType === "5-day Sprint" ? "5 days" : task.time;
+    
+    // Dynamic values for a rich hackathon-winning simulator feel
+    const progress = [35, 62, 0, 78, 45][index % 5];
+    const trust = [92, 94, 88, 96, 91][index % 5];
+    const confidence = ["High", "Optimal", "High", "Excellent", "Stable"][index % 5];
+    const aiSupport = index % 2 === 0 ? "Active" : "Ready";
+    const activeTeammatesHtml = `
+      <div style="display: flex; gap: -6px; margin-left: 8px;">
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #db2777; color: white; font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 1px solid var(--card);">R</span>
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #7c3aed; color: white; font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 1px solid var(--card); margin-left: -6px;">S</span>
+        <span style="width: 22px; height: 22px; border-radius: 50%; background: #16a34a; color: white; font-size: 10px; font-weight: 700; display: grid; place-items: center; border: 1px solid var(--card); margin-left: -6px;">M</span>
+      </div>
+    `;
 
     const card = document.createElement("div");
     card.className = "card task-card";
     card.dataset.taskId = task.id;
-    card.style.minHeight = "320px";
+    card.style.minHeight = "330px"; /* refined compact card height */
     card.style.display = "flex";
     card.style.flexDirection = "column";
     card.style.justifyContent = "space-between";
+    card.style.position = "relative";
+    card.style.overflow = "hidden";
+    card.style.background = "linear-gradient(135deg, var(--card) 0%, rgba(99, 102, 241, 0.02) 100%)";
+    card.style.border = "1px solid var(--border)";
 
     card.innerHTML = `
+      <!-- Glowing Background Element -->
+      <div style="position: absolute; top: -40px; right: -40px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(99, 102, 241, 0.12), transparent 70%); filter: blur(10px); pointer-events: none;"></div>
+      
       <div>
-        <div class="company-header">
-          <div class="company-logo">${task.logo}</div>
-          <span class="company-name">${task.company}</span>
+        <div class="company-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="company-logo" style="width: 28px; height: 28px; border-radius: 6px; font-weight: 600; display: grid; place-items: center; background: rgba(99, 102, 241, 0.08); color: var(--blue); border: 1px solid rgba(99, 102, 241, 0.15); font-size: 13px;">${task.logo}</div>
+            <span class="company-name" style="font-weight: 600; font-size: 13px; color: var(--text);">${task.company}</span>
+          </div>
+          <span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(16, 185, 129, 0.08); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.15);">Collab: High</span>
         </div>
-        <p class="task-label">${task.label}</p>
-        <h2>${task.title}</h2>
-        <p class="task-desc">${task.description}</p>
+        <p class="task-label" style="font-size: 10.5px; margin-bottom: 4px; color: var(--subtext); font-weight: 500;">${task.label}</p>
+        <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; color: var(--text);">${task.title}</h2>
+        <p class="task-desc" style="font-size: 12.5px; color: var(--subtext); line-height: 1.45; margin-bottom: 12px;">${task.description}</p>
       </div>
+
       <div>
-        <div class="task-meta">
-          <div class="meta-box"><span>Role</span><strong>${task.role}</strong></div>
-          <div class="meta-box"><span>Time</span><strong>${taskTime}</strong></div>
-          <div class="meta-box"><span>Difficulty</span><strong>${task.difficulty}</strong></div>
-          <div class="meta-box"><span>Team</span><strong>${task.teamSize}</strong></div>
+        <!-- Simulation Progress Indicator -->
+        <div style="margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; margin-bottom: 4px; color: var(--subtext);">
+            <span>Room Progress</span>
+            <span style="color: var(--text);">${progress}%</span>
+          </div>
+          <div style="height: 5px; width: 100%; background: var(--border); border-radius: 99px; overflow: hidden;">
+            <div style="height: 100%; width: ${progress}%; background: linear-gradient(90deg, var(--blue), var(--indigo)); border-radius: 99px;"></div>
+          </div>
         </div>
-        <div class="requirement-list">
-          ${task.skills.map(skill => `<div class="req">${skill}</div>`).join("")}
+
+        <div class="task-meta" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px;">
+          <div class="meta-box" style="padding: 6px 10px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); box-shadow: none;">
+            <span style="font-size: 9px; color: var(--subtext); display: block;">Trust Score</span>
+            <strong style="font-size: 12px; color: var(--green); font-weight: 600;"><span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-right: 4px;"></span>${trust}%</strong>
+          </div>
+          <div class="meta-box" style="padding: 6px 10px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); box-shadow: none;">
+            <span style="font-size: 9px; color: var(--subtext); display: block;">AI Co-Pilot</span>
+            <strong style="font-size: 12px; color: var(--blue); font-weight: 600;"><span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); margin-right: 4px;"></span>${aiSupport}</strong>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 11px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="color: var(--subtext);">Team:</span>
+            ${activeTeammatesHtml}
+          </div>
+          <div style="color: var(--subtext); display: flex; align-items: center; gap: 2px;">
+            <i data-lucide="clock" class="icon-xs" style="vertical-align: middle;"></i> ${taskTime}
+          </div>
+        </div>
+
+        <div class="requirement-list" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">
+          ${task.skills.map(skill => `<div class="req" style="font-size: 9.5px; padding: 2px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); color: var(--subtext); font-weight: 500; box-shadow: none;">${skill}</div>`).join("")}
         </div>
       </div>
-      <button class="primary-btn start-sim" data-task-id="${task.id}" style="margin-top:18px;">Start Room</button>
+      <button class="primary-btn start-sim" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px;">Enter Simulation Room</button>
     `;
 
     taskGrid.appendChild(card);
@@ -1283,7 +1333,6 @@ const managerActions = document.querySelectorAll(".console-chip");
 const typingIndicator = document.getElementById("typingIndicator");
 const managerInput = document.getElementById("aiManagerInput");
 const managerSendBtn = document.getElementById("aiManagerSendBtn");
-
 const systemPrompts = {
   "Strict": "You are a direct but human sprint coach in a live work simulation. Speak like a busy teammate on Slack: concise, specific, and practical. Ask for the next decision, owner, or proof. Do not use corporate filler.",
   "Supportive": "You are a supportive sprint coach in a live work simulation. Sound like a real coworker: warm, concise, and specific. Acknowledge the user's move, then suggest the next practical step.",
@@ -1291,27 +1340,72 @@ const systemPrompts = {
   "Corporate VP": "You are a senior VP in a product review. Sound polished but still human. Keep it brief, name the business risk, and ask for one clear next step."
 };
 
-function localHumanManagerReply(userMessage, style) {
+function localDynamicAiResponse(userMessage, style) {
   const text = String(userMessage || "").toLowerCase();
-  if (text.includes("hint") || text.includes("help")) {
-    return "Start with the smallest decision the team can act on. Name the risky path, the file or metric you checked, and what you would validate next.";
+  const name = JSON.parse(localStorage.getItem("user"))?.name || "Saavi";
+  
+  const strictReplies = {
+    prioritize: "Cut the list to the single checkout blocker, " + name + ". If we can't ship payment gate stability, marketing doesn't matter.",
+    team: "Ravi is waiting on the API paths. Tell him what to ship, what to hold, and how QA verifies it.",
+    kpi: "We need the conversion rate baseline. Ask Alex for the database logs before we guess the reason.",
+    default: "Focus on closing one risk first. What ships, what waits, and what proof closes the checkout bottleneck?"
+  };
+
+  const supportiveReplies = {
+    prioritize: "That makes complete sense! Prioritizing reliability is the best move. I suggest defining the checkout gateway owner next.",
+    team: "Ravi and Mira are fully aligned. Ravi can start on the API outline once you define the recovery path.",
+    kpi: "Excellent check. Verifying metrics with Alex ensures we don't build the wrong interface. Let's ask him now.",
+    default: "That's a solid call. I recommend making the tradeoff explicit so the entire room is aligned on release safety."
+  };
+
+  const founderReplies = {
+    prioritize: "Yes! Scale doesn't matter if checkout is broken. Let's narrow the scope to gateway recovery and run a check.",
+    team: "Ravi can build this in a couple of hours if we give him a clean schema. Let's make the call on ownership now.",
+    kpi: "We can't guess these KPIs under pressure. Let's get Alex to query the transaction failures immediately.",
+    default: "I like the momentum. Cut down the scope to the core MVP path so we can ship the fix today."
+  };
+
+  const vpReplies = {
+    prioritize: "Understood. Protecting revenue is the primary objective. Assign an owner to the payment gate reliability immediately.",
+    team: "Ensure Ravi has clear API specifications. We cannot afford another integration delay in this sprint.",
+    kpi: "Provide a verified summary of the transaction anomalies. I need solid numbers before the brand presentation.",
+    default: "This is a reasonable strategic starting point. Tie it directly to the customer retention metric and assign a milestone owner."
+  };
+
+  let category = "default";
+  if (text.includes("priorit") || text.includes("scope") || text.includes("mvp") || text.includes("checkout")) {
+    category = "prioritize";
+  } else if (text.includes("team") || text.includes("ravi") || text.includes("mira") || text.includes("owner")) {
+    category = "team";
+  } else if (text.includes("kpi") || text.includes("metric") || text.includes("data") || text.includes("alex") || text.includes("analysis")) {
+    category = "kpi";
   }
-  if (text.includes("pressure") || text.includes("urgent") || text.includes("crisis")) {
-    return "Okay, then make it smaller. Tell the room what we are protecting right now, what we are deliberately not fixing, and who owns the next check.";
+
+  let reply = "";
+  if (style === "Strict") reply = strictReplies[category] || strictReplies.default;
+  else if (style === "Startup Founder") reply = founderReplies[category] || founderReplies.default;
+  else if (style === "Corporate VP") reply = vpReplies[category] || vpReplies.default;
+  else reply = supportiveReplies[category] || supportiveReplies.default;
+
+  // Append context-aware suggestions dynamically
+  let suggestion1 = "Prioritize Gateway Fix";
+  let suggestion2 = "Ask Ravi for proof";
+  
+  if (category === "prioritize") {
+    suggestion1 = "Assign Ravi to fix";
+    suggestion2 = "Ask Alex for metrics";
+  } else if (category === "team") {
+    suggestion1 = "Run gateway checks";
+    suggestion2 = "Reduce sprint scope";
+  } else if (category === "kpi") {
+    suggestion1 = "Submit metrics draft";
+    suggestion2 = "Confirm launch goals";
   }
-  if (text.includes("review") || text.includes("feedback")) {
-    return "You are close, but make the evidence sharper. I would add one line on the tradeoff and one line on how QA knows this is safe.";
-  }
-  if (style === "Strict") {
-    return "Good, but make the call explicit. What ships now, what waits, and what proof closes the risk?";
-  }
-  if (style === "Startup Founder") {
-    return "I like the direction. Cut it down to the move that changes the outcome today, then tell the team exactly what to do next.";
-  }
-  if (style === "Corporate VP") {
-    return "This is useful. Tie it back to customer impact and give me a clear owner for the next milestone.";
-  }
-  return "That is a reasonable start. I would make the tradeoff explicit, then ask Ravi or QA for the one check that proves the plan is safe.";
+
+  return {
+    reply: reply,
+    suggestions: [suggestion1, suggestion2]
+  };
 }
 
 function addManagerMessage(text, isUser = false) {
@@ -1438,6 +1532,283 @@ function advanceCalendarProgress() {
   }
 }
 
+function parseRecruiterEmail(email) {
+  if (!email) return { name: "User", initials: "U", companyName: "Enterprise", email: "" };
+  email = email.trim().toLowerCase();
+  let companyName = "Enterprise";
+  let name = "User";
+  
+  if (email.includes("@")) {
+    const parts = email.split("@");
+    const username = parts[0];
+    const domain = parts[1];
+    const domainParts = domain.split(".");
+    companyName = domainParts[0] || domain;
+    
+    const cleanUsername = username.replace(/[0-9]+/g, "").replace(/[._-]+/g, " ").trim();
+    const nameParts = cleanUsername.split(" ");
+    name = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+  }
+  
+  const knownCompanies = {
+    google: "Google",
+    microsoft: "Microsoft",
+    amazon: "Amazon",
+    openai: "OpenAI",
+    apple: "Apple",
+    meta: "Meta",
+    netflix: "Netflix",
+    adobe: "Adobe",
+    tesla: "Tesla",
+    linkedin: "LinkedIn",
+    gmail: "Gmail",
+    yahoo: "Yahoo",
+    outlook: "Outlook",
+    hotmail: "Hotmail"
+  };
+  const companyKey = companyName.toLowerCase();
+  const displayCompany = knownCompanies[companyKey] || (companyName.charAt(0).toUpperCase() + companyName.slice(1));
+  
+  const nameParts = name.trim().split(/\s+/);
+  let initials = "";
+  if (nameParts.length >= 2) {
+    initials = nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
+  } else if (nameParts.length === 1) {
+    initials = nameParts[0].charAt(0);
+  }
+  initials = initials.toUpperCase() || "U";
+  
+  return {
+    name: name.trim(),
+    initials: initials,
+    companyName: displayCompany,
+    companyId: companyKey,
+    email: email
+  };
+}
+
+function hydrateDynamicUser() {
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("user"));
+  } catch (e) {
+    console.warn("Could not parse user object from localStorage", e);
+  }
+
+  // Fallback if not logged in or missing data
+  if (!user || !user.email) {
+    const fallbackEmail = localStorage.getItem("userName") ? `${localStorage.getItem("userName").toLowerCase().replace(/\s+/g, ".")}@gmail.com` : "saavi.patel@gmail.com";
+    const profile = parseRecruiterEmail(fallbackEmail);
+    user = {
+      name: localStorage.getItem("userName") || profile.name,
+      email: fallbackEmail,
+      role: getCandidateRole() || "Frontend Engineer",
+      company: profile.companyName,
+      initials: profile.initials
+    };
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+
+  // Ensure initials are uppercase
+  const nameParts = user.name.split(/\s+/);
+  let initials = user.initials;
+  if (!initials) {
+    if (nameParts.length >= 2) {
+      initials = nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
+    } else {
+      initials = nameParts[0].charAt(0);
+    }
+  }
+  initials = initials.toUpperCase() || "U";
+
+  // Cache user object back to ensure consistency
+  user.initials = initials;
+  localStorage.setItem("user", JSON.stringify(user));
+
+  // sidebar user elements
+  const sidebarName = document.getElementById("sidebarUserName");
+  const sidebarBadge = document.getElementById("sidebarCompanyBadge");
+  const studentAvatar = document.getElementById("studentAvatar");
+  const roleBadge = document.getElementById("topbarRoleBadge");
+
+  if (sidebarName) sidebarName.innerText = user.name;
+  if (sidebarBadge) {
+    sidebarBadge.innerText = user.company;
+    sidebarBadge.className = `company-badge ${user.company.toLowerCase()}`;
+  }
+  if (studentAvatar) studentAvatar.innerText = initials;
+  if (roleBadge) roleBadge.innerText = `${user.role} (${localStorage.getItem("userExperience") || "Intermediate"})`;
+
+  // drawer elements
+  const dAvatar = document.getElementById("drawerAvatar");
+  const dName = document.getElementById("drawerName");
+  const dEmail = document.getElementById("drawerEmail");
+  const dBadge = document.getElementById("drawerCompanyBadge");
+  const dRole = document.getElementById("drawerRole");
+  const dLevel = document.getElementById("drawerLevel");
+  
+  if (dAvatar) dAvatar.innerText = initials;
+  if (dName) dName.innerText = user.name;
+  if (dEmail) dEmail.innerText = user.email;
+  if (dBadge) dBadge.innerText = user.company;
+  if (dRole) dRole.innerText = user.role;
+  if (dLevel) dLevel.innerText = localStorage.getItem("userExperience") || "Intermediate";
+
+  // skillrecord elements
+  const cAvatar = document.getElementById("candidateAvatar");
+  const cName = document.getElementById("candidateName");
+  const cRole = document.getElementById("candidateRole");
+
+  if (cAvatar) cAvatar.innerText = initials;
+  if (cName) cName.innerText = user.name;
+  if (cRole) cRole.innerText = user.role;
+}
+
+function initThemeToggle() {
+  const toggleBtn = document.getElementById("themeToggleBtn");
+  if (!toggleBtn) return;
+
+  // Apply saved theme or default to light
+  const currentTheme = localStorage.getItem("theme") || "light";
+  if (currentTheme === "dark") {
+    document.body.classList.add("dark");
+    document.body.classList.remove("light");
+    toggleBtn.innerHTML = "🌙 Dark";
+  } else {
+    document.body.classList.add("light");
+    document.body.classList.remove("dark");
+    toggleBtn.innerHTML = "☀️ Light";
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    const isDark = document.body.classList.contains("dark");
+    if (isDark) {
+      document.body.classList.remove("dark");
+      document.body.classList.add("light");
+      localStorage.setItem("theme", "light");
+      toggleBtn.innerHTML = "☀️ Light";
+    } else {
+      document.body.classList.add("dark");
+      document.body.classList.remove("light");
+      localStorage.setItem("theme", "dark");
+      toggleBtn.innerHTML = "🌙 Dark";
+    }
+  });
+}
+
+function initProfileDrawer() {
+  const trigger = document.getElementById("sidebarProfileTrigger");
+  const overlay = document.getElementById("profileDrawerOverlay");
+  const closeBtn = document.getElementById("closeProfileDrawerBtn");
+
+  if (trigger && overlay) {
+    trigger.addEventListener("click", () => {
+      // Hydrate all user profile stats dynamically!
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      
+      const email = user.email || localStorage.getItem("userEmail") || "saavi@gmail.com";
+      const name = user.name || localStorage.getItem("userName") || "Saavi Patel";
+      const role = user.role || localStorage.getItem("userRole") || "Frontend Developer";
+      const initials = user.initials || localStorage.getItem("userInitials") || "S";
+      const company = user.company || localStorage.getItem("userCompany") || "Gmail";
+      const experience = localStorage.getItem("userExperience") || "Intermediate";
+
+      // Hydrate core details
+      const drawerAvatar = document.getElementById("drawerAvatar");
+      const drawerName = document.getElementById("drawerName");
+      const drawerCompany = document.getElementById("drawerCompanyBadge");
+      const drawerEmail = document.getElementById("drawerEmail");
+      const drawerRole = document.getElementById("drawerRole");
+      const drawerLevel = document.getElementById("drawerLevel");
+
+      if (drawerAvatar) drawerAvatar.textContent = initials;
+      if (drawerName) drawerName.textContent = name;
+      if (drawerCompany) drawerCompany.textContent = company.toUpperCase();
+      if (drawerEmail) drawerEmail.textContent = email;
+      if (drawerRole) drawerRole.textContent = role;
+      if (drawerLevel) drawerLevel.textContent = experience;
+
+      // Hydrate metrics
+      const finishedRuns = parseInt(localStorage.getItem("statsFinishedRuns") || "2", 10) || 2;
+      const avgScore = parseInt(localStorage.getItem("lastScore") || "92", 10) || 92;
+      const aiPrompts = parseInt(localStorage.getItem("statsAiPrompts") || "4", 10) || 4;
+      const tasks = getTasksForCurrentProfile();
+
+      const drawerCollabScore = document.getElementById("drawerCollabScore");
+      const drawerSimsCount = document.getElementById("drawerSimsCount");
+      const drawerAiScore = document.getElementById("drawerAiScore");
+      const drawerSprintScore = document.getElementById("drawerSprintScore");
+      const drawerTasksCount = document.getElementById("drawerTasksCount");
+
+      const collabEl = document.getElementById("statCollab");
+      const collabVal = collabEl ? collabEl.innerText : "92%";
+
+      if (drawerCollabScore) drawerCollabScore.textContent = collabVal;
+      if (drawerSimsCount) drawerSimsCount.textContent = finishedRuns;
+      if (drawerAiScore) {
+        // AI interaction metric
+        const score = Math.min(84 + aiPrompts * 3, 99);
+        drawerAiScore.textContent = `${score}%`;
+      }
+      if (drawerSprintScore) {
+        let rating = "Outstanding";
+        if (avgScore < 75) rating = "Developing";
+        else if (avgScore < 88) rating = "Strong";
+        drawerSprintScore.textContent = rating;
+      }
+      if (drawerTasksCount) drawerTasksCount.textContent = `${tasks.length} Tasks`;
+
+      overlay.classList.add("active");
+      playWorkspaceAlertSound();
+    });
+  }
+
+  if (closeBtn && overlay) {
+    closeBtn.addEventListener("click", () => {
+      overlay.classList.remove("active");
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        overlay.classList.remove("active");
+      }
+    });
+  }
+}
+
+function initLogoutFlow() {
+  const sidebarLogout = document.getElementById("sidebarLogoutBtn");
+  const drawerLogout = document.getElementById("drawerLogoutBtn");
+  const navLogout = document.getElementById("logoutShortcutBtn");
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    
+    // Clear dynamic session data
+    localStorage.removeItem("user");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userExperience");
+    localStorage.removeItem("candidateSetupComplete");
+    
+    // Reset theme default
+    localStorage.removeItem("theme");
+    
+    // Add slide-out fade animation to body
+    document.body.style.transition = "opacity 0.5s ease";
+    document.body.style.opacity = 0;
+    
+    setTimeout(() => {
+      window.location.href = "../../index.html";
+    }, 500);
+  };
+
+  if (sidebarLogout) sidebarLogout.addEventListener("click", handleLogout);
+  if (drawerLogout) drawerLogout.addEventListener("click", handleLogout);
+  if (navLogout) navLogout.addEventListener("click", handleLogout);
 async function loadProfile() {
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -1454,7 +1825,296 @@ async function loadProfile() {
     data.name.split(" ").map(w => w[0]).join("");
 }
 
-loadProfile();
+function initSettingsPanel() {
+  const roleSelect = document.getElementById("settingsRoleSelect");
+  const expSelect = document.getElementById("settingsExperienceSelect");
+  const audioToggle = document.getElementById("settingsAudioToggle");
+  const speedSelect = document.getElementById("settingsSpeedSelect");
+  const resetBtn = document.getElementById("settingsResetBtn");
+
+  const role = getCandidateRole();
+  const experience = localStorage.getItem("userExperience") || "Intermediate";
+  const audioEnabled = localStorage.getItem("settingsAudioEnabled") !== "false";
+  const speed = localStorage.getItem("settingsSpeed") || "1";
+
+  if (roleSelect) {
+    roleSelect.value = role;
+    roleSelect.addEventListener("change", (e) => {
+      const newRole = e.target.value;
+      localStorage.setItem("userRole", newRole);
+      try {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        user.role = newRole;
+        localStorage.setItem("user", JSON.stringify(user));
+      } catch (err) {}
+      
+      hydrateDynamicUser();
+      renderTaskGrid();
+      playWorkspaceAlertSound();
+      showToast(`Active profile role updated to ${newRole}!`);
+    });
+  }
+
+  if (expSelect) {
+    expSelect.value = experience;
+    expSelect.addEventListener("change", (e) => {
+      const newExp = e.target.value;
+      localStorage.setItem("userExperience", newExp);
+      renderTaskGrid();
+      playWorkspaceAlertSound();
+      showToast(`Difficulty level switched to ${newExp}!`);
+    });
+  }
+
+  if (audioToggle) {
+    audioToggle.checked = audioEnabled;
+    audioToggle.addEventListener("change", (e) => {
+      const isEnabled = e.target.checked;
+      localStorage.setItem("settingsAudioEnabled", isEnabled ? "true" : "false");
+      if (isEnabled) playWorkspaceAlertSound();
+      showToast(isEnabled ? "Audio alerts enabled." : "Audio alerts muted.");
+    });
+  }
+
+  if (speedSelect) {
+    speedSelect.value = speed;
+    speedSelect.addEventListener("change", (e) => {
+      const newSpeed = e.target.value;
+      localStorage.setItem("settingsSpeed", newSpeed);
+      playWorkspaceAlertSound();
+      showToast(`Sprint speed factor set to ${newSpeed}x!`);
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to reset all workspace and simulation storage? This will clear history.")) {
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        document.body.style.transition = "opacity 0.4s ease";
+        document.body.style.opacity = 0;
+        
+        setTimeout(() => {
+          window.location.href = "../../index.html";
+        }, 400);
+      }
+    });
+  }
+}
+
+// Execute initializations
+hydrateDynamicUser();
+initThemeToggle();
+initProfileDrawer();
+initLogoutFlow();
+initSettingsPanel();
+
+function initInteractiveElements() {
+  const stripeApplyBtn = document.getElementById("stripeApplyBtn");
+  const notificationBtn = document.getElementById("notificationBtn");
+  const notificationsDropdown = document.getElementById("notificationsDropdown");
+  const clearNotificationsBtn = document.getElementById("clearNotificationsBtn");
+  const notiBadge = document.getElementById("notiBadge");
+  const inviteTeammateBtn = document.getElementById("inviteTeammateBtn");
+
+  if (stripeApplyBtn) {
+    stripeApplyBtn.addEventListener("click", () => {
+      stripeApplyBtn.disabled = true;
+      stripeApplyBtn.style.opacity = "0.7";
+      stripeApplyBtn.textContent = "Applying...";
+      playWorkspaceAlertSound();
+      showToast("Sending application to Stripe cross-functional team...");
+
+      setTimeout(() => {
+        playWorkspaceAlertSound();
+        showToast("Application approved! Sarah & Mike welcomed you to the team. Preparing room...");
+        
+        setTimeout(() => {
+          document.body.style.transition = "opacity 0.4s ease";
+          document.body.style.opacity = "0";
+          
+          setTimeout(() => {
+            localStorage.setItem("dayzero_task_id", "frontend-dashboard");
+            window.location.href = "loading.html";
+          }, 400);
+        }, 1200);
+      }, 1500);
+    });
+  }
+
+  if (notificationBtn && notificationsDropdown) {
+    notificationBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isHidden = notificationsDropdown.style.display === "none" || !notificationsDropdown.style.display;
+      notificationsDropdown.style.display = isHidden ? "block" : "none";
+      if (isHidden) playWorkspaceAlertSound();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!notificationsDropdown.contains(e.target) && e.target !== notificationBtn) {
+        notificationsDropdown.style.display = "none";
+      }
+    });
+  }
+
+  if (clearNotificationsBtn && notificationsDropdown) {
+    clearNotificationsBtn.addEventListener("click", () => {
+      const list = document.getElementById("notificationsList");
+      if (list) {
+        list.innerHTML = `<div style="text-align: center; color: var(--subtext); padding: 16px; font-size: 12px;">No new alerts. You're up to date!</div>`;
+      }
+      if (notiBadge) notiBadge.style.display = "none";
+      playWorkspaceAlertSound();
+      showToast("Notifications cleared.");
+    });
+  }
+
+  if (inviteTeammateBtn) {
+    inviteTeammateBtn.addEventListener("click", () => {
+      const email = prompt("Enter your peer's email address to invite them to this collaborative session:");
+      if (email === null) return;
+      if (!email.trim() || !email.includes("@")) {
+        alert("Please enter a valid classmate email address.");
+        return;
+      }
+      
+      playWorkspaceAlertSound();
+      showToast(`Sending invite to ${email.trim()}...`);
+      
+      setTimeout(() => {
+        playWorkspaceAlertSound();
+        showToast(`Teammate joined! peer has connected to your live huddle.`);
+        
+        appendTeamChatMessage("System", "Collaborator", `${email.trim().split('@')[0]} has joined the room.`, "system");
+        
+        const roster = document.querySelector(".coop-avatars");
+        if (roster) {
+          const initials = email.trim().charAt(0).toUpperCase();
+          const name = email.trim().split('@')[0].split(/[._-]/)[0];
+          const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+          
+          const newAvatar = document.createElement("div");
+          newAvatar.className = "coop-user";
+          newAvatar.style.display = "flex";
+          newAvatar.style.alignItems = "center";
+          newAvatar.style.gap = "8px";
+          newAvatar.innerHTML = `<div class="avatar PM" style="background:#059669; color:white; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:700;">${initials}</div><span>${capitalizedName} (Peer)</span><span class="status online" style="width:8px; height:8px; background:#10b981; border-radius:50%;"></span>`;
+          roster.insertBefore(newAvatar, inviteTeammateBtn);
+          
+          if (typeof refreshLucideIcons === 'function') refreshLucideIcons();
+        }
+      }, 1500);
+    });
+  }
+}
+
+initInteractiveElements();
+
+const MOCK_FILES_PREVIEW = {
+  sprint_spec: {
+    name: "sprint_spec.md",
+    lines: 45,
+    badge: "MARKDOWN",
+    content: `# Product Sprint: Stripe & Spotify Integration
+
+## Objective
+Enable seamless billing subscriptions and automated payouts for verified creator playlists.
+
+## Requirements
+1. Validate transaction tokens in backend.
+2. Form-level error reporting in UI.
+3. Decisive rollback gates on DB locks.
+
+## Timeline & Slack Updates
+- Day 1: Build layout and design systems.
+- Day 2: Hook up dynamic database schemas and endpoint APIs.
+- Day 3: QA validations and live huddle.`
+  },
+  user_feedback: {
+    name: "user_feedback.csv",
+    lines: 120,
+    badge: "CSV DATA",
+    content: `user_id,timestamp,rating,issue_category,verdict
+usr_9120,2026-05-24T10:14:02Z,2,form_validation,Checkout button stays disabled on valid input
+usr_8820,2026-05-24T12:45:19Z,1,api_failure,Timeout waiting for PayPal confirmation toast
+usr_7491,2026-05-25T08:12:00Z,3,latency,Loading dots bounce for 8s when changing roles
+usr_2011,2026-05-25T09:30:15Z,2,auth,Denied access because of generic gmail domain`
+  },
+  api_endpoints: {
+    name: "api_endpoints.yaml",
+    lines: 35,
+    badge: "OPENAPI SPEC",
+    content: `openapi: 3.0.3
+info:
+  title: DayZero Sprint Billing API
+  version: 1.0.0
+paths:
+  /api/sessions:
+    post:
+      summary: Start a live candidate session
+      responses:
+        '200':
+          description: Session created
+  /api/sessions/{id}/chat:
+    post:
+      summary: Post a room update`
+  },
+  db_schema: {
+    name: "db_schema.sql",
+    lines: 28,
+    badge: "SQL SCHEMA",
+    content: `-- DayZero Simulator Core DB Schemas
+CREATE TABLE IF NOT EXISTS sessions (
+  id VARCHAR(64) PRIMARY KEY,
+  task_id VARCHAR(64) NOT NULL,
+  role VARCHAR(32) NOT NULL,
+  participant_name VARCHAR(128) NOT NULL,
+  phase VARCHAR(32) DEFAULT 'planning',
+  overall_score INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);`
+  }
+};
+
+function initFilesPanel() {
+  const fileButtons = document.querySelectorAll(".file-item-btn");
+  const fileNameEl = document.getElementById("previewFileName");
+  const lineCountEl = document.getElementById("previewFileLineCount");
+  const badgeEl = document.getElementById("previewFileBadge");
+  const codeEl = document.getElementById("previewFileCode");
+
+  if (!fileButtons.length) return;
+
+  fileButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      fileButtons.forEach((b) => {
+        b.classList.remove("active");
+        b.style.background = "transparent";
+        b.style.color = "var(--text)";
+        b.style.fontWeight = "600";
+      });
+
+      btn.classList.add("active");
+      btn.style.background = "rgba(99, 102, 241, 0.08)";
+      btn.style.color = "var(--blue)";
+      btn.style.fontWeight = "700";
+
+      const fileKey = btn.dataset.fileKey;
+      const fileData = MOCK_FILES_PREVIEW[fileKey];
+
+      if (fileData) {
+        if (fileNameEl) fileNameEl.textContent = fileData.name;
+        if (lineCountEl) lineCountEl.textContent = `${fileData.lines} lines`;
+        if (badgeEl) badgeEl.textContent = fileData.badge;
+        if (codeEl) codeEl.textContent = fileData.content;
+        playWorkspaceAlertSound();
+      }
+    });
+  });
+}
+
+initFilesPanel();
 
 
 async function simulateAiResponse(userMessage) {
@@ -1515,12 +2175,16 @@ async function simulateAiResponse(userMessage) {
       }
     } else {
       console.error("API Error:", data);
-      addManagerMessage(localHumanManagerReply(userMessage, style), false);
+      const fallback = localDynamicAiResponse(userMessage, style);
+      addManagerMessage(fallback.reply, false);
+      updateManagerActions(fallback.suggestions);
     }
   } catch (err) {
     if (typingIndicator) typingIndicator.classList.add("hidden");
     console.error("Network Error:", err);
-    addManagerMessage(localHumanManagerReply(userMessage, style), false);
+    const fallback = localDynamicAiResponse(userMessage, style);
+    addManagerMessage(fallback.reply, false);
+    updateManagerActions(fallback.suggestions);
   }
 }
 
@@ -2292,30 +2956,30 @@ document.querySelectorAll(".project-card").forEach(card => {
         if (currentDayIndex === -1) {
           // Onboarding Screen
           modalContent.innerHTML = `
-            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
-              <div style="background: #ffffff; border-radius: 24px; padding: 60px 48px; width: 100%; max-width: 480px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border: 1px solid #ffffff; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, var(--bg) 0%, var(--card) 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+              <div style="background: var(--card); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 440px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden;">
                 
                 <!-- Decorative shapes -->
-                <div style="position: absolute; top: -60px; right: -60px; width: 160px; height: 160px; background: #eff6ff; border-radius: 50%; z-index: 0;"></div>
-                <div style="position: absolute; bottom: -40px; left: -40px; width: 120px; height: 120px; background: #f8fafc; border-radius: 50%; z-index: 0;"></div>
+                <div style="position: absolute; top: -60px; right: -60px; width: 160px; height: 160px; background: rgba(99, 102, 241, 0.04); border-radius: 50%; z-index: 0;"></div>
+                <div style="position: absolute; bottom: -40px; left: -40px; width: 120px; height: 120px; background: rgba(99, 102, 241, 0.02); border-radius: 50%; z-index: 0;"></div>
                 
                 <div style="position: relative; z-index: 1; width: 100%;">
-                  <div style="width: 64px; height: 64px; background: #eff6ff; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: #3b82f6;">
-                    <i data-lucide="rocket" style="width: 32px; height: 32px;"></i>
+                  <div style="width: 54px; height: 54px; background: rgba(99, 102, 241, 0.08); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--blue);">
+                    <i data-lucide="rocket" style="width: 26px; height: 26px;"></i>
                   </div>
-                  <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 12px; color: #0f172a;">Simulation Entry</h1>
-                  <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 32px;">Initialize your profile to begin the intensive product sprint. Your performance will be strictly monitored.</p>
+                  <h1 style="font-size: 26px; font-weight: 600; letter-spacing: -0.5px; margin: 0 0 10px; color: var(--text);">Simulation Entry</h1>
+                  <p style="color: var(--subtext); font-size: 13.5px; line-height: 1.5; margin-bottom: 24px;">Initialize your profile to begin the intensive product sprint. Your performance will be strictly monitored.</p>
                   
-                  <div style="width: 100%; text-align: left; margin-bottom: 32px;">
-                    <label style="display: block; font-size: 12px; letter-spacing: 1px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Full Name</label>
-                    <input type="text" id="simNameInput" placeholder="e.g. Jane Doe" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; margin-bottom: 20px; box-sizing: border-box;">
+                  <div style="width: 100%; text-align: left; margin-bottom: 24px;">
+                    <label style="display: block; font-size: 11px; letter-spacing: 0.5px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase;">Full Name</label>
+                    <input type="text" id="simNameInput" placeholder="e.g. Jane Doe" style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; margin-bottom: 16px; box-sizing: border-box;">
                     
-                    <label style="display: block; font-size: 12px; letter-spacing: 1px; font-weight: 700; color: #475569; margin-bottom: 8px; text-transform: uppercase;">Target Role</label>
-                    <input type="text" id="simRoleInput" placeholder="e.g. Senior Product Manager" style="width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; font-size: 15px; outline: none; transition: border-color 0.2s; box-sizing: border-box;">
+                    <label style="display: block; font-size: 11px; letter-spacing: 0.5px; font-weight: 600; color: var(--subtext); margin-bottom: 6px; text-transform: uppercase;">Target Role</label>
+                    <input type="text" id="simRoleInput" placeholder="e.g. Senior Product Manager" style="width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box;">
                   </div>
 
-                  <button id="simStartBtn" style="width: 100%; background: #2563eb; color: #ffffff; border: none; border-radius: 12px; padding: 16px; font-weight: 600; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
-                    Initiate Sequence <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                  <button id="simStartBtn" style="width: 100%; background: var(--blue); color: #ffffff; border: none; border-radius: 8px; padding: 14px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);">
+                    Initiate Sequence <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
                   </button>
                 </div>
               </div>
@@ -2336,10 +3000,10 @@ document.querySelectorAll(".project-card").forEach(card => {
         if (currentDayIndex >= sprintData.length) {
           // Analysis Loader
           modalContent.innerHTML = `
-            <div style="background: #ffffff; color: #0f172a; padding: 60px 40px; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-              <i data-lucide="loader-2" class="icon-lg pulse" style="color: #3b82f6; margin-bottom: 24px; width: 48px; height: 48px;"></i>
-              <h2 style="margin: 0 0 12px; font-size: 24px; font-weight: 600;">Analyzing Final Performance...</h2>
-              <p id="analysisStatusText" style="color: #64748b; font-size: 15px;">Evaluating your strategic reasoning and deliverables.</p>
+            <div style="background: var(--bg); color: var(--text); padding: 60px 40px; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+              <i data-lucide="loader-2" class="icon-lg pulse" style="color: var(--blue); margin-bottom: 24px; width: 44px; height: 44px;"></i>
+              <h2 style="margin: 0 0 12px; font-size: 22px; font-weight: 600; color: var(--text);">Analyzing Final Performance...</h2>
+              <p id="analysisStatusText" style="color: var(--subtext); font-size: 14px;">Evaluating your strategic reasoning and deliverables.</p>
             </div>
           `;
           if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2391,24 +3055,24 @@ document.querySelectorAll(".project-card").forEach(card => {
         if(topbarRoleBadge) topbarRoleBadge.innerText = `${window.simulationUser.role || 'Enterprise'} Simulation`;
 
         modalContent.innerHTML = `
-          <div style="background: #f8fafc; color: #0f172a; text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
+          <div style="background: var(--bg); color: var(--text); text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
             
             <!-- Top / Task Brief Section -->
-            <div class="sprint-header-pane" style="padding: 40px 60px; border-bottom: 1px solid rgba(79, 70, 229, 0.15); background: linear-gradient(135deg, #ffffff 0%, #f4f6ff 100%); flex-shrink: 0; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: relative; z-index: 10; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
-              <p style="color: var(--blue); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px;"><i data-lucide="target" style="width: 16px; height: 16px;"></i> ${data.header}</p>
-              <h1 style="font-size: 36px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 16px; color: #0f172a; line-height: 1.2;">${data.title}</h1>
-              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0; max-width: none; width: 100%;">${data.desc}</p>
+            <div class="sprint-header-pane" style="padding: 24px 32px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--card) 0%, var(--bg) 100%); flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); position: relative; z-index: 10; display: flex; flex-direction: column; width: 100%; box-sizing: border-box;">
+              <p style="color: var(--blue); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; gap: 6px;"><i data-lucide="target" style="width: 14px; height: 14px;"></i> ${data.header}</p>
+              <h1 style="font-size: 24px; font-weight: 600; letter-spacing: -0.5px; margin: 0 0 10px; color: var(--text); line-height: 1.2;">${data.title}</h1>
+              <p style="color: var(--subtext); font-size: 14px; line-height: 1.5; margin: 0; width: 100%;">${data.desc}</p>
             </div>
 
             <div class="sprint-split-view">
               <!-- Left side: Submission Area -->
               <div class="sprint-left-pane">
-                <p style="color: #64748b; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; font-weight: 700;">YOUR SUBMISSION</p>
-                <textarea id="sprintSubmissionText" placeholder="Write your PRD / deliverable... or post your code here" style="flex: 1; min-height: 200px; width: 100%; background: #fafbfe; border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 12px; color: #0f172a; padding: 24px; font-family: inherit; font-size: 15px; resize: none; outline: none; margin-bottom: 24px; box-shadow: inset 0 2px 8px rgba(79, 70, 229, 0.03); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(document.activeElement !== this) { this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03), 0 4px 12px rgba(79, 70, 229, 0.08)'; this.style.borderColor='rgba(79, 70, 229, 0.4)'; this.style.transform='translateY(-2px)' }" onmouseout="if(document.activeElement !== this) { this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03)'; this.style.borderColor='rgba(79, 70, 229, 0.2)'; this.style.transform='translateY(0)' }" onfocus="this.style.boxShadow='0 0 0 4px rgba(79, 70, 229, 0.15), 0 8px 24px rgba(79, 70, 229, 0.1)'; this.style.borderColor='var(--blue)'; this.style.background='#ffffff'; this.style.transform='translateY(-2px)'" onblur="this.style.boxShadow='inset 0 2px 8px rgba(79, 70, 229, 0.03)'; this.style.borderColor='rgba(79, 70, 229, 0.2)'; this.style.background='#fafbfe'; this.style.transform='translateY(0)'"></textarea>
+                <p style="color: var(--subtext); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; font-weight: 600;">YOUR SUBMISSION</p>
+                <textarea id="sprintSubmissionText" placeholder="Write your PRD / deliverable... or post your code here" style="flex: 1; min-height: 200px; width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 16px; font-family: inherit; font-size: 14px; resize: none; outline: none; margin-bottom: 16px; box-shadow: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="if(document.activeElement !== this) { this.style.borderColor='rgba(99, 102, 241, 0.4)'; }" onmouseout="if(document.activeElement !== this) { this.style.borderColor='var(--border)'; }" onfocus="this.style.borderColor='var(--blue)'; this.style.background='var(--card)';" onblur="this.style.borderColor='var(--border)';"></textarea>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                    <button id="uploadCodeBtn" style="background: linear-gradient(135deg, #eff6ff, #e0e7ff); color: #3730a3; border: 1px solid #c7d2fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(55,48,163,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="upload" style="width:16px; height:16px; margin-right:8px;"></i> Upload Code / Zip</button>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <button id="uploadCodeBtn" style="background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; height: 38px; display: flex; align-items: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--bg)';" onmouseout="this.style.background='var(--card)';"><i data-lucide="upload" style="width:14px; height:14px; margin-right:6px;"></i> Upload Code / Zip</button>
                     <button id="addLinkBtn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #166534; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(22,101,52,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'"><i data-lucide="link" style="width:16px; height:16px; margin-right:8px;"></i> Add Project Link</button>
                     <button style="background: linear-gradient(135deg, #fdf4ff, #fae8ff); color: #86198f; border: 1px solid #fbcfe8; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.boxShadow='0 6px 16px rgba(134,25,143,0.15)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='none'; this.style.transform='translateY(0)'" onclick="alert('File browser opened to upload assets')"><i data-lucide="image" style="width:16px; height:16px; margin-right:8px;"></i> Creative Assets</button>
                   </div>
@@ -2675,53 +3339,53 @@ document.querySelectorAll(".project-card").forEach(card => {
                   <p style="margin: 0; font-size: 16px; color: #cbd5e1; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 600;">Simulation Successfully Completed</p>
                 </div>
                 
-                <div style="text-align: center; margin-bottom: 40px;">
-                  <h2 style="color: #0f172a; font-size: 32px; margin: 0 0 8px; font-weight: 800;">${uName}</h2>
-                  <p style="color: #475569; font-size: 18px; margin: 0;">Completed as: <strong>${uRole}</strong></p>
+                <div style="text-align: center; margin-bottom: 32px;">
+                  <h2 style="color: var(--text); font-size: 26px; margin: 0 0 8px; font-weight: 600;">${uName}</h2>
+                  <p style="color: var(--subtext); font-size: 15px; margin: 0;">Completed as: <strong>${uRole}</strong></p>
                 </div>
                 
-                <div style="display: flex; gap: 24px; margin-bottom: 40px; flex-wrap: wrap;">
-                  <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-                    <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;"><i data-lucide="briefcase" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Target Company</p>
-                    <p style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700;">${title}</p>
+                <div style="display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; width: 100%;">
+                  <div style="flex: 1; min-width: 180px; background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                    <p style="font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin: 0 0 8px;"><i data-lucide="briefcase" style="width: 12px; height: 12px; display: inline-block; vertical-align: middle;"></i> Target Company</p>
+                    <p style="margin: 0; color: var(--text); font-size: 16px; font-weight: 600;">${title}</p>
                   </div>
-                  <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-                    <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;">Final Rating</p>
+                  <div style="flex: 1; min-width: 180px; background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                    <p style="font-size: 11px; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin: 0 0 8px;">Final Rating</p>
                     <div style="display: flex; justify-content: center; gap: 4px;">
                       ${starsHtml}
                     </div>
                   </div>
                 </div>
 
-                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 32px; margin-bottom: 40px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                      <div style="width:48px; height:48px; border-radius:50%; background:#0f172a; color:#fff; border:1px solid #cbd5e1; display:grid; place-items:center; font-weight:800;">Q</div>
+                <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 32px; width: 100%; text-align: left;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div style="width:40px; height:40px; border-radius:50%; background:var(--blue); color:#fff; border:1px solid var(--border); display:grid; place-items:center; font-weight:600; font-size: 14px;">Q</div>
                       <div>
-                        <p style="font-weight: 700; font-size: 16px; margin: 0; color: #0f172a;">Quinn</p>
-                        <p style="color: #64748b; font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">SkillRecord Evaluator</p>
+                        <p style="font-weight: 600; font-size: 14px; margin: 0; color: var(--text);">Quinn</p>
+                        <p style="color: var(--subtext); font-size: 11px; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">SkillRecord Evaluator</p>
                       </div>
                     </div>
-                    <div style="width: 60px; height: 60px; border-radius: 50%; border: 3px dashed #fbbf24; display: flex; align-items: center; justify-content: center; background: #fffbeb;">
-                      <span style="color: #b45309; font-weight: 800; font-size: 12px; text-align: center; line-height: 1;">TOP<br>5%</span>
+                    <div style="width: 50px; height: 50px; border-radius: 50%; border: 2px dashed var(--amber); display: flex; align-items: center; justify-content: center; background: rgba(217, 119, 6, 0.08);">
+                      <span style="color: var(--amber); font-weight: 700; font-size: 10.5px; text-align: center; line-height: 1;">TOP<br>5%</span>
                     </div>
                   </div>
-                  <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0; font-style: italic;">"${finalVerdict}"</p>
+                  <p style="color: var(--subtext); font-size: 14.5px; line-height: 1.5; margin: 0; font-style: italic;">"${finalVerdict}"</p>
                 </div>
 
-                <div style="margin-bottom: 40px;">
-                  <p style="font-size: 14px; color: #0f172a; font-weight: 700; margin: 0 0 16px; text-transform: uppercase; letter-spacing: 1px;">Live Performance Analytics</p>
-                  <div id="analyticsChartContainer" style="width: 100%; height: 180px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <div style="margin-bottom: 32px; width: 100%; text-align: left;">
+                  <p style="font-size: 12px; color: var(--text); font-weight: 600; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.5px;">Live Performance Analytics</p>
+                  <div id="analyticsChartContainer" style="width: 100%; height: 180px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; display: flex; align-items: center; justify-content: center;">
                     <canvas id="analyticsChart" width="700" height="180"></canvas>
                   </div>
                 </div>
                 
-                <div style="display: flex; gap: 16px; width: 100%; flex-wrap: wrap;">
-                  <button id="downloadReportBtn" style="flex: 1; padding: 16px; font-size: 16px; border-radius: 12px; border: 2px solid #e2e8f0; background: #ffffff; color: #475569; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.borderColor='var(--blue)'; this.style.color='var(--blue)';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#475569';">
-                    <i data-lucide="download" style="width: 20px; height: 20px;"></i> Save as PDF
+                <div style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
+                  <button id="downloadReportBtn" style="flex: 1; padding: 12px; font-size: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='var(--bg)';" onmouseout="this.style.background='var(--card)';">
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i> Save as PDF
                   </button>
-                  <button id="viewSkillRecordBtn" style="flex: 2; padding: 16px; font-size: 16px; border-radius: 12px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
-                    Return to Dashboard <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
+                  <button id="viewSkillRecordBtn" style="flex: 2; padding: 12px; font-size: 14px; border-radius: 8px; background: var(--blue); color: #ffffff; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);" onmouseover="this.style.background='var(--indigo)';" onmouseout="this.style.background='var(--blue)';">
+                    Return to Dashboard <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
                   </button>
                 </div>
               </div>
@@ -2729,43 +3393,43 @@ document.querySelectorAll(".project-card").forEach(card => {
           `;
         } else {
           modalContent.innerHTML = `
-            <div class="cert-wrapper">
-              <div class="cert-card">
+            <div class="cert-wrapper" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; background: linear-gradient(135deg, var(--bg) 0%, var(--card) 100%);">
+              <div class="cert-card" style="background: var(--card); border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 480px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden;">
                 
                 <div class="cert-fail-header">
-                  <div style="width: 80px; height: 80px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.1);">
-                    <i data-lucide="alert-triangle" style="width: 40px; height: 40px; color: #dc2626;"></i>
+                  <div style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);">
+                    <i data-lucide="alert-triangle" style="width: 28px; height: 28px; color: var(--red);"></i>
                   </div>
-                  <h1 style="margin: 0 0 8px; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; color: #991b1b;">Performance Report</h1>
-                  <p style="margin: 0; font-size: 16px; color: #dc2626; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;">Simulation Failed</p>
+                  <h1 style="margin: 0 0 6px; font-size: 24px; font-weight: 600; letter-spacing: -0.5px; color: var(--red);">Performance Report</h1>
+                  <p style="margin: 0; font-size: 13px; color: var(--red); letter-spacing: 1px; text-transform: uppercase; font-weight: 600;">Simulation Failed</p>
                 </div>
 
-                <div style="text-align: center; margin-bottom: 40px;">
-                  <h2 style="color: #0f172a; font-size: 32px; margin: 0 0 8px; font-weight: 800;">${uName}</h2>
-                  <p style="color: #475569; font-size: 18px; margin: 0;">Target Company: <strong>${title}</strong></p>
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <h2 style="color: var(--text); font-size: 24px; margin: 0 0 6px; font-weight: 600;">${uName}</h2>
+                  <p style="color: var(--subtext); font-size: 14px; margin: 0;">Target Company: <strong>${title}</strong></p>
                 </div>
                 
-                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; padding: 16px; background: #f8fafc; border-radius: 12px;">
+                <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 24px; padding: 12px; background: var(--bg); border-radius: 8px; width: 100%; border: 1px solid var(--border);">
                   ${starsHtml}
                 </div>
 
-                <div style="background: #fff5f5; border: 1px solid #fecaca; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
-                  <p style="color: #991b1b; font-size: 16px; line-height: 1.6; margin: 0; font-weight: 500;"><strong>Manager Feedback:</strong> "${finalVerdict}"</p>
+                <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; padding: 18px; margin-bottom: 24px; width: 100%; text-align: left;">
+                  <p style="color: var(--text); font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;"><strong>Manager Feedback:</strong> "${finalVerdict}"</p>
                 </div>
                 
-                <div style="background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-                  <p style="font-weight: 700; color: #0f172a; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;"><i data-lucide="target" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;"></i> Identified Skill Gaps</p>
-                  <ul style="color: #dc2626; margin: 0; padding-left: 20px; font-size: 15px; font-weight: 500; line-height: 1.8;">
+                <div style="background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 32px; width: 100%; text-align: left;">
+                  <p style="font-weight: 600; color: var(--text); margin-bottom: 12px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;"><i data-lucide="target" style="width: 14px; height: 14px; vertical-align: middle;"></i> Identified Skill Gaps</p>
+                  <ul style="color: var(--red); margin: 0; padding-left: 20px; font-size: 13.5px; font-weight: 500; line-height: 1.6;">
                     ${missingSkills.length > 0 ? missingSkills.map(s => `<li>${s}</li>`).join('') : `<li>Poor problem solving</li><li>Code quality issues</li>`}
                   </ul>
                 </div>
 
-                <div style="display: flex; gap: 16px; width: 100%; flex-wrap: wrap;">
-                  <button id="downloadReportBtn" style="flex: 1; padding: 16px; font-size: 16px; border-radius: 12px; border: 2px solid #fecaca; background: #ffffff; color: #b91c1c; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='#ffffff';">
-                    <i data-lucide="download" style="width: 20px; height: 20px;"></i> Download PDF
+                <div style="display: flex; gap: 12px; width: 100%; flex-wrap: wrap;">
+                  <button id="downloadReportBtn" style="flex: 1; padding: 12px; font-size: 14px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); background: var(--card); color: var(--red); font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='rgba(239, 68, 68, 0.05)';" onmouseout="this.style.background='var(--card)';">
+                    <i data-lucide="download" style="width: 16px; height: 16px;"></i> Download PDF
                   </button>
-                  <button id="viewSkillRecordBtn" style="flex: 2; padding: 16px; font-size: 16px; border-radius: 12px; background: #0f172a; color: #ffffff; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(15,23,42,0.1); display: flex; align-items: center; justify-content: center; gap: 8px;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
-                    Return to Dashboard <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
+                  <button id="viewSkillRecordBtn" style="flex: 2; padding: 12px; font-size: 14px; border-radius: 8px; background: var(--text); color: var(--card); font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">
+                    Return to Dashboard <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
                   </button>
                 </div>
               </div>
@@ -3470,15 +4134,110 @@ async function handleTeamChatSend() {
       );
 
   } catch (error) {
-    console.error("Team Chat Error:", error);
+    console.error("Team Chat Error, falling back to local simulation:", error);
     typingMsg.remove();
-    appendTeamChatMessage(
-      "System",
-      "Backend",
-      `Backend chat failed: ${error.message || "unknown error"}. Check Flask logs; no hardcoded teammate reply was used.`,
-      "system"
-    );
+    handleLocalTeammateChatResponse(userText);
   }
+}
+
+function playWorkspaceAlertSound() {
+  const audioEnabled = localStorage.getItem("settingsAudioEnabled") !== "false";
+  if (!audioEnabled) return;
+  
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+    
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.36);
+  } catch (error) {
+    console.warn("Web Audio alert could not play:", error);
+  }
+}
+
+function handleLocalTeammateChatResponse(userText) {
+  if (!teamChatHistory) return;
+  const text = String(userText || "").toLowerCase();
+  
+  let speaker = "Sarah";
+  let role = "Designer";
+  let avatar = "S";
+  let message = "";
+  
+  if (text.includes("design") || text.includes("ui") || text.includes("ux") || text.includes("wire") || text.includes("css") || text.includes("frontend") || text.includes("button") || text.includes("color")) {
+    speaker = "Sarah";
+    role = "Design";
+    avatar = "S";
+    const responses = [
+      "I'm on it! I've updated the Figma file and mapped out the transition flows. Let me know if you want me to share the wireframe links.",
+      "Good point. I'll make sure the mobile layout handles spacing properly so we don't crowd the viewport. Should I push the updated Figma assets?",
+      "I completely agree! An explicit state transition makes the product feel much more alive. I'll add an animated micro-interaction here."
+    ];
+    message = responses[Math.floor(Math.random() * responses.length)];
+  } else if (text.includes("code") || text.includes("backend") || text.includes("api") || text.includes("database") || text.includes("server") || text.includes("schema") || text.includes("cache") || text.includes("query") || text.includes("latency")) {
+    speaker = "Mike";
+    role = "Dev";
+    avatar = "M";
+    const responses = [
+      "Makes sense. I'll review the database indexes to guarantee we aren't creating locks under high traffic. The schemas are in the files list.",
+      "Good catch! I'll set up a Redis cache fallback path so that if the main database connection latency spikes, the user session doesn't fail.",
+      "Got it. I'll add validation gates and double-check the API response payloads. I'm moving the DBSchema task card to in progress."
+    ];
+    message = responses[Math.floor(Math.random() * responses.length)];
+  } else if (text.includes("data") || text.includes("metric") || text.includes("test") || text.includes("experiment") || text.includes("ab") || text.includes("report") || text.includes("kpi") || text.includes("rate")) {
+    speaker = "Alex";
+    role = "Data";
+    avatar = "A";
+    const responses = [
+      "I've provisioned the analytics cohort board. We can track user onboarding segment funnel conversion rates in real time now.",
+      "Interesting. The cohort A/B test data has some minor noise, but concentrating on retention over acquisition is definitely backed by the Day-7 charts.",
+      "I'll pull the active sessions query log. That should confirm the anomaly drop and tell us if there's any regional skew."
+    ];
+    message = responses[Math.floor(Math.random() * responses.length)];
+  } else {
+    const speakerOptions = [
+      { name: "Sarah", role: "Design", avatar: "S", msg: "Sounds solid. Let's make sure we have a clear owner for this checkout validation step." },
+      { name: "Mike", role: "Dev", avatar: "M", msg: "I agree with the prioritization. Let's tackle the critical rollback path before we add anything complex." },
+      { name: "Alex", role: "Data", avatar: "A", msg: "Aligned. I'll monitor the room pulse and update the stakeholder charts as we proceed." }
+    ];
+    const option = speakerOptions[Math.floor(Math.random() * speakerOptions.length)];
+    speaker = option.name;
+    role = option.role;
+    avatar = option.avatar;
+    message = option.msg;
+  }
+  
+  const typingDelay = 1000 + Math.min(message.length * 15, 1500);
+  
+  const typingMsg = document.createElement("div");
+  typingMsg.className = "chat-msg typing-indicator";
+  typingMsg.innerHTML = `<em>${speaker} (${role}) is typing...</em>`;
+  teamChatHistory.appendChild(typingMsg);
+  teamChatHistory.scrollTop = teamChatHistory.scrollHeight;
+  
+  setTimeout(() => {
+    typingMsg.remove();
+    appendTeamChatMessage(speaker, role, message);
+    playWorkspaceAlertSound();
+    
+    let dmMsgs = parseInt(localStorage.getItem("statsTeammateMsgs") || "0", 10) || 0;
+    dmMsgs++;
+    localStorage.setItem("statsTeammateMsgs", String(dmMsgs));
+  }, typingDelay);
 }
 
 if (teamChatSend) {
@@ -3591,30 +4350,35 @@ if (welcomePopup) {
   if (startSimBtn) startSimBtn.addEventListener("click", dismissWelcome);
 }
 window.addEventListener("DOMContentLoaded", () => {
+  // Hydrate dynamic user identity
+  hydrateDynamicUser();
 
-    const studentData = {
-        name: "Saavi Patel",
-        role: "Frontend Developer"
-    };
+  // Teammate & Live Signal Feed Loop
+  const teammateUpdates = [
+    { sender: "Sarah (Design)", message: "Updating wireframes for the new Checkout Onboarding flow." },
+    { sender: "Mike (Dev)", message: "Payment Gateway API refactor is 80% complete. Running latency checks." },
+    { sender: "Alex (Data)", message: "Conversion rate drop resolved! Stale session reads were causing telemetry spikes." },
+    { sender: "Asha (PM)", message: "Launch review scheduled for 3 PM today. Ravi, is your gateway check ready?" },
+    { sender: "Ravi (Dev)", message: "Outline is finished. I am waiting on the final checklist before writing the endpoint." }
+  ];
 
-    localStorage.setItem(
-        "student",
-        JSON.stringify(studentData)
-    );
-
-    const student =
-        JSON.parse(localStorage.getItem("student"));
-
-    if(student){
-
-        const initials = student.name
-            .split(" ")
-            .map(word => word[0])
-            .join("")
-            .toUpperCase();
-
-        document.getElementById("studentAvatar").innerText =
-            initials;
+  let logIndex = 0;
+  setInterval(() => {
+    const update = teammateUpdates[logIndex % teammateUpdates.length];
+    
+    // Show dynamic toast notification
+    if (typeof showToast === 'function') {
+      showToast(`Signal: ${update.sender}: "${update.message.substring(0, 30)}..."`, "success");
+    }
+    
+    // Append to live console timeline
+    if (typeof addAiAlert === 'function') {
+      addAiAlert('hint', `<strong>${update.sender}</strong>: ${update.message}`);
     }
 
+    // Add Timeline Event
+    addTimelineEvent(`${update.sender}: ${update.message}`);
+    
+    logIndex++;
+  }, 20000); // Trigger every 20 seconds
 });

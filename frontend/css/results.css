@@ -752,3 +752,210 @@ a {
     box-shadow: none;
   }
 }
+
+/* Premium Dark Mode Override */
+html.dark, html.dark body {
+  background:
+    radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
+    #050816 !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .recruiter-profile-card {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .profile-header {
+  background: #0A0F24 !important;
+  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .profile-identity h2 {
+  color: #E6ECFF !important;
+}
+
+html.dark .profile-task {
+  color: #94A3B8 !important;
+}
+
+html.dark .profile-location {
+  color: #94A3B8 !important;
+}
+
+html.dark .profile-actions .secondary-btn,
+html.dark .profile-actions .action-link {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .profile-actions .secondary-btn:hover,
+html.dark .profile-actions .action-link:hover {
+  background: #151F3D !important;
+}
+
+html.dark .profile-summary-section {
+  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .overall-score-box {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .score-ring .ring-track {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .score-ring .ring-fill {
+  stroke: var(--blue);
+}
+
+html.dark .score-value {
+  color: #E6ECFF !important;
+}
+
+html.dark .profile-score-text h4 {
+  color: #94A3B8 !important;
+}
+
+html.dark .score-tags .subtitle {
+  color: #E6ECFF !important;
+}
+
+html.dark .professional-summary h4 {
+  color: #E6ECFF !important;
+}
+
+html.dark .professional-summary p {
+  color: #94A3B8 !important;
+}
+
+html.dark .profile-skills-matrix {
+  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .skill-info {
+  color: #E6ECFF !important;
+}
+
+html.dark .skill-bar-wrap {
+  background: #0A0F24 !important;
+}
+
+html.dark .profile-bottom-section {
+  background: #0A0F24 !important;
+  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .profile-bottom-section h4 {
+  color: #94A3B8 !important;
+}
+
+html.dark .ach-badge {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .ach-badge.gold {
+  background: rgba(234, 179, 8, 0.05) !important;
+  border-color: rgba(234, 179, 8, 0.3) !important;
+  color: #fbbf24 !important;
+}
+
+html.dark .role-tag {
+  background: rgba(124, 92, 255, 0.1) !important;
+  border-color: rgba(124, 92, 255, 0.25) !important;
+  color: #a5b4fc !important;
+}
+
+html.dark .profile-footer {
+  background: rgba(16, 185, 129, 0.02) !important;
+  border-top-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+html.dark .stamp-details p {
+  color: #94A3B8 !important;
+}
+
+html.dark .record-history {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .history-heading h3 {
+  color: #E6ECFF !important;
+}
+
+html.dark .history-heading span {
+  background: rgba(124, 92, 255, 0.1) !important;
+  border-color: rgba(124, 92, 255, 0.25) !important;
+  color: #a5b4fc !important;
+}
+
+html.dark .record-item {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .record-item:hover,
+html.dark .record-item.active {
+  border-color: #7C5CFF !important;
+  box-shadow: 0 10px 22px rgba(124, 92, 255, 0.15) !important;
+}
+
+html.dark .record-item b {
+  color: #34d399 !important;
+}
+
+html.dark .record-empty {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #94A3B8 !important;
+}
+
+html.dark .detail-card {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .section-head h3 {
+  color: #E6ECFF !important;
+}
+
+html.dark .eyebrow {
+  color: #94A3B8 !important;
+}
+
+html.dark .signal-list li {
+  color: #94A3B8 !important;
+}
+
+html.dark .note-card {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+}
+
+html.dark .note-meta strong {
+  color: #f8fafc !important;
+}
+
+html.dark .note-strength {
+  color: #f8fafc !important;
+}
+
+html.dark .note-risk {
+  color: #8e9bb4 !important;
+}
+
+html.dark .note-score {
+  background: rgba(52, 211, 153, 0.1) !important;
+  color: #34d399 !important;
+}

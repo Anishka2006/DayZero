@@ -1646,3 +1646,102 @@ body.team-glow .teammate-row {
     grid-template-columns: 1fr;
   }
 }
+
+/* Premium Dark Mode Override */
+html.dark, html.dark body {
+  --bg: #050816;
+  --surface: rgba(16, 24, 47, 0.96);
+  --surface-strong: #10182F;
+  --surface-soft: #0A0F24;
+  --line: rgba(124, 92, 255, 0.12);
+  --line-strong: rgba(124, 92, 255, 0.22);
+  --text: #E6ECFF;
+  --muted: #94A3B8;
+  --muted-strong: #7C5CFF;
+  
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
+    #050816 !important;
+}
+
+html.dark .icon-lite-btn {
+  background: var(--surface-soft) !important;
+  border-color: var(--line) !important;
+  color: var(--text) !important;
+}
+
+html.dark .icon-lite-btn:hover {
+  background: var(--surface-strong) !important;
+}
+
+html.dark .chat-topbar {
+  background: var(--surface-soft) !important;
+  border-bottom-color: var(--line) !important;
+}
+
+html.dark .chat-card {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+  color: var(--text) !important;
+}
+
+html.dark .reference-chat-feed {
+  background: var(--bg) !important;
+}
+
+html.dark .mission-ribbon {
+  background: var(--surface-soft) !important;
+  border-bottom-color: var(--line) !important;
+}
+
+html.dark .mission-ribbon-main,
+html.dark .mission-output {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+}
+
+html.dark .mission-update {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+html.dark .composer-wrap,
+html.dark .reference-composer-wrap {
+  background: var(--surface-soft) !important;
+  border-top: 1px solid var(--line) !important;
+}
+
+html.dark textarea#candidateMessageInput,
+html.dark textarea#codeEditor {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+
+html.dark .workspace-topbar {
+  background: var(--surface-soft) !important;
+  border-bottom-color: var(--line) !important;
+}
+
+html.dark .workspace-footer {
+  background: var(--surface-soft) !important;
+  border-top-color: var(--line) !important;
+}
+
+html.dark .footer-btn {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+  color: var(--text) !important;
+}
+
+html.dark .footer-btn:hover {
+  background: var(--surface-soft) !important;
+}
+
+html.dark .modal-card {
+  background: var(--surface-strong) !important;
+  border-color: var(--line-strong) !important;
+  box-shadow: var(--shadow) !important;
+}

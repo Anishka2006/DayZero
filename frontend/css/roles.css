@@ -306,3 +306,77 @@ button {
     font-size: 13px;
   }
 }
+
+/* Premium Dark Mode Override */
+html.dark, html.dark body {
+  background:
+    radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
+    #050816 !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .brand-compact h1 {
+  color: #E6ECFF !important;
+}
+
+html.dark .role-selection {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .selection-header h2 {
+  color: #E6ECFF !important;
+}
+
+html.dark .selection-header p {
+  color: #94A3B8 !important;
+}
+
+html.dark .role-card {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .role-card:hover {
+  border-color: #7C5CFF !important;
+  box-shadow: 0 14px 28px rgba(124, 92, 255, 0.15) !important;
+}
+
+html.dark .role-card.active {
+  background: linear-gradient(135deg, #7C5CFF 0%, #4DA3FF 100%) !important;
+  border-color: #7C5CFF !important;
+  color: #ffffff !important;
+}
+
+html.dark .role-icon {
+  background: rgba(124, 92, 255, 0.1) !important;
+  color: #4FFFD1 !important;
+}
+
+html.dark .level-label {
+  color: #94A3B8 !important;
+}
+
+html.dark .level-btn {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #94A3B8 !important;
+}
+
+html.dark .level-btn:hover {
+  background: #10182F !important;
+  color: #E6ECFF !important;
+}
+
+html.dark .level-btn.active {
+  background: #7C5CFF !important;
+  color: #ffffff !important;
+  border-color: #7C5CFF !important;
+}
+
+html.dark .selection-footer {
+  border-top-color: rgba(124, 92, 255, 0.12) !important;
+}

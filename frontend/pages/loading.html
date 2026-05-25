@@ -284,12 +284,18 @@
 
     <div class="fallback-section" id="fallbackSection">
       <p class="fallback-message" id="fallbackMessage">Waiting for the local simulation backend...</p>
-      <button class="retry-btn" id="retryBtn">Retry connection</button>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button class="retry-btn" id="retryBtn">Retry connection</button>
+        <button class="retry-btn" id="demoBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">Launch Demo Mode</button>
+      </div>
     </div>
 
     <div class="error-section" id="errorSection">
       <p class="error-message" id="errorMessage">Could not initialize simulation. Please retry.</p>
-      <button class="retry-btn" id="errorRetryBtn">Try again</button>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button class="retry-btn" id="errorRetryBtn">Try again</button>
+        <button class="retry-btn" id="errorDemoBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">Launch Offline Demo</button>
+      </div>
     </div>
 
     <div class="tips-section">
