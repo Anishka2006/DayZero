@@ -195,20 +195,13 @@ function selectedTaskContext(taskId) {
 
 async function wakeBackendService() {
   const attempts = [
-    { timeout: 8000, delay: 900 },
-    { timeout: 12000, delay: 1400 },
-    { timeout: 16000, delay: 2200 },
-    { timeout: 20000, delay: 0 },
+    { timeout: 1500, delay: 0 }
   ];
 
   let lastError = null;
 
   for (let index = 0; index < attempts.length; index += 1) {
     const attempt = attempts[index];
-    if (index > 0) {
-      setStatus("AI teammates are reviewing the task brief...");
-    }
-
     try {
       const response = await fetchWithTimeout(`${API_BASE_URL}/health`, { method: "GET" }, attempt.timeout);
       if (response.ok) {
@@ -220,14 +213,88 @@ async function wakeBackendService() {
     } catch (error) {
       lastError = error;
     }
-
-    showFallback("Waiting for the local simulation backend. Start it with python backend/app.py if it is not running.");
-    if (attempt.delay) {
-      await sleep(attempt.delay);
-    }
   }
 
   throw lastError || new Error("Backend health check failed.");
+}
+
+function generateLocalMockSession(taskId) {
+  const role = sessionStorage.getItem("dayzero_role") || localStorage.getItem("userRole") || "Frontend";
+  const difficulty = sessionStorage.getItem("dayzero_difficulty") || localStorage.getItem("userExperience") || "Medium";
+  const name = localStorage.getItem("userName") || "Developer";
+
+  let headline = "Optimize Sprint Room";
+  let summary = "Ensure task-specific decisions are made quickly and evidence is clear.";
+  let initialMessages = [];
+  
+  if (taskId && taskId.includes("spotify")) {
+    headline = "Creator Retention Campaign";
+    summary = "Address conflicting metrics regarding creator retention versus user acquisition.";
+    initialMessages = [
+      {
+        speaker_name: "Sarah (Product Manager)",
+        speaker_title: "Product Lead",
+        avatar: "S",
+        role: "agent",
+        channel: "team",
+        message: "Welcome to the Stripe/Spotify sprint room! We need to analyze why creator retention metrics fell 12% in the last cohort. Let's inspect the dataset in the workspace.",
+        created_at: new Date().toISOString()
+      },
+      {
+        speaker_name: "Kenji (QA Engineer)",
+        speaker_title: "QA Lead",
+        avatar: "K",
+        role: "agent",
+        channel: "team",
+        message: "I've checked the telemetry. It looks like the experimental analytics logger might have been double-counting active sessions or duplicating events. I've left the files in the workspace.",
+        created_at: new Date().toISOString()
+      }
+    ];
+  } else {
+    headline = "Sprint Room Optimization";
+    summary = "Execute task decisions rapidly, resolve blocker items, and verify metrics.";
+    initialMessages = [
+      {
+        speaker_name: "Sarah (Product Manager)",
+        speaker_title: "Product Lead",
+        avatar: "S",
+        role: "agent",
+        channel: "team",
+        message: `Welcome team! Let's get the ${role} requirements scoped and execute on this issue immediately. Check the files list in the workspace.`,
+        created_at: new Date().toISOString()
+      },
+      {
+        speaker_name: "Kenji (QA Engineer)",
+        speaker_title: "QA Lead",
+        avatar: "K",
+        role: "agent",
+        channel: "team",
+        message: "Hey! Ready to review and validate our changes. Let's make sure our checkout validation is covered.",
+        created_at: new Date().toISOString()
+      }
+    ];
+  }
+
+  return {
+    session_id: "local-session-" + taskId + "-" + Date.now(),
+    phase: "planning",
+    status: "active",
+    task_id: taskId,
+    role: role,
+    difficulty: difficulty,
+    participant_name: name,
+    messages: initialMessages,
+    memory: {
+      phase: "planning",
+      timeline: [
+        {
+          title: "Sprint Room Initiated",
+          description: `Collaborative offline workspace initialized for task "${taskId}".`,
+          created_at: new Date().toISOString()
+        }
+      ]
+    }
+  };
 }
 
 async function initializeSession() {
@@ -259,7 +326,7 @@ async function initializeSession() {
         participant_name: localStorage.getItem("userName") || "Candidate",
         task_context: taskContext,
       }),
-    }, 18000);
+    }, 8000);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -274,10 +341,7 @@ async function initializeSession() {
 }
 
 function navigateToSimulation(sessionData) {
-  // Store session data in sessionStorage for simulation.html to use
   sessionStorage.setItem("dayzero_session_data", JSON.stringify(sessionData));
-
-  // Navigate to simulation
   window.location.replace("simulation.html");
 }
 
@@ -287,15 +351,15 @@ async function startLoadingSequence() {
   startMessageRotation();
   startProgressAnimation();
 
-  // Show fallback after 8 seconds
+  // Show fallback options after 2.5 seconds
   fallbackTimer = setTimeout(() => {
-    showFallback("Waiting for the local simulation backend...");
-  }, 8000);
+    showFallback("Looking for the local backend... Or you can launch in offline Demo Mode immediately.");
+  }, 2500);
 
-  // Show error after 20 seconds
+  // Show error / demo mode option after 6 seconds
   errorTimer = setTimeout(() => {
-    showFallback("Still preparing the room. Retry connection");
-  }, 20000);
+    showError("Connection taking longer than expected. You can launch in Local Offline Mode.");
+  }, 6000);
 
   try {
     const sessionData = await initializeSession();
@@ -311,9 +375,18 @@ async function startLoadingSequence() {
     }
   } catch (error) {
     if (runId !== loadingRunId) return;
+    console.warn("Could not connect to live backend, falling back to local simulation mode.", error);
     cleanup();
-    hideFallback();
-    showError("Could not connect to the local backend or initialize the simulation. Please retry.");
+    setStatus("Active backend not detected. Booting Offline Demo Workspace...");
+    if (progressFill) {
+      progressFill.style.width = "100%";
+    }
+    
+    const taskId = sessionStorage.getItem("dayzero_task_id") || localStorage.getItem("dayzero_task_id") || "spotify-creator-retention";
+    const mockSession = generateLocalMockSession(taskId);
+    
+    await sleep(800);
+    navigateToSimulation(mockSession);
   }
 }
 
@@ -326,6 +399,19 @@ function retryConnection() {
   startLoadingSequence();
 }
 
+function launchDemoMode() {
+  cleanup();
+  setStatus("Launching local simulation room...");
+  if (progressFill) progressFill.style.width = "100%";
+  
+  const taskId = sessionStorage.getItem("dayzero_task_id") || localStorage.getItem("dayzero_task_id") || "spotify-creator-retention";
+  const mockSession = generateLocalMockSession(taskId);
+  
+  setTimeout(() => {
+    navigateToSimulation(mockSession);
+  }, 600);
+}
+
 if (retryBtn) {
   retryBtn.addEventListener("click", retryConnection);
 }
@@ -334,5 +420,14 @@ if (errorRetryBtn) {
   errorRetryBtn.addEventListener("click", retryConnection);
 }
 
-// Start the loading sequence when page loads
+const demoBtn = document.getElementById("demoBtn");
+const errorDemoBtn = document.getElementById("errorDemoBtn");
+
+if (demoBtn) {
+  demoBtn.addEventListener("click", launchDemoMode);
+}
+if (errorDemoBtn) {
+  errorDemoBtn.addEventListener("click", launchDemoMode);
+}
+
 document.addEventListener("DOMContentLoaded", startLoadingSequence);

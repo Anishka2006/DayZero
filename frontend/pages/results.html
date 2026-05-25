@@ -9,6 +9,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/results.css?v=5" />
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+      document.addEventListener("DOMContentLoaded", () => document.body.classList.add("dark"));
+    }
+  </script>
 </head>
 <body>
   <main class="results-shell">

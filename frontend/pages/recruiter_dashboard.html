@@ -40,6 +40,91 @@
       --radius-lg: 14px;
     }
 
+    body.dark {
+      --bg: #050816;
+      --surface: #10182F;
+      --surface2: #0A0F24;
+      --border: rgba(124, 92, 255, 0.12);
+      --border2: rgba(124, 92, 255, 0.25);
+      --text: #E6ECFF;
+      --subtext: #94A3B8;
+      --hint: rgba(148, 163, 184, 0.65);
+      --blue: #4DA3FF;
+      --blue-bg: rgba(77, 163, 255, 0.12);
+      --blue-text: #4DA3FF;
+      --indigo: #7C5CFF;
+      --indigo-bg: rgba(124, 92, 255, 0.12);
+      --green: #4FFFD1;
+      --green-bg: rgba(79, 255, 209, 0.1);
+      --green-text: #4FFFD1;
+      --amber: #fbbf24;
+      --amber-bg: rgba(251, 191, 36, 0.12);
+      --amber-text: #fbbf24;
+      --red: #FF4D6D;
+      --red-bg: rgba(255, 77, 109, 0.12);
+      --red-text: #FF4D6D;
+      --purple: #7C5CFF;
+      --purple-bg: rgba(124, 92, 255, 0.1);
+      
+      background:
+        radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
+        #050816 !important;
+    }
+    
+    body.dark .sidebar {
+      background: var(--surface) !important;
+      border-right-color: var(--border) !important;
+    }
+    
+    body.dark .topbar {
+      background: var(--surface) !important;
+      border-bottom-color: var(--border) !important;
+    }
+    
+    body.dark .side-panel {
+      background: var(--surface) !important;
+      border-left-color: var(--border) !important;
+    }
+    
+    body.dark .sp-header {
+      background: var(--surface) !important;
+      border-bottom-color: var(--border) !important;
+    }
+    
+    body.dark .candidates-table tr.cand-row.selected td {
+      background: rgba(124, 92, 255, 0.15) !important;
+    }
+    
+    body.dark .toast {
+      background: #10182F !important;
+      border: 1px solid var(--border) !important;
+      color: #E6ECFF !important;
+    }
+
+    body.dark .profile-panel {
+      background: rgba(10, 15, 36, 0.95) !important;
+      backdrop-filter: blur(40px) !important;
+      -webkit-backdrop-filter: blur(40px) !important;
+      border-left: 1px solid var(--border) !important;
+      box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    body.dark .profile-panel-header {
+      background: rgba(16, 24, 47, 0.5) !important;
+      border-bottom: 1px solid var(--border) !important;
+    }
+    
+    body.dark .profile-header-card {
+      background: linear-gradient(135deg, rgba(16, 24, 47, 0.85), rgba(10, 15, 36, 0.9)) !important;
+      border: 1px solid var(--border) !important;
+      box-shadow: 0 10px 30px -10px rgba(124, 92, 255, 0.15) !important;
+    }
+    
+    body.dark .profile-header-card::before {
+      background: radial-gradient(circle, rgba(124, 92, 255, 0.15) 0%, transparent 70%) !important;
+    }
+
     body {
       font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
@@ -1496,6 +1581,9 @@
         </button>
         <button class="topbar-btn primary" id="inviteBtn">
           <i data-lucide="plus" style="width:14px;height:14px;"></i> Invite Candidate
+        </button>
+        <button class="topbar-btn" id="themeToggleBtn" style="padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+          ☀️ Light
         </button>
         
         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 4px;"></div>
@@ -5050,7 +5138,35 @@
     if (addBtn) addBtn.onclick = function() { openSimCandidateModal(); };
   });
 
+  function initThemeToggle() {
+    var toggleBtn = el("themeToggleBtn");
+    var savedTheme = localStorage.getItem("theme") || "light";
+
+    function applyTheme(theme) {
+      if (theme === "dark") {
+        document.body.classList.add("dark");
+        document.body.classList.remove("light");
+        if (toggleBtn) toggleBtn.innerHTML = "🌙 Dark";
+      } else {
+        document.body.classList.add("light");
+        document.body.classList.remove("dark");
+        if (toggleBtn) toggleBtn.innerHTML = "☀️ Light";
+      }
+    }
+
+    applyTheme(savedTheme);
+
+    if (toggleBtn) {
+      toggleBtn.onclick = function() {
+        var currentTheme = document.body.classList.contains("dark") ? "light" : "dark";
+        localStorage.setItem("theme", currentTheme);
+        applyTheme(currentTheme);
+      };
+    }
+  }
+
   function init() {
+    initThemeToggle();
     // Show dashboard by default
     var dashView = el("dashboardView");
     if (dashView) dashView.style.display="block";

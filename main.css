@@ -1055,3 +1055,230 @@ section {
   border: 1px solid #93c5fd;
   color: #1e40af;
 }
+
+/* ==========================================================================
+   PREMIUM CYBER DARK MODE SYSTEM
+   ========================================================================== */
+body.dark {
+  background:
+    radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
+    #050816 !important;
+  color: #E6ECFF !important;
+}
+
+body.dark .navbar {
+  background: rgba(10, 15, 36, 0.85) !important;
+  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+  backdrop-filter: blur(14px) !important;
+}
+
+body.dark .nav-link {
+  color: #94A3B8 !important;
+}
+
+body.dark .nav-link:hover {
+  color: #7C5CFF !important;
+}
+
+body.dark .nav-link.login-link {
+  color: #7C5CFF !important;
+}
+
+body.dark .btn-primary {
+  background: linear-gradient(135deg, #7C5CFF 0%, #4DA3FF 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(124, 92, 255, 0.3) !important;
+  border: none !important;
+}
+
+body.dark .btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(124, 92, 255, 0.45) !important;
+}
+
+body.dark .btn-secondary {
+  background: #10182F !important;
+  color: #E6ECFF !important;
+  border-color: rgba(124, 92, 255, 0.2) !important;
+}
+
+body.dark .btn-secondary:hover {
+  background: #151F3D !important;
+  border-color: #7C5CFF !important;
+}
+
+body.dark .dashboard-card,
+body.dark .rec-dashboard-metric,
+body.dark .rec-dashboard-score,
+body.dark .trust-strip,
+body.dark .problem-card,
+body.dark .benefit-card,
+body.dark .step-card {
+  background: #10182F !important;
+  border: 1px solid rgba(124, 92, 255, 0.12) !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4) !important;
+  color: #E6ECFF !important;
+}
+
+body.dark .problem-card:hover,
+body.dark .benefit-card:hover,
+body.dark .step-card:hover {
+  background: #151F3D !important;
+  border-color: #7C5CFF !important;
+  box-shadow: 0 20px 40px rgba(124, 92, 255, 0.15) !important;
+}
+
+body.dark .dashboard-title,
+body.dark .dashboard-task-title,
+body.dark .team-value,
+body.dark .trust-item h4,
+body.dark .problem-card h3,
+body.dark .benefit-card h3,
+body.dark .step-card h3,
+body.dark .section-heading h2,
+body.dark .final-cta-title,
+body.dark .footer-logo {
+  color: #E6ECFF !important;
+}
+
+body.dark .hero-sub,
+body.dark .hero-support,
+body.dark .dashboard-meta,
+body.dark .team-label,
+body.dark .trust-item p,
+body.dark .section-heading p,
+body.dark .problem-card p,
+body.dark .benefit-card p,
+body.dark .step-card p,
+body.dark .recruiter-list,
+body.dark .final-cta-sub,
+body.dark .footer-desc,
+body.dark .footer-contact p,
+body.dark .footer-link {
+  color: #94A3B8 !important;
+}
+
+body.dark .problem-icon,
+body.dark .benefit-icon,
+body.dark .step-number {
+  background: rgba(124, 92, 255, 0.1) !important;
+  color: #4FFFD1 !important; /* Cyan accent */
+}
+
+body.dark .problem-card:hover .problem-icon,
+body.dark .benefit-card:hover .benefit-icon,
+body.dark .step-card:hover .step-number {
+  background: #7C5CFF !important;
+  color: #ffffff !important;
+}
+
+body.dark .team-divider,
+body.dark .footer-copyright {
+  border-top-color: rgba(124, 92, 255, 0.12) !important;
+  background: rgba(124, 92, 255, 0.12) !important;
+}
+
+body.dark .footer {
+  background: #0A0F24 !important;
+  border-top: 1px solid rgba(124, 92, 255, 0.12) !important;
+}
+
+body.dark .footer-social-icon {
+  background: #10182F !important;
+  color: #E6ECFF !important;
+  border: 1px solid rgba(124, 92, 255, 0.12) !important;
+}
+
+body.dark .footer-social-icon:hover {
+  background: #151F3D !important;
+  border-color: #7C5CFF !important;
+}
+
+body.dark .modal-content {
+  background: #10182F !important;
+  border: 1px solid rgba(124, 92, 255, 0.15) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark .modal-content h3 {
+  color: #E6ECFF !important;
+}
+
+body.dark .modal-close {
+  color: #94A3B8 !important;
+}
+
+body.dark .modal-close:hover {
+  color: #E6ECFF !important;
+}
+
+body.dark .input-group input {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #E6ECFF !important;
+}
+
+body.dark .input-group input:focus {
+  border-color: #7C5CFF !important;
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.15) !important;
+}
+
+body.dark .auth-role-toggle {
+  background: #0A0F24 !important;
+}
+
+body.dark .role-btn {
+  color: #94A3B8 !important;
+}
+
+body.dark .role-btn.active {
+  background: linear-gradient(135deg, #7C5CFF, #4DA3FF) !important;
+  color: #ffffff !important;
+}
+
+body.dark .auth-tabs {
+  border-bottom: 1px solid rgba(124, 92, 255, 0.12) !important;
+}
+
+body.dark .auth-tab {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.12) !important;
+  color: #94A3B8 !important;
+}
+
+body.dark .auth-tab.active {
+  background: #7C5CFF !important;
+  color: #ffffff !important;
+  border-color: #7C5CFF !important;
+}
+
+body.dark .auth-left {
+  background: linear-gradient(135deg, #0A0F24, #151F3D) !important;
+  border-right: 1px solid rgba(124, 92, 255, 0.12) !important;
+}
+
+body.dark .auth-right {
+  background: #10182F !important;
+}
+
+body.dark .auth-switch-text {
+  color: #94A3B8 !important;
+}
+
+body.dark .email-domain-warning.success {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+  color: #34d399 !important;
+}
+
+body.dark .email-domain-warning.warning {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
+  color: #fbbf24 !important;
+}
+
+body.dark .email-domain-warning.info {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+  color: #60a5fa !important;
+}
