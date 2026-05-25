@@ -1,3 +1,21 @@
+// Intercept all outgoing fetch requests globally to inject the X-API-Key header from localStorage dynamically
+const originalFetch = window.fetch;
+window.fetch = function(url, options) {
+  options = options || {};
+  options.headers = options.headers || {};
+  const userApiKey = localStorage.getItem("dayzero_user_api_key");
+  if (userApiKey) {
+    if (options.headers instanceof Headers) {
+      options.headers.set("X-API-Key", userApiKey);
+    } else if (Array.isArray(options.headers)) {
+      options.headers.push(["X-API-Key", userApiKey]);
+    } else {
+      options.headers["X-API-Key"] = userApiKey;
+    }
+  }
+  return originalFetch(url, options);
+};
+
 const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 
@@ -364,6 +382,18 @@ if (exitBtn) {
   });
 }
 
+const setApiKeyBtn = document.getElementById("setApiKeyBtn");
+if (setApiKeyBtn) {
+  setApiKeyBtn.addEventListener("click", () => {
+    const existingKey = localStorage.getItem("dayzero_user_api_key") || "";
+    const key = prompt("Enter your OpenRouter / Groq API Key:", existingKey);
+    if (key !== null) {
+      localStorage.setItem("dayzero_user_api_key", key.trim());
+      showToast("API Key updated successfully! active in memory. 🔑");
+    }
+  });
+}
+
 // Re-initialize icons just in case new html needs it
 lucide.createIcons();
 
@@ -544,7 +574,7 @@ async function simulateAiResponse(userMessage) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: "POST",
       headers: {
@@ -1223,6 +1253,8 @@ document.querySelectorAll(".project-card").forEach(card => {
       const title = card.querySelector(".proj-title") ? card.querySelector(".proj-title").textContent : "Simulation";
       const logoImg = card.querySelector("img");
       const logoSrc = logoImg ? logoImg.src : "";
+      const companyName = (logoImg && logoImg.alt) ? logoImg.alt : title;
+      
       let selectedTag = card.querySelector(".role-tag.selected");
       if (!selectedTag) selectedTag = card.querySelector(".role-tag");
       const targetRole = selectedTag ? selectedTag.textContent.trim() : "Candidate";
@@ -1333,6 +1365,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           <button class="sim-link-btn" style="background: linear-gradient(135deg, #fff7ed, #ffedd5); color: #c2410c; border: 1px solid #fdba74; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="send" style="width:16px; height:16px; margin-right:8px;"></i> Postman</button>
           <button class="sim-link-btn" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #15803d; border: 1px solid #86efac; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="bar-chart-2" style="width:16px; height:16px; margin-right:8px;"></i> Datadog</button>
           <button class="sim-link-btn" style="background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #6d28d9; border: 1px solid #ddd6fe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;" onclick="window.handleRoleAction(this)"><i data-lucide="database" style="width:16px; height:16px; margin-right:8px;"></i> Supabase</button>
+          <button class="sim-upload-btn" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; height: 42px; display: flex; align-items: center; cursor: pointer;"><i data-lucide="upload" style="width:16px; height:16px; margin-right:8px;"></i> Upload Draft</button>
         `;
       } else {
         uiPlaceholder = "GitHub sync, component tasks, deployment links...";
@@ -1622,7 +1655,10 @@ document.querySelectorAll(".project-card").forEach(card => {
                                     
                                     const res = await fetch('http://localhost:5000/api/chat', {
                                         method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: { 
+                                            'Content-Type': 'application/json',
+                                            'X-API-Key': localStorage.getItem('dayzero_api_key') || ''
+                                        },
                                         body: JSON.stringify({ 
                                             message: transcript,
                                             system_prompt: `You are ${name}, a friendly AI teammate in a live voice call. The user just spoke to you over voice chat. Keep your response brief (1-2 short sentences maximum), conversational, and natural like a real spoken conversation. The user is in role: ${roleContext}. Their current draft is: ${subText}`
@@ -1892,13 +1928,16 @@ document.querySelectorAll(".project-card").forEach(card => {
       };
 
       const logActivity = (day, prompt, project, userSubmission, teammateReply, managerReply, pressure, starRating) => {
-        window.activityLog.push({ day, timestamp: Date.now(), prompt, project, userSubmission, teammateReply, managerReply, pressure, starRating });
+        let actualScore = 50;
+        if (typeof managerReply === 'string') {
+           const match = managerReply.match(/(\d+)/);
+           if (match) actualScore = parseInt(match[0]);
+        }
+        window.activityLog.push({ day, timestamp: Date.now(), prompt, project, userSubmission, teammateReply, managerReply, pressure, starRating, actualScore });
         const overallScoreEl = document.querySelector('.score-value');
         if (overallScoreEl) {
-          const currentScore = parseInt(overallScoreEl.textContent) || 0;
-          const newScore = Math.max(40, Math.min(99, currentScore + (starRating - 3) * 5));
-          overallScoreEl.textContent = newScore;
-          window.analyticsData.scores.push(newScore);
+          overallScoreEl.textContent = actualScore;
+          window.analyticsData.scores.push(actualScore);
           window.analyticsData.timestamps.push(Date.now());
           drawAnalyticsChart();
         }
@@ -1969,12 +2008,15 @@ document.querySelectorAll(".project-card").forEach(card => {
           try {
             const res = await fetch(`${API_BASE_URL}/api/chat`, {
               method: "POST", 
-              headers: { "Content-Type": "application/json" },
+              headers: { 
+                  "Content-Type": "application/json",
+                  "X-API-Key": localStorage.getItem("dayzero_api_key") || ""
+              },
               body: JSON.stringify({
                 model: "llama-3.1-8b-instant",
                 response_format: { type: "json_object" },
                 messages: [
-                  { role: "system", content: "You are a strict AI manager. Evaluate the user's simulation submissions. Return JSON: { \"passed\": boolean, \"verdict\": \"Professional and thorough 2-3 sentence verdict explaining the reasoning.\", \"missingSkills\": [\"skill1\", \"skill2\", \"skill3\", \"skill4\", \"skill5\"], \"stars\": number_between_1_and_5 }. ALWAYS provide at least 4-5 specific, professional missing skills." },
+                  { role: "system", content: "You are a strict AI manager. Evaluate the user's simulation submissions. Return JSON: { \"passed\": boolean, \"verdict\": \"Professional and thorough 2-3 sentence verdict explaining the reasoning.\", \"missingSkills\": [\"skill1\", \"skill2\", \"skill3\", \"skill4\", \"skill5\"], \"stars\": number_between_1_and_5 }. IMPORTANT: If the submissions are gibberish, empty, or completely off-topic, set missingSkills to indicate this (e.g. ['Submitted Gibberish', 'Lack of Effort', 'Invalid Response']) instead of hallucinating random programming concepts. Otherwise, provide actual missing technical or soft skills based on their answers." },
                   { role: "user", content: "My submissions across 5 days: " + window.sprintSubmissions.join(" | ") }
                 ]
               })
@@ -2007,7 +2049,7 @@ document.querySelectorAll(".project-card").forEach(card => {
         if(topbarRoleBadge) topbarRoleBadge.innerText = `${window.simulationUser.role || 'Enterprise'} Simulation`;
 
         modalContent.innerHTML = `
-          <div style="background: #f8fafc; color: #0f172a; text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: row; height: 100vh; overflow: hidden;">
+          <div class="sprint-split-view" style="background: #f8fafc; color: #0f172a; text-align: left; font-family: 'Inter', sans-serif; display: flex; flex-direction: row; height: 100vh; overflow: hidden;">
             
             <!-- Main Left Column -->
             <div class="sprint-main-column" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: #ffffff;">
@@ -2031,7 +2073,7 @@ document.querySelectorAll(".project-card").forEach(card => {
 
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-top: 16px; padding-top: 20px; border-top: 1px dashed #cbd5e1;">
                   <span id="charCountSpan" style="color: #64748b; font-size: 13px; font-family: monospace;">0 chars</span>
-                  <div style="display: flex; gap: 12px; align-items: center;">
+                  <div class="sprint-btn-group" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
                     <button id="sprintProceedBtn" style="display: none; background: #ffffff; color: #4f46e5; border: 2px solid #4f46e5; border-radius: 8px; padding: 12px 24px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s ease;">
                       Proceed Immediately
                     </button>
@@ -2112,12 +2154,15 @@ document.querySelectorAll(".project-card").forEach(card => {
                     const currentRole = localStorage.getItem("currentProjectRole") || "Candidate";
                     const textAreaEl = document.getElementById('sprintSubmissionText');
                     const currentDraft = textAreaEl ? textAreaEl.value.trim() : "";
-                    const draftContext = currentDraft ? ` The user's current draft submission is: "${currentDraft}".` : "";
-                    const sysPrompt = `You are Nova, an AI Manager on the ${currentProj} project. The user is a ${currentRole} doing a simulation.${draftContext} Give a helpful, concise answer in 1-3 sentences. Keep it highly professional and relevant to software development. Answer their question directly. If their draft submission is gibberish or poor quality and they ask for a review, point it out strictly. Do not use asterisks or formatting.`;
+                    const draftContext = currentDraft ? ` The user's current draft submission is: "${currentDraft}". If this draft contains random gibberish or keyboard mashing, you MUST strictly point out that it is invalid gibberish and urge them to take the task seriously.` : "";
+                    const sysPrompt = `You are Nova, an AI Manager on the ${currentProj} project. The user is a ${currentRole} doing a simulation.${draftContext} Give a helpful, concise answer in 1-3 sentences. Keep it highly professional and relevant to software development. Answer their question directly. Do not use asterisks or formatting.`;
                     
                     const response = await fetch("http://localhost:5000/api/chat", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "X-API-Key": localStorage.getItem("dayzero_api_key") || ""
+                        },
                         body: JSON.stringify({ 
                             model: "llama-3.1-8b-instant",
                             response_format: { type: "json_object" },
@@ -2212,35 +2257,7 @@ document.querySelectorAll(".project-card").forEach(card => {
           });
         });
 
-        const askAiBtn = document.getElementById("askAiManagerBtn");
-        if(askAiBtn) {
-          askAiBtn.addEventListener("click", () => {
-            const feed = document.getElementById("teamFeedContainer");
-            if(!feed) return;
-            
-            askAiBtn.innerHTML = `<i data-lucide="loader-2" class="icon-sm pulse"></i> Asking...`;
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-            
-            setTimeout(() => {
-              askAiBtn.innerHTML = `🤖 Ask AI Manager`;
-              feed.innerHTML += `
-              <div class="team-msg-card" style="display: flex; gap: 16px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px rgba(15,23,42,0.02); margin-top: 16px; animation: fadeIn 0.5s ease; cursor: pointer;">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Nova" alt="Nova" style="width: 48px; height: 48px; border-radius: 50%; border: 1px solid #cbd5e1; background: #ffffff; flex-shrink: 0;">
-                <div style="flex: 1;">
-                  <div style="margin-bottom: 8px;">
-                    <span style="font-weight: 700; font-size: 15px; color: #0f172a; margin-right: 8px;">Nova</span>
-                    <span style="font-size: 12px; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">AI MANAGER</span>
-                  </div>
-                  <div style="color: #334155; font-size: 14px; line-height: 1.6;">
-                    <strong>Live Review:</strong> I reviewed your progress so far. Consider focusing on the ${roleType === 'PM' ? 'risk analysis and PWA tradeoffs' : roleType === 'Designer' ? 'mobile offline UX flows' : 'database indexing and API latency'} because our engineering bandwidth is limited.
-                  </div>
-                </div>
-              </div>
-              `;
-              feed.scrollTo({ top: feed.scrollHeight, behavior: 'smooth' });
-            }, 1500);
-          });
-        }
+        // Removed duplicate hardcoded Ask AI Manager event listener to prevent conflicting messages.
         
         // Setup custom link modal for all link buttons removed to use handleRoleAction
 
@@ -2258,31 +2275,60 @@ document.querySelectorAll(".project-card").forEach(card => {
           if (typeof lucide !== 'undefined') lucide.createIcons();
           btn.disabled = true;
 
+          const proceedBtn = document.getElementById("sprintProceedBtn");
+          if(proceedBtn) proceedBtn.style.display = "flex";
+
           const currentPressure = document.body.className.includes("pressure-high") ? "High" : document.body.className.includes("pressure-low") ? "Low" : "Medium";
           
-          let reply = "Solid update. Let's proceed to the next phase.";
-          let skillAnalysis = "Submission logged. Monitoring consistency and accuracy.";
+          let reply = "I couldn't process your submission.";
+          let aiReview = {
+             decision: "Needs Improvement",
+             score: "0/100",
+             manager_feedback: "API Error: Unable to automatically evaluate submission. Ensure your API Key is valid.",
+             strengths: ["None (Evaluation Failed)"],
+             weaknesses: ["API Connection Issue"]
+          };
           try {
               const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s for review
+              const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s for review
               const res = await fetch("http://localhost:5000/api/chat", {
                 method: "POST", 
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                  "Content-Type": "application/json",
+                  "X-API-Key": localStorage.getItem("dayzero_api_key") || ""
+                },
                 signal: controller.signal,
                 body: JSON.stringify({
+                  model: "llama-3.1-8b-instant",
+                  response_format: { type: "json_object" },
                   message: "Review my submission: " + val,
-                  system_prompt: `You are evaluating a tech simulation. Act as two entities: 1. ${data.teammateName}, a ${data.teammateRole}. 2. Nova, the strict AI Manager. Current pressure: ${currentPressure}. Review their latest submission. If the submission is short, wrong, or gibberish, ${data.teammateName} should act stressed/impatient. Nova must perform a micro skill analysis based on their exact text. Return ONLY JSON: { "teammate_reply": "1-2 conversational sentences", "nova_analysis": "1-2 sentences of professional skill analysis grading their actual code/text." }`
+                  system_prompt: `You are evaluating a tech simulation. Act as two entities: 1. ${data.teammateName}, a ${data.teammateRole}. 2. Nova, the strict AI Manager. Current pressure: ${currentPressure}. Review their latest submission. If the submission is gibberish, random keystrokes, or under 5 words, you MUST give a score of exactly 0/100. Return ONLY JSON: { "teammate_reply": "1-2 short sentences", "decision": "Approve or Needs Improvement", "score": "number/100", "manager_feedback": "2 sentences of strict skill analysis", "strengths": ["string"], "weaknesses": ["string"] }`
                 })
               });
               const rd = await res.json();
+              if (rd.error) {
+                 throw new Error("Backend API Error: " + JSON.stringify(rd.error));
+              }
               if (rd.choices && rd.choices.length > 0) {
-                 const parsed = JSON.parse(rd.choices[0].message.content);
-                 if (parsed.teammate_reply) reply = parsed.teammate_reply;
-                 if (parsed.nova_analysis) skillAnalysis = parsed.nova_analysis;
+                 let content = rd.choices[0].message.content;
+                 // Extract just the JSON object from the response
+                 const startIdx = content.indexOf('{');
+                 const endIdx = content.lastIndexOf('}');
+                 if (startIdx !== -1 && endIdx !== -1) {
+                     content = content.substring(startIdx, endIdx + 1);
+                 }
+                 try {
+                     const parsed = JSON.parse(content.trim());
+                     if (parsed.teammate_reply) reply = parsed.teammate_reply;
+                     aiReview = { ...aiReview, ...parsed };
+                 } catch (parseErr) {
+                     throw new Error("Failed to parse AI JSON response: " + content);
+                 }
               }
               clearTimeout(timeoutId);
           } catch(e) {
               console.error("Sprint review error:", e);
+              // Fallthrough gracefully to render the 0/100 score and Proceed button
           }
 
           if (typeof logActivity === 'function') {
@@ -2321,7 +2367,7 @@ document.querySelectorAll(".project-card").forEach(card => {
                     </div>
                   </div>
                   <div style="background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 13px;">
-                    ${aiReview.score || "N/A"}
+                    ${(aiReview.score !== undefined && aiReview.score !== null && aiReview.score !== '') ? aiReview.score : "0/100"}
                   </div>
                 </div>
                 
@@ -2430,17 +2476,16 @@ document.querySelectorAll(".project-card").forEach(card => {
                 <div style="text-align: center; margin-bottom: 40px;">
                   <h2 style="color: #0f172a; font-size: 32px; margin: 0 0 8px; font-weight: 800;">${uName}</h2>
                   <p style="color: #475569; font-size: 18px; margin: 0;">Completed as: <strong>${uRole}</strong></p>
-                </div>
-                
-                <div style="display: flex; gap: 24px; margin-bottom: 40px; flex-wrap: wrap;">
-                  <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-                    <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;"><i data-lucide="briefcase" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Target Company</p>
-                    <p style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700;">${title}</p>
-                  </div>
-                  <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
-                    <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;">Final Rating</p>
-                    <div style="display: flex; justify-content: center; gap: 4px;">
-                      ${starsHtml}
+                  <div style="display: flex; gap: 24px; margin-bottom: 40px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
+                      <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;"><i data-lucide="briefcase" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"></i> Target Company</p>
+                      <p style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700;">${companyName}</p>
+                    </div>
+                    <div style="flex: 1; min-width: 200px; background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; text-align: center;">
+                      <p style="font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin: 0 0 12px;">Final Rating</p>
+                      <div style="display: flex; justify-content: center; gap: 4px;">
+                        ${starsHtml}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2494,7 +2539,7 @@ document.querySelectorAll(".project-card").forEach(card => {
 
                 <div style="text-align: center; margin-bottom: 40px;">
                   <h2 style="color: #0f172a; font-size: 32px; margin: 0 0 8px; font-weight: 800;">${uName}</h2>
-                  <p style="color: #475569; font-size: 18px; margin: 0;">Target Company: <strong>${title}</strong></p>
+                  <p style="color: #475569; font-size: 18px; margin: 0;">Target Company: <strong>${companyName}</strong></p>
                 </div>
                 
                 <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; padding: 16px; background: #f8fafc; border-radius: 12px;">
@@ -2505,11 +2550,26 @@ document.querySelectorAll(".project-card").forEach(card => {
                   <p style="color: #991b1b; font-size: 16px; line-height: 1.6; margin: 0; font-weight: 500;"><strong>Manager Feedback:</strong> "${finalVerdict}"</p>
                 </div>
                 
-                <div style="background: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-                  <p style="font-weight: 700; color: #0f172a; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;"><i data-lucide="target" style="width: 16px; height: 16px; margin-right: 8px; display: inline-block; vertical-align: middle;"></i> Identified Skill Gaps</p>
-                  <ul style="color: #dc2626; margin: 0; padding-left: 20px; font-size: 15px; font-weight: 500; line-height: 1.8;">
-                    ${missingSkills.length > 0 ? missingSkills.map(s => `<li>${s}</li>`).join('') : `<li>Poor problem solving</li><li>Code quality issues</li>`}
-                  </ul>
+                <div style="margin-bottom: 40px;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                    <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; display: flex; align-items: center; justify-content: center;">
+                      <i data-lucide="crosshair" style="width: 16px; height: 16px; color: #ef4444;"></i>
+                    </div>
+                    <h3 style="font-weight: 800; color: #0f172a; margin: 0; font-size: 18px; letter-spacing: -0.5px;">IDENTIFIED SKILL GAPS</h3>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${missingSkills.length > 0 ? missingSkills.map(s => `
+                      <div style="background: #ffffff; border-left: 4px solid #ef4444; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                        <i data-lucide="alert-circle" style="width: 18px; height: 18px; color: #ef4444; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="color: #334155; font-size: 15px; font-weight: 600; line-height: 1.5;">${s}</div>
+                      </div>
+                    `).join('') : `
+                      <div style="background: #ffffff; border-left: 4px solid #ef4444; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 12px;">
+                        <i data-lucide="alert-circle" style="width: 18px; height: 18px; color: #ef4444; margin-top: 2px; flex-shrink: 0;"></i>
+                        <div style="color: #334155; font-size: 15px; font-weight: 600; line-height: 1.5;">General Problem Solving</div>
+                      </div>
+                    `}
+                  </div>
                 </div>
 
                 <div style="display: flex; gap: 16px; width: 100%; flex-wrap: wrap;">
@@ -2555,10 +2615,12 @@ document.querySelectorAll(".project-card").forEach(card => {
           // Populate the Main Dashboard Skill Record
           const missingSkillsContainer = document.getElementById("missingSkillsContainer");
           if (missingSkillsContainer && missingSkills && missingSkills.length > 0) {
-             missingSkillsContainer.innerHTML = '';
-             missingSkills.forEach(s => {
-               missingSkillsContainer.innerHTML += `<div class="skill-pill missing" style="border:1px solid #fecaca; background:#fff5f5; color:#b91c1c; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600;"><i data-lucide="x" style="width:12px; height:12px; margin-right:4px;"></i> ${s}</div>`;
-             });
+             missingSkillsContainer.innerHTML = missingSkills.map(s => `
+               <div style="background: #ffffff; border-left: 4px solid #ef4444; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 8px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+                 <i data-lucide="alert-circle" style="width: 18px; height: 18px; color: #ef4444; margin-top: 2px; flex-shrink: 0;"></i>
+                 <div style="color: #334155; font-size: 15px; font-weight: 600; line-height: 1.5;">${s}</div>
+               </div>
+             `).join('');
              if (typeof lucide !== 'undefined') lucide.createIcons();
           }
 
@@ -2579,21 +2641,20 @@ document.querySelectorAll(".project-card").forEach(card => {
 
           // Update Skill Record Data
           const overallScoreValue = document.querySelector(".score-value");
-          let finalTargetScore = 85;
+          
+          let sumScore = 0;
+          let countScore = 0;
+          window.activityLog.forEach(log => {
+             if (log.actualScore !== undefined) {
+                sumScore += log.actualScore;
+                countScore++;
+             }
+          });
+          let finalTargetScore = countScore > 0 ? Math.round(sumScore / countScore) : 85;
+
           if (overallScoreValue) {
             let currentScore = parseInt(overallScoreValue.textContent);
             if (!isNaN(currentScore)) {
-              let scoreBump = 0;
-              if (starRating === 1) scoreBump = -15;
-              else if (starRating === 2) scoreBump = -5;
-              else if (starRating === 3) scoreBump = 0;
-              else if (starRating === 4) scoreBump = 5;
-              else if (starRating === 5) scoreBump = 12;
-
-              finalTargetScore = currentScore + scoreBump; 
-              if(finalTargetScore > 99) finalTargetScore = 99;
-              if(finalTargetScore < 40) finalTargetScore = 40;
-
               let direction = finalTargetScore > currentScore ? 1 : -1;
               const scoreInterval = setInterval(() => {
                 if(currentScore !== finalTargetScore) {
@@ -2602,7 +2663,7 @@ document.querySelectorAll(".project-card").forEach(card => {
                 } else {
                   clearInterval(scoreInterval);
                 }
-              }, 50);
+              }, 20);
             }
             
             // update ring fill
@@ -2613,15 +2674,16 @@ document.querySelectorAll(".project-card").forEach(card => {
             }
           }
           
-          // Update Skill bars visually based on star rating
+          // Update Skill bars visually based on finalTargetScore
           const skillRows = document.querySelectorAll(".skill-row");
           skillRows.forEach(row => {
             const strong = row.querySelector("strong");
             const fill = row.querySelector(".skill-bar-fill");
             if(strong && fill) {
-               // Calculate dynamic score: Base 60 + (stars * 7) + up to 8 points random variance
-               let baseScore = 60 + (starRating * 7) + Math.floor(Math.random() * 8);
+               // Calculate dynamic score: base it around finalTargetScore with up to 8 points random variance
+               let baseScore = finalTargetScore + Math.floor(Math.random() * 16 - 8);
                if(baseScore > 99) baseScore = 99;
+               if(baseScore < 0) baseScore = 0;
                
                strong.textContent = baseScore;
                fill.style.transition = "width 1.5s ease-out";
@@ -2952,25 +3014,30 @@ function appendTeamChatMessage(name, role, message, type = "agent") {
 
 function updateTaskFromSimulation(task) {
   if (!task) return;
-  const taskTitleEl = document.querySelector(".task-card h2");
-  const taskDescEl = document.querySelector(".task-card .task-desc");
-  const metaStrongEls = document.querySelectorAll(".task-card .task-meta strong");
-  const reqEls = document.querySelectorAll(".requirement-list .req");
+  const taskCard = document.querySelector(".task-card");
+  if (!taskCard) return;
+
+  const taskTitleEl = taskCard.querySelector("h2");
+  const taskDescEl = taskCard.querySelector(".task-desc");
+  const metaStrongEls = taskCard.querySelectorAll(".task-meta strong");
+  const reqEls = taskCard.querySelectorAll(".requirement-list .req");
 
   if (taskTitleEl && task.title) {
     taskTitleEl.innerText = task.title;
   }
-  if (taskDescEl && task.summary) {
-    taskDescEl.innerText = task.summary;
+  if (taskDescEl && (task.summary || task.problem)) {
+    taskDescEl.innerText = task.summary || task.problem;
   }
-  if (metaStrongEls[0] && task.deadline_minutes) {
-    metaStrongEls[0].innerText = `${task.deadline_minutes} mins`;
+  const deadlineVal = task.deadline_minutes || task.deadline;
+  if (metaStrongEls[0] && deadlineVal) {
+    metaStrongEls[0].innerText = `${deadlineVal} mins`;
   }
-  if (metaStrongEls[1] && task.deadline_minutes) {
-    metaStrongEls[1].innerText = `${task.deadline_minutes}m left`;
+  if (metaStrongEls[1] && deadlineVal) {
+    metaStrongEls[1].innerText = `${deadlineVal}m left`;
   }
-  if (metaStrongEls[2] && task.priority) {
-    metaStrongEls[2].innerText = task.priority;
+  const priorityVal = task.priority || task.difficulty;
+  if (metaStrongEls[2] && priorityVal) {
+    metaStrongEls[2].innerText = priorityVal;
   }
   if (reqEls.length && Array.isArray(task.requirements)) {
     reqEls.forEach((node, index) => {

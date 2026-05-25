@@ -4,8 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DayZero Simulation Dashboard</title>
-  <link rel="stylesheet" href="../css/dashboard.css?v=2" />
+  <link rel="stylesheet" href="../css/dashboard.css?v=8" />
   <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* CRITICAL INLINE FIXES FOR MOBILE OVERFLOW - BYPASSES BROWSER CACHE */
+    html, body { overflow-x: hidden !important; max-width: 100% !important; width: 100% !important; box-sizing: border-box !important; }
+    .app, .main-shell { max-width: 100% !important; width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+    .card, .task-card, .nova-card { min-width: 0 !important; max-width: 100% !important; overflow: hidden; word-wrap: break-word; }
+    .task-top, .task-top > div, .task-desc { min-width: 0 !important; max-width: 100% !important; word-wrap: break-word; white-space: normal !important; }
+    @media (max-width: 960px) {
+      .dashboard { display: flex !important; flex-direction: column !important; width: 100% !important; max-width: 100% !important; padding: 12px !important; min-width: 0 !important; box-sizing: border-box !important; }
+      .center-panel, .right-panel { width: 100% !important; max-width: 100% !important; min-width: 0 !important; padding: 0 !important; }
+      .right-panel { order: 10 !important; }
+      
+      /* Sprint View Mobile Stacking (50/50 Vertical Split) */
+      .sprint-split-view { flex-direction: column !important; overflow: hidden !important; height: calc(100vh - 60px) !important; }
+      .sprint-main-column { width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: 1 1 50% !important; border-right: none !important; border-bottom: 2px solid var(--border) !important; overflow-y: auto !important; }
+      .sprint-right-pane { width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: 1 1 50% !important; border-right: none !important; overflow-y: auto !important; padding: 16px 20px !important; }
+      .sprint-header-pane { padding: 16px 20px !important; }
+      .sprint-btn-group { width: 100% !important; flex-direction: column !important; align-items: stretch !important; gap: 12px !important; margin-top: 12px !important; }
+      .sprint-btn-group button { width: 100% !important; justify-content: center !important; }
+    }
+  </style>
 </head>
 <body class="light">
   <div class="app">
@@ -37,7 +57,6 @@
         <div class="topbar-left">
           <div class="mobile-menu" id="mobileMenu">☰</div>
           <div class="role-badge" id="topbarRoleBadge">Enterprise Simulation</div>
-          <div class="day-badge" id="topbarDayBadge">Phase 1 of 5</div>
         </div>
 
         <div class="topbar-center">
@@ -55,8 +74,10 @@
             <i data-lucide="alert-triangle"></i>
           </button>
 
+          <button class="exit-btn" id="setApiKeyBtn" style="background: linear-gradient(135deg, #4f46e5, #3730a3); color: #ffffff; border: none; margin-right: 8px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="key" style="width: 14px; height: 14px;"></i> Set API Key
+          </button>
           <button class="exit-btn">Exit Simulation</button>
-          <div class="avatar" id="studentAvatar"></div>
         </div>
       </header>
 
@@ -899,6 +920,19 @@
                 </div>
               </div>
 
+              <!-- 4. Identified Skill Gaps -->
+              <div class="profile-skill-gaps-section" style="margin-top: 32px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                  <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="crosshair" style="width: 16px; height: 16px; color: #ef4444;"></i>
+                  </div>
+                  <h3 style="font-weight: 800; color: #0f172a; margin: 0; font-size: 18px; letter-spacing: -0.5px;">IDENTIFIED SKILL GAPS</h3>
+                </div>
+                <div id="missingSkillsContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                  <div style="color: #64748b; font-size: 14px;">Complete a simulation to see identified skill gaps.</div>
+                </div>
+              </div>
+
               <!-- 4. Achievements & Recommendations -->
               <div class="profile-bottom-section">
                 <div class="achievements-area">
@@ -1178,7 +1212,7 @@
       </div>
     </div>
   </div>
-<script src="../js/dashboard.js"></script>
+<script src="../js/dashboard.js?v=21"></script>
 
 <script>
   document.querySelectorAll(".start-sim").forEach((btn) => {

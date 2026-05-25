@@ -14,11 +14,19 @@ CORS(app)  # Enable CORS for frontend interaction
 def serve_index():
     return app.send_static_file('index.html')
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+@app.before_request
+def dynamic_api_key_sync():
+    api_key = request.headers.get("X-API-Key")
+    if api_key:
+        masked = api_key[:6] + "..." + api_key[-4:] if len(api_key) > 10 else "..."
+        print(f"[Dynamic API Sync] X-API-Key header received: {masked} (length: {len(api_key)})")
+        os.environ["OPENROUTER_API_KEY"] = api_key
+        os.environ["GROQ_API_KEY"] = api_key
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    if not GROQ_API_KEY:
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
         return jsonify({"error": "API Key not configured on server"}), 500
 
     incoming_data = request.json
@@ -47,7 +55,7 @@ def chat():
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Authorization": f"Bearer {groq_key}",
                 "Content-Type": "application/json"
             },
             json=payload,

@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+import os
 import sys
 from pathlib import Path
 
@@ -19,13 +18,14 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend interaction
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-@app.route('/api/chat', methods=['POST'])
-def chat():
-    if not GROQ_API_KEY:
-        return jsonify({"error": "API Key not configured on server"}), 500
-
+@app.before_request
+def dynamic_api_key_sync():
+    api_key = request.headers.get("X-API-Key")
+    if api_key:
+        masked = api_key[:6] + "..." + api_key[-4:] if len(api_key) > 10 else "..."
+        print(f"[Dynamic API Sync] X-API-Key header received: {masked} (length: {len(api_key)})")
+        os.environ["OPENROUTER_API_KEY"] = api_key
+        os.environ["GROQ_API_KEY"] = api_key
 
 @app.route("/api/chat", methods=["POST"])
 def chat() -> tuple:
@@ -49,6 +49,40 @@ def chat() -> tuple:
         temperature = float(incoming.get("temperature") or 0.7)
         response_format = incoming.get("response_format")
 
+    # Dynamic Routing: If a Groq API key is present in memory, use it to call Groq directly!
+    groq_key = os.getenv("GROQ_API_KEY") or ""
+    if groq_key.startswith("gsk_"):
+        print("[Router] Routing completion request directly to Groq API...")
+        payload = {
+            "model": "llama-3.1-8b-instant",
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        if response_format:
+            payload["response_format"] = response_format
+
+        try:
+            import requests as r
+            res = r.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json"
+                },
+                json=payload,
+                timeout=20
+            )
+            if res.status_code == 200:
+                return jsonify(res.json()), 200
+            else:
+                print(f"[Router] Groq API returned error: {res.text}")
+                return jsonify(res.json()), res.status_code
+        except Exception as e:
+            print(f"[Router] Failed to connect to Groq API: {str(e)}")
+            return jsonify({"error": f"Groq request failed: {str(e)}"}), 500
+
+    # Otherwise, call OpenRouter via default chat_completion
     response = chat_completion(
         messages=messages,
         model=model,
