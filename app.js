@@ -55,6 +55,89 @@ function isApprovedRecruiterDomain(email) {
   return approvedRecruiterDomains.includes(domain);
 }
 
+function parseRecruiterEmail(email) {
+  if (!email) return null;
+  email = email.trim().toLowerCase();
+  
+  const genericDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"];
+  let companyName = "";
+  let name = "";
+  
+  if (email.includes("@")) {
+    const parts = email.split("@");
+    const username = parts[0];
+    const domain = parts[1];
+    
+    if (genericDomains.includes(domain)) {
+      return null;
+    }
+    
+    const domainParts = domain.split(".");
+    if (domainParts.length >= 2) {
+      companyName = domainParts[0];
+    } else {
+      return null;
+    }
+    
+    // Clean name: replace underscores, dots, dashes, and numbers with spaces
+    const cleanUsername = username.replace(/[0-9]+/g, "").replace(/[._-]+/g, " ").trim();
+    const nameParts = cleanUsername.split(" ");
+    name = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+  } else if (email.endsWith(".ac.in")) {
+    const parts = email.split(".");
+    if (parts.length < 4) {
+      return null;
+    }
+    
+    for (const gd of genericDomains) {
+      if (email.includes(gd)) return null;
+    }
+    
+    companyName = parts[parts.length - 3];
+    const nameParts = parts.slice(0, parts.length - 3);
+    const cleanNameParts = nameParts.map(p => p.replace(/[0-9]+/g, "").replace(/[._-]+/g, " ").trim());
+    name = cleanNameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+  } else {
+    return null;
+  }
+  
+  if (!name || !companyName) {
+    return null;
+  }
+  
+  const knownCompanies = {
+    google: "Google",
+    microsoft: "Microsoft",
+    amazon: "Amazon",
+    openai: "OpenAI",
+    apple: "Apple",
+    meta: "Meta",
+    netflix: "Netflix",
+    adobe: "Adobe",
+    tesla: "Tesla",
+    linkedin: "LinkedIn"
+  };
+  const companyKey = companyName.toLowerCase();
+  const displayCompany = knownCompanies[companyKey] || (companyName.charAt(0).toUpperCase() + companyName.slice(1));
+  
+  const nameParts = name.trim().split(/\s+/);
+  let initials = "";
+  if (nameParts.length >= 2) {
+    initials = nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0);
+  } else if (nameParts.length === 1) {
+    initials = nameParts[0].charAt(0) + (nameParts[0].charAt(1) || "");
+  }
+  initials = initials.toUpperCase();
+  
+  return {
+    name: name.trim(),
+    initials: initials,
+    companyName: displayCompany,
+    companyId: companyKey,
+    email: email
+  };
+}
+
 function initSprintLinks() {
   document.querySelectorAll('a[href="#sprint-room"]').forEach((link) => {
     link.addEventListener("click", (event) => {
@@ -405,18 +488,17 @@ function initAuthModal() {
   function updateEmailWarning() {
     if (!emailWarning) return;
 
-    const email = emailInput.value.trim().toLowerCase();
+    const email = emailInput.value.trim();
     const role = roleInput.value;
 
     if (role === "recruiter" && email) {
-      const domain = getEmailDomain(email);
-      const isApproved = isApprovedRecruiterDomain(email);
+      const profile = parseRecruiterEmail(email);
 
-      if (isApproved) {
-        emailWarning.innerHTML = `✅ Domain <strong>${domain}</strong> is approved for recruiters`;
+      if (profile) {
+        emailWarning.innerHTML = `✅ Official ID for <strong>${profile.companyName}</strong> detected!`;
         emailWarning.className = "email-domain-warning success";
       } else {
-        emailWarning.innerHTML = `⚠️ Domain <strong>${domain}</strong> is not approved. Recruiters must use official company emails (@google, @microsoft, etc.)`;
+        emailWarning.innerHTML = `⚠️ Access restricted to official company accounts only. Format: name@company.com or name.company.ac.in`;
         emailWarning.className = "email-domain-warning warning";
       }
     } else if (role === "recruiter") {
@@ -521,12 +603,70 @@ function initAuthModal() {
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
 
-    // Validate recruiter email domain on frontend before submission
-    if (!isLogin && role === "recruiter") {
-      if (!isApprovedRecruiterDomain(email)) {
-        showToast("Please use an approved company email domain to register as a recruiter.", "error");
+    // Intercept recruiter auth for dynamic, professional-only access control
+    if (role === "recruiter") {
+      const profile = parseRecruiterEmail(email);
+      if (!profile) {
+        showToast("Access restricted to official company accounts only. Please sign in using your official company ID.", "error");
         return;
       }
+
+      // Generate recruiter display name dynamically if signup mode
+      let displayRole = "Senior Recruiter";
+      let displayName = profile.name;
+      if (!isLogin && name.trim()) {
+        displayName = name.trim();
+        const parts = displayName.split(" ");
+        let initials = parts[0].charAt(0) + (parts[parts.length - 1]?.charAt(0) || "");
+        profile.name = displayName;
+        profile.initials = initials.toUpperCase();
+      }
+
+      // High-fidelity dynamic mock recruiter profile
+      const mockAuth = {
+        recruiterName: profile.name,
+        recruiterInitials: profile.initials,
+        recruiterEmail: profile.email,
+        companyName: profile.companyName,
+        companyId: profile.companyId,
+        role: displayRole,
+        avatar: "",
+        stats: {
+          totalProjects: 0, // Computed dynamically
+          totalCandidates: 0, // Computed dynamically
+          activeSimulations: 0, // Computed dynamically
+          teamSimulations: 0, // Computed dynamically
+          individualSimulations: 0, // Computed dynamically
+          hiringSuccessRate: "92%",
+          activeSessions: 1
+        }
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Please wait...";
+
+      setTimeout(() => {
+        showToast(`Welcome back, ${profile.name} (${profile.companyName}) 🎉`, "success");
+        
+        localStorage.setItem("recruiter", JSON.stringify(mockAuth));
+        localStorage.setItem("user", JSON.stringify({
+          name: profile.name,
+          email: profile.email,
+          role: "recruiter",
+          companyId: profile.companyId,
+          companyName: profile.companyName
+        }));
+        localStorage.setItem("role", "recruiter");
+        
+        authForm.reset();
+        closeAuth();
+        
+        setTimeout(() => {
+          window.location.href = "frontend/pages/recruiter_dashboard.html";
+        }, 1000);
+      }, 800);
+
+      return;
     }
 
     const url = isLogin

@@ -3,10 +3,12 @@
 // Depend only on companyId for visibility and separation of projects.
 
 const mockUser = {
-  companyId: "google",
-  companyName: "Google",
-  recruiterName: "Sarah Johnson",
-  recruiterRole: "Senior Recruiter"
+  companyId: "linkedin",
+  companyName: "LinkedIn",
+  recruiterName: "Saavi",
+  recruiterRole: "Senior Recruiter",
+  recruiterEmail: "saavi@linkedin.in",
+  recruiterInitials: "S"
 };
 
 // Make available globally in browser or through CommonJS if compiled/run in Node
