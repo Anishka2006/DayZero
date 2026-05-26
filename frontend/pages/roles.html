@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | Choose Your Sprint Role</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/roles.css?v=4" />
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+      document.addEventListener("DOMContentLoaded", () => document.body.classList.add("dark"));
+    }
+  </script>
+</head>
+<body>
+  <main class="page centered">
+    <div class="brand-compact">
+      <div class="logo">DZ</div>
+      <h1>DayZero</h1>
+    </div>
+
+
+    <section class="role-selection">
+      <div class="selection-header">
+        <span class="selection-kicker">Work Simulation OS</span>
+        <h2>Choose Your Sprint Role</h2>
+        <p>Enter a live company room with teammates, blockers, files, metrics, and pressure.</p>
+      </div>
+
+      <div class="role-grid" id="roleOptions">
+        <button class="role-card" type="button" data-value="Frontend Engineer">
+          <div class="role-icon">FE</div>
+          <h3>Frontend Engineer</h3>
+          <p>Interfaces, flows, accessibility, responsive states</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Backend Engineer">
+          <div class="role-icon">BE</div>
+          <h3>Backend Engineer</h3>
+          <p>APIs, data flow, reliability, rollback thinking</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Product Manager">
+          <div class="role-icon">PM</div>
+          <h3>Product Manager</h3>
+          <p>Users, priorities, deadlines, stakeholder pressure</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Product Designer">
+          <div class="role-icon">PD</div>
+          <h3>Product Designer</h3>
+          <p>UX clarity, onboarding, usability, customer confusion</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="QA Engineer">
+          <div class="role-icon">QA</div>
+          <h3>QA Engineer</h3>
+          <p>Edge cases, validation, release safety, regressions</p>
+        </button>
+
+        <button class="role-card" type="button" data-value="Data Analyst">
+          <div class="role-icon">DA</div>
+          <h3>Data Analyst</h3>
+          <p>Metrics, trends, conversion drops, experiment insight</p>
+        </button>
+      </div>
+
+      <div class="selection-footer">
+        <div class="level-selector">
+          <span class="level-label">Difficulty</span>
+          <div class="level-options" id="levelOptions">
+            <button class="level-btn" type="button" data-value="Beginner">Beginner</button>
+            <button class="level-btn active" type="button" data-value="Intermediate">Intermediate</button>
+            <button class="level-btn" type="button" data-value="Advanced">Advanced</button>
+          </div>
+        </div>
+        <button class="continue-btn" id="continueBtn" type="button">Enter Sprint Room</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="../js/roles.js?v=3"></script>
+
+</body>
+</html>

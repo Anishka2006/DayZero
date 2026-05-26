@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DayZero | Live Simulation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="../css/simulation.css?v=10" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+      document.addEventListener("DOMContentLoaded", () => document.body.classList.add("dark"));
+    }
+  </script>
+</head>
+
+<body>
+  <div class="sim-reference-shell">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="reference-sidebar">
+
+      <div class="reference-brand">
+        <div class="brand-logo">
+          <i data-lucide="zap"></i>
+        </div>
+        <div>
+          <h1 id="companyName">DayZero</h1>
+          <p id="sprintLabel">Live Company Sprint</p>
+        </div>
+      </div>
+
+      <div class="sidebar-status-grid">
+        <div>
+          <span>Priority</span>
+          <strong id="priorityBadge">High</strong>
+        </div>
+        <div>
+          <span>Phase</span>
+          <strong id="phaseLabel">Live Sprint</strong>
+        </div>
+        <div>
+          <span>Timebox</span>
+          <strong id="taskDeadline">30 min</strong>
+        </div>
+      </div>
+
+      <!-- ONLY ONE TEAM CHANNEL -->
+      <section class="sidebar-block">
+        <p class="sidebar-title">Team Channel</p>
+
+        <div id="channelList" class="channel-stack">
+          <button class="channel-item active" type="button" data-channel="team" id="teamChannelBtn">
+            <span>#</span>
+            <div>
+              <strong>Team Channel</strong>
+              <small>Share updates with everyone</small>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <section class="sidebar-block teammate-block">
+        <p class="sidebar-title">Direct Messages</p>
+        <div id="teammateList" class="teammate-stack"></div>
+      </section>
+
+      <section class="sidebar-block timeline-block">
+        <p class="sidebar-title">Room Pulse</p>
+        <div id="timelineList" class="timeline-list"></div>
+      </section>
+
+      <div class="sidebar-self">
+        <div class="self-avatar" id="selfAvatar">Y</div>
+        <div>
+          <strong id="currentUserName">You</strong>
+          <p id="currentUserRole">Candidate</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT -->
+    <main class="chat-surface">
+
+      <header class="chat-topbar">
+        <div class="topic-row">
+          <span class="topic-hash" id="channelIcon">#</span>
+          <div class="topic-copy">
+            <h2 id="channelTitle">Team Channel</h2>
+            <p id="scenarioTitle">Join the room, read the artifacts, and make the sprint call.</p>
+          </div>
+        </div>
+
+        <div class="chat-topbar-actions">
+          <div class="demo-pill">
+            <span>DEMO IN</span>
+            <strong id="countdownTimer">30:00</strong>
+          </div>
+
+          <button type="button" class="workspace-jump-btn" id="workspaceJumpBtn">
+            <i data-lucide="code-xml"></i>
+            <span>Workspace</span>
+          </button>
+
+          <button type="button" class="primary-footer-btn scene-submit-btn" id="submitSceneBtn">
+            <i data-lucide="arrow-right"></i>
+            <span>Submit</span>
+          </button>
+
+          <button type="button" class="icon-lite-btn" id="refreshSceneBtn" aria-label="Refresh">
+            <i data-lucide="rotate-ccw"></i>
+          </button>
+        </div>
+      </header>
+
+      <section id="teamChat" class="reference-chat-feed" aria-live="polite"></section>
+
+      <div id="typingIndicator" class="reference-typing hidden"></div>
+
+      <div class="reference-composer-wrap">
+        <div id="quickPrompts" class="quick-prompts-bar"></div>
+
+        <div class="reference-composer">
+          <textarea
+            id="candidateMessageInput"
+            rows="1"
+            placeholder="Message Team Channel"
+          ></textarea>
+
+          <button id="sendMessageBtn" class="reference-send-btn" type="button" aria-label="Send">
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+
+        <p class="reference-composer-note">
+          Stay concise. The room is moving.
+        </p>
+      </div>
+    </main>
+
+    <!-- WORKSPACE -->
+    <section class="workspace-surface" id="workspaceSurface">
+
+      <header class="workspace-topbar">
+        <div class="workspace-heading">
+          <i data-lucide="braces"></i>
+          <h2 id="workspaceTitle">Shared Workspace</h2>
+          <span class="shared-badge" id="workspaceShareLabel">team visible</span>
+        </div>
+
+        <div class="workspace-people">
+          <span class="workspace-people-avatars" id="workspacePeopleAvatars"></span>
+
+          <button type="button" class="icon-lite-btn" id="peopleBtn" aria-label="People">
+            <i data-lucide="users"></i>
+          </button>
+
+          <button type="button" class="icon-lite-btn" id="closeWorkspaceBtn" aria-label="Close">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </header>
+
+      <div id="workspaceTabs" class="reference-tabs"></div>
+
+      <div class="reference-editor-shell">
+        <textarea id="codeEditor" spellcheck="false"></textarea>
+      </div>
+
+      <footer class="workspace-footer">
+        <div class="workspace-footer-meta">
+          <span id="activeFileName">No file selected</span>
+          <span id="wordCount">0 lines • 0 chars</span>
+          <span id="saveStatus">Saved</span>
+          <span id="testStatus">Checks not run</span>
+        </div>
+
+        <div class="workspace-footer-actions">
+          <button id="insertOutlineBtn" class="footer-btn" type="button">
+            <i data-lucide="list-tree"></i>
+            <span>Outline</span>
+          </button>
+
+          <button id="runTestsBtn" class="footer-btn" type="button">
+            <i data-lucide="check-check"></i>
+            <span>Checks</span>
+          </button>
+
+          <button id="requestCritiqueBtn" class="footer-btn" type="button">
+            <i data-lucide="message-square-warning"></i>
+            <span>Ask Agent</span>
+          </button>
+
+          <button id="saveDraftBtn" class="footer-btn" type="button">
+            <i data-lucide="save"></i>
+            <span>Save</span>
+          </button>
+
+          <button id="shareWorkspaceBtn" class="footer-btn" type="button">
+            <i data-lucide="share-2"></i>
+            <span>Share</span>
+          </button>
+
+          <button id="submitWorkspaceBtn" class="primary-footer-btn" type="button">
+            <i data-lucide="arrow-right"></i>
+            <span>Submit</span>
+          </button>
+        </div>
+      </footer>
+
+      <div class="workspace-tip-row">
+        <p id="workspaceTip">
+          Tip: In Team Channel, files are shared with everyone. In DM, files are shared only with that agent.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- HIDDEN SUPPORT ELEMENTS FOR EXISTING JS -->
+  <div class="hidden-support">
+    <span id="crisisStatus"></span>
+    <span id="taskOutput"></span>
+    <span id="taskUpdate"></span>
+    <span id="workspaceHelper"></span>
+    <p id="scenarioSummary"></p>
+    <ul id="taskRequirements"></ul>
+    <ul id="taskAcceptance"></ul>
+    <button id="submitBtn" type="button"></button>
+    <button id="triggerCrisisBtn" type="button"></button>
+  </div>
+
+  <!-- CRISIS MODAL -->
+  <div id="crisisModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">Live Crisis</p>
+          <h3>Pressure spike incoming</h3>
+        </div>
+
+        <button id="closeCrisisModalBtn" class="icon-lite-btn" type="button" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <p id="crisisModalText">
+        Leadership just tightened the demo window. Do you want the room to absorb the crisis now?
+      </p>
+
+      <div class="modal-actions">
+        <button id="cancelCrisisBtn" class="footer-btn" type="button">Not now</button>
+        <button id="confirmCrisisBtn" class="primary-footer-btn" type="button">Handle crisis</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+  <script src="../../../workspaceFiles.js"></script>
+  <script src="../js/skill-record-utils.js?v=1"></script>
+  <script src="../js/simulation.js?v=13"></script>
+
+  <script>
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
