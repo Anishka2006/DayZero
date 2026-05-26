@@ -47,7 +47,7 @@ a {
 }
 
 .sidebar {
-  width: 270px;
+  width: 220px;
   background: var(--sidebar);
   backdrop-filter: blur(18px);
   border-right: 1px solid var(--border);
@@ -297,7 +297,7 @@ body.dark .sidebar-user-card:hover {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border-left: 2px solid transparent;
   font-weight: 500;
-  font-size: 12.5px;
+  font-size: 15px;
 }
 
 .menu-item i, .menu-item svg {
