@@ -15,8 +15,22 @@ from db import invited_candidates_collection
 app = Flask(__name__)
 
 app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
-CORS(app)
 
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "https://anishka2006.github.io",
+                "http://localhost:3000",
+                "http://localhost:5173"
+            ]
+        }
+    },
+    supports_credentials=True
+)
 
 @app.route("/api/user-profile", methods=["GET"])
 def get_user_profile():
