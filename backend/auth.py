@@ -3,11 +3,22 @@ import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
+from pymongo import MongoClient
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+if "mongodb+srv" in MONGO_URI:
+    import certifi
+    mongo_client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
+else:
+    mongo_client = MongoClient(MONGO_URI)
+mongo_db = mongo_client["dayzero"]
+invited_candidates_collection = mongo_db["invited_candidates"]
+
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
@@ -79,6 +90,24 @@ def signup():
 
     if role not in ["user", "recruiter"]:
         return jsonify({"error": "Invalid role"}), 400
+
+    if role == "user":
+        try:
+            invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+            if not invite:
+                return jsonify({
+                    "error": "not_invited",
+                    "message": "Your email is not invited by any recruiter yet. Redirecting to Public Demo Mode.",
+                    "redirect_to_demo": True
+                }), 403
+        except Exception as db_err:
+            app.logger.error(f"Database error during signup validation: {db_err}")
+            return jsonify({
+                "error": "database_error",
+                "message": "Database connection failed. Redirecting to Demo Mode.",
+                "redirect_to_demo": True
+            }), 403
+
 
     # Validate recruiter email domain
     if role == "recruiter":
@@ -183,16 +212,48 @@ def login():
                 "error": f"This account is registered as '{user_role}', not '{requested_role}'."
             }), 403
 
+        invite_details = None
+        if user_role == "user":
+            try:
+                invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+                if invite:
+                    invite_details = {
+                        "companyId": invite.get("companyId"),
+                        "companyName": invite.get("companyName"),
+                        "projectId": invite.get("projectId"),
+                        "projectTitle": invite.get("projectTitle"),
+                        "experienceLevel": invite.get("experienceLevel"),
+                        "role": invite.get("role")
+                    }
+                else:
+                    return jsonify({
+                        "error": "not_invited",
+                        "message": "Your email is not invited by any recruiter yet. Redirecting to Public Demo Mode.",
+                        "redirect_to_demo": True
+                    }), 403
+            except Exception as db_err:
+                app.logger.error(f"Database error during login validation: {db_err}")
+                return jsonify({
+                    "error": "database_error",
+                    "message": "Database connection failed. Redirecting to Demo Mode.",
+                    "redirect_to_demo": True
+                }), 403
+
+        user_data = {
+            "id": user.get("id"),
+            "name": user_name,
+            "email": user.get("email", email),
+            "role": user_role,
+        }
+        if invite_details:
+            user_data.update(invite_details)
+
         return jsonify({
             "message": "Login successful",
             "access_token": payload.get("access_token"),
-            "user": {
-                "id": user.get("id"),
-                "name": user_name,
-                "email": user.get("email", email),
-                "role": user_role,
-            }
+            "user": user_data
         }), 200
+
 
     except requests.exceptions.Timeout:
         return jsonify({"error": "Login took too long. Try again."}), 504

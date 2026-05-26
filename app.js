@@ -14,9 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const AUTH_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || !window.location.hostname)
-  ? "http://localhost:8001"
-  : "https://madauth.onrender.com";
+const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://madauth.onrender.com";
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+
 
 // Hardcoded approved recruiter domains
 const approvedRecruiterDomains = [
@@ -667,6 +667,102 @@ function initAuthModal() {
 
       return;
     }
+
+    if (role === "user") {
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Please wait...";
+
+      try {
+        const valRes = await fetch(`${PLATFORM_API_BASE_URL}/api/invites/validate?email=${encodeURIComponent(email)}`);
+        const valData = await valRes.json();
+        
+        if (valData.success && valData.invited) {
+          // Success! User is invited!
+          const invite = valData.invite;
+          const userData = {
+            name: invite.name,
+            email: invite.email,
+            role: "invited candidate",
+            companyId: invite.companyId,
+            companyName: invite.companyName,
+            projectId: invite.projectId,
+            projectTitle: invite.projectTitle,
+            experienceLevel: invite.experienceLevel,
+            assignedRole: invite.role,
+            initials: invite.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+          };
+          
+          showToast(`Welcome! Invitation active for ${invite.companyName} 🎉`, "success");
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("role", "invited candidate");
+          localStorage.setItem("companyId", invite.companyId);
+          localStorage.setItem("companyName", invite.companyName);
+          localStorage.setItem("userName", invite.name);
+          localStorage.setItem("userExperience", invite.experienceLevel);
+          localStorage.setItem("dayzero_task_id", invite.projectId);
+          localStorage.setItem("projectId", invite.projectId);
+          localStorage.setItem("projectTitle", invite.projectTitle);
+          localStorage.setItem("candidateSetupComplete", "true");
+
+          authForm.reset();
+          closeAuth();
+
+          setTimeout(() => {
+            window.location.href = "frontend/pages/dashboard.html";
+          }, 1000);
+          return;
+        } else {
+          // Not invited! Intercept and redirect to Demo Mode gracefully!
+          showToast("Access restricted: Email not invited. Redirecting to Demo Mode 🌐", "error");
+          
+          const demoUser = {
+            name: name || "Demo Guest",
+            email: email,
+            role: "demo user",
+            company: "Demo Workspace",
+            companyId: "demo",
+            initials: "DG"
+          };
+          localStorage.setItem("user", JSON.stringify(demoUser));
+          localStorage.setItem("role", "demo user");
+          localStorage.setItem("companyId", "demo");
+          localStorage.setItem("userName", name || "Demo Guest");
+
+          authForm.reset();
+          closeAuth();
+
+          setTimeout(() => {
+            window.location.href = "frontend/pages/dashboard.html?demo=true";
+          }, 1200);
+          return;
+        }
+      } catch (err) {
+        console.warn("Could not validate invitation via backend, falling back to Demo Mode:", err);
+        // On error, let's also gracefully fallback to Demo Mode!
+        showToast("Welcome to DayZero Demo Mode! 🌐", "success");
+        const demoUser = {
+          name: name || "Demo Guest",
+          email: email,
+          role: "demo user",
+          company: "Demo Workspace",
+          companyId: "demo",
+          initials: "DG"
+        };
+        localStorage.setItem("user", JSON.stringify(demoUser));
+        localStorage.setItem("role", "demo user");
+        localStorage.setItem("companyId", "demo");
+        localStorage.setItem("userName", name || "Demo Guest");
+
+        authForm.reset();
+        closeAuth();
+
+        setTimeout(() => {
+          window.location.href = "frontend/pages/dashboard.html?demo=true";
+        }, 1000);
+        return;
+      }
+    }
+
 
     const url = isLogin
       ? `${AUTH_BASE_URL}/login`

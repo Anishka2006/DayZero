@@ -1,9 +1,10 @@
 flask
 flask-cors
-psycopg2-binary
 python-dotenv
 requests
 werkzeug
 gunicorn
-pymongo
+pymongo[srv]
 dnspython
+certifi
+psycopg2-binary

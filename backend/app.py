@@ -8,7 +8,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from db import users_collection
 from pymongo import MongoClient
+import pymongo
 from datetime import datetime
+from db import invited_candidates_collection
 
 app = Flask(__name__)
 
@@ -55,6 +57,126 @@ def signup():
     return jsonify({"message": "User created", "user": user})
 
 
+@app.route("/api/invites", methods=["POST"])
+def create_invite():
+    try:
+        data = request.get_json() or {}
+        
+        email = data.get("email", "").strip().lower()
+        name = data.get("name", "").strip()
+        college = data.get("college", "").strip()
+        skills = data.get("skills", "")
+        sim_type = data.get("simType", "individual")
+        role = data.get("role", "Frontend Engineer")
+        project_id = data.get("projectId")
+        project_title = data.get("projectTitle", "")
+        experience_level = data.get("experienceLevel", "Intermediate")
+        message = data.get("message", "")
+        
+        # Recruiter and company info
+        company_id = data.get("companyId", "").strip().lower()
+        company_name = data.get("companyName", "").strip()
+        recruiter_id = data.get("recruiterId", "").strip()
+        
+        if not email or not name:
+            return jsonify({"success": False, "error": "Candidate Email and Name are required"}), 400
+            
+        token = str(uuid.uuid4())
+        invite_id = str(uuid.uuid4())
+        
+        invite = {
+            "_id": invite_id,
+            "id": invite_id, # Step 3 requirement
+            "email": email,
+            "name": name,
+            "candidateName": name, # Step 3 requirement
+            "candidateEmail": email, # Step 3 requirement
+            "college": college,
+            "skills": skills,
+            "simType": sim_type,
+            "role": role,
+            "projectId": project_id,
+            "projectTitle": project_title,
+            "experienceLevel": experience_level,
+            "message": message,
+            "companyId": company_id,
+            "companyName": company_name,
+            "recruiterId": recruiter_id,
+            "projectAssigned": project_id, # Step 3 requirement
+            "roleAssigned": role, # Step 3 requirement
+            "inviteStatus": "active", # Step 3 requirement
+            "status": "active",
+            "token": token,
+            "inviteToken": token, # Step 3 requirement
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat() # Step 3 requirement
+        }
+        
+        # Force database ping to verify connection before executing write operation
+        # mongo_client.admin.command('ping')
+        
+        # Insert or update
+        invited_candidates_collection.update_one(
+            {"email": email},
+            {"$set": invite},
+            upsert=True
+        )
+        
+        return jsonify({
+            "success": True, 
+            "message": "Invite created successfully", 
+            "inviteId": invite_id,
+            "inviteToken": token,
+            "invite": invite
+        }), 201
+        
+    except pymongo.errors.PyMongoError as db_err:
+        app.logger.error(f"Database connection failure during invite creation: {db_err}")
+        return jsonify({
+            "success": False, 
+            "error": "Database connection failed. Please ensure MongoDB is running."
+        }), 500
+    except Exception as e:
+        app.logger.error(f"Unexpected crash during invite creation: {e}")
+        return jsonify({
+            "success": False, 
+            "error": f"Internal server error: {str(e)}"
+        }), 500
+
+
+@app.route("/api/invites", methods=["GET"])
+def get_invites():
+    company_id = request.args.get("companyId", "").strip().lower()
+    recruiter_id = request.args.get("recruiterId", "").strip()
+    
+    query = {}
+    if company_id:
+        query["companyId"] = company_id
+    if recruiter_id:
+        query["recruiterId"] = recruiter_id
+        
+    invites = list(invited_candidates_collection.find(query))
+    for inv in invites:
+        inv["_id"] = str(inv["_id"])
+        
+    return jsonify({"success": True, "invites": invites}), 200
+
+
+@app.route("/api/invites/validate", methods=["GET"])
+def validate_invite():
+    email = request.args.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"success": False, "error": "Email is required"}), 400
+        
+    invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+    if not invite:
+        return jsonify({"success": True, "invited": False}), 200
+        
+    invite["_id"] = str(invite["_id"])
+    return jsonify({"success": True, "invited": True, "invite": invite}), 200
+
+
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -91,9 +213,15 @@ logging.basicConfig(
 
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-mongo_client = MongoClient(MONGO_URI)
+if "mongodb+srv" in MONGO_URI:
+    import certifi
+    mongo_client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
+else:
+    mongo_client = MongoClient(MONGO_URI)
 mongo_db = mongo_client["dayzero"]
 users_collection = mongo_db["users"]
+invited_candidates_collection = mongo_db["invited_candidates"]
+
 
 def update_candidate_mongodb_score(email_or_name: str | None, report: dict, submission_text: str):
     try:

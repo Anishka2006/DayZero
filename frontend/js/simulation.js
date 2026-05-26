@@ -1,4 +1,4 @@
-const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 
 const STORAGE_KEYS = {
@@ -3498,6 +3498,25 @@ function bindEvents() {
 }
 
 async function init() {
+  const role = localStorage.getItem("role") || "candidate";
+  const taskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask) || "spotify-creator-retention";
+  
+  // Unauthenticated user protection
+  const user = localStorage.getItem("user");
+  if (!user && role !== "demo user") {
+    window.location.href = "../../index.html?auth=false";
+    return;
+  }
+
+  // Demo user restricted tasks protection
+  if (role === "demo user") {
+    const allowedDemoRooms = ["frontend-homeflow", "spotify-creator-retention"];
+    if (allowedDemoRooms.indexOf(taskId) === -1) {
+      window.location.href = "dashboard.html?demo=true&locked=true";
+      return;
+    }
+  }
+
   await hydrateSimulationWorkspaceFiles();
   await hydrateSelectedDashboardTaskWorkspaceFiles();
   bindEvents();

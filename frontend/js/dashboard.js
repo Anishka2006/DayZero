@@ -1,4 +1,4 @@
-const API_BASE_URL = localStorage.getItem("dayzero_api_base") || "http://127.0.0.1:5000";
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 let workspaceFilesModulePromise = null;
@@ -992,9 +992,125 @@ function updateCandidateSummary() {
 }
 
 function getTasksForCurrentProfile() {
-  const role = getCandidateRole();
+  const role = localStorage.getItem("role") || "candidate";
+  
+  if (role === "demo user" || window.location.search.includes("demo=true")) {
+    return [
+      {
+        id: "frontend-homeflow",
+        company: "Shoply",
+        logo: "🛒",
+        label: "Shoply Onboarding UI",
+        title: "Checkout Flow Improvements",
+        description: "Optimize the checkout screen for faster conversions and smoother input validation.",
+        role: "Frontend",
+        time: "45 mins",
+        difficulty: "Beginner",
+        teamSize: "3",
+        skills: ["React UI", "Accessibility", "Form validation"]
+      },
+      {
+        id: "spotify-creator-retention",
+        company: "Spotify",
+        logo: "🎵",
+        label: "Spotify Creator Retention",
+        title: "Creator Retention Analysis",
+        description: "Analyze why creator retention metrics fell 12% in the last cohort. Inspect the dataset in the workspace.",
+        role: "Product Manager",
+        time: "45 mins",
+        difficulty: "Intermediate",
+        teamSize: "4",
+        skills: ["Retention", "Analytics", "Growth PM"]
+      },
+      {
+        id: "stripe-fraud-dashboard",
+        company: "Stripe",
+        logo: "💳",
+        label: "Stripe Security Sprint",
+        title: "Real-time Fraud Shield (Premium)",
+        description: "Deploy and scale automated fraud detection rules for high-volume transactions under high traffic load.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "5",
+        skills: ["Security", "Scaling", "Risk Mitigation"],
+        locked: true
+      },
+      {
+        id: "google-search-orchestration",
+        company: "Google",
+        logo: "🔍",
+        label: "Google Search Segregation",
+        title: "Distributed Query Isolation (Premium)",
+        description: "Re-architect the distributed query processing nodes to safeguard company database layers.",
+        role: "Backend",
+        time: "5 days",
+        difficulty: "Advanced",
+        teamSize: "6",
+        skills: ["Infrastructure", "Data Isolation", "High Availability"],
+        locked: true
+      }
+    ];
+  }
+  
+  const candRole = getCandidateRole();
   const level = localStorage.getItem("userExperience") || "Intermediate";
-  return (TASKS[role] && TASKS[role][level]) || [];
+  const allTasks = (TASKS[candRole] && TASKS[candRole][level]) || [];
+  
+  if (role === "invited candidate") {
+    // Isolated company view: only show tasks belonging to this company, or the explicitly assigned task
+    const assignedProjectId = localStorage.getItem("projectId") || "";
+    const companyId = localStorage.getItem("companyId") || "";
+    const companyName = localStorage.getItem("companyName") || "";
+    
+    // Filter matching task
+    let filtered = allTasks.filter(task => {
+      // Matches task ID or companyId (case insensitive)
+      return task.id === assignedProjectId || task.company.toLowerCase() === companyId.toLowerCase();
+    });
+    
+    // If no task matched but they have an assigned task, let's inject it dynamically!
+    if (filtered.length === 0 && assignedProjectId) {
+      // Find the template task in all task lists
+      let foundTemplate = null;
+      for (const r in TASKS) {
+        for (const l in TASKS[r]) {
+          const t = TASKS[r][l].find(item => item.id === assignedProjectId);
+          if (t) {
+            foundTemplate = t;
+            break;
+          }
+        }
+        if (foundTemplate) break;
+      }
+      
+      const template = foundTemplate || {
+        id: assignedProjectId,
+        label: "Corporate Task",
+        title: localStorage.getItem("projectTitle") || "Assigned Simulation Sprint",
+        description: "Execute the assigned simulation room for your company hiring round.",
+        role: candRole,
+        time: "1 hour",
+        difficulty: level,
+        skills: ["Strategy", "Execution"]
+      };
+      
+      filtered = [{
+        ...template,
+        company: companyName || "Corporate Partner",
+        logo: (companyName ? companyName.charAt(0) : "🏢")
+      }];
+    }
+    
+    // Customize all company fields dynamically to match their assigned corporate branding
+    return filtered.map(task => ({
+      ...task,
+      company: companyName || task.company,
+      logo: companyName ? companyName.charAt(0) : task.logo
+    }));
+  }
+  
+  return allTasks;
 }
 
 function renderTaskGrid() {
@@ -1027,6 +1143,18 @@ function renderTaskGrid() {
       </div>
     `;
 
+    const isLocked = (localStorage.getItem("role") === "demo user" && task.locked);
+    const badgeHtml = isLocked 
+      ? `<span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15);">🔒 Premium Locked</span>`
+      : `<span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(16, 185, 129, 0.08); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.15);">Collab: High</span>`;
+
+    const isInvitedProject = (localStorage.getItem("role") === "invited candidate" && (task.id === localStorage.getItem("projectId") || task.id === localStorage.getItem("dayzero_task_id")));
+    const btnText = isInvitedProject ? "Open Simulation" : "Enter Simulation Room";
+
+    const buttonHtml = isLocked
+      ? `<button class="primary-btn start-sim locked" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px; background: linear-gradient(135deg, #475569 0%, #334155 100%); border-color: #475569;">🔒 Unlock Premium Room</button>`
+      : `<button class="primary-btn start-sim" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px;">${btnText}</button>`;
+
     const card = document.createElement("div");
     card.className = "card task-card";
     card.dataset.taskId = task.id;
@@ -1049,7 +1177,7 @@ function renderTaskGrid() {
             <div class="company-logo" style="width: 28px; height: 28px; border-radius: 6px; font-weight: 600; display: grid; place-items: center; background: rgba(99, 102, 241, 0.08); color: var(--blue); border: 1px solid rgba(99, 102, 241, 0.15); font-size: 13px;">${task.logo}</div>
             <span class="company-name" style="font-weight: 600; font-size: 13px; color: var(--text);">${task.company}</span>
           </div>
-          <span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(16, 185, 129, 0.08); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.15);">Collab: High</span>
+          ${badgeHtml}
         </div>
         <p class="task-label" style="font-size: 10.5px; margin-bottom: 4px; color: var(--subtext); font-weight: 500;">${task.label}</p>
         <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 6px; line-height: 1.3; color: var(--text);">${task.title}</h2>
@@ -1093,7 +1221,7 @@ function renderTaskGrid() {
           ${task.skills.map(skill => `<div class="req" style="font-size: 9.5px; padding: 2px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--border); color: var(--subtext); font-weight: 500; box-shadow: none;">${skill}</div>`).join("")}
         </div>
       </div>
-      <button class="primary-btn start-sim" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px;">Enter Simulation Room</button>
+      ${buttonHtml}
     `;
 
     taskGrid.appendChild(card);
@@ -1102,6 +1230,43 @@ function renderTaskGrid() {
   taskGrid.querySelectorAll('.start-sim').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const taskId = btn.dataset.taskId;
+      const role = localStorage.getItem("role") || "candidate";
+
+      // Enforce demo mode locks directly in the click handler!
+      if (role === "demo user") {
+        const allowedDemoRooms = ["frontend-homeflow", "spotify-creator-retention"];
+        if (allowedDemoRooms.indexOf(taskId) === -1) {
+          const modal = document.getElementById("demoLockModal");
+          if (modal) {
+            modal.style.display = "flex";
+            modal.classList.remove("hidden");
+            
+            const exploreBtn = document.getElementById("demoLockExploreBtn");
+            if (exploreBtn) {
+              exploreBtn.onclick = function() {
+                modal.style.display = "none";
+                modal.classList.add("hidden");
+                // Auto-queue spotify demo sprint
+                const spotifyTask = tasks.find(t => t.id === "spotify-creator-retention");
+                if (spotifyTask) {
+                  queueSimulationLoading("spotify-creator-retention", spotifyTask);
+                } else {
+                  localStorage.setItem("dayzero_task_id", "spotify-creator-retention");
+                }
+                window.location.href = 'loading.html';
+              };
+            }
+            const closeFn = function() {
+              modal.style.display = "none";
+              modal.classList.add("hidden");
+            };
+            if (document.getElementById("closeDemoLockBtn")) document.getElementById("closeDemoLockBtn").onclick = closeFn;
+            if (document.getElementById("demoLockCloseBtn")) document.getElementById("demoLockCloseBtn").onclick = closeFn;
+          }
+          return;
+        }
+      }
+
       const selectedTask = tasks.find((task) => task.id === taskId);
       const originalText = btn.textContent;
       btn.disabled = true;
@@ -1182,6 +1347,12 @@ function initializeCandidateProfile() {
   bindCandidateProfileSelections();
   updateCandidateSummary();
   hydrateDashboardWorkspaceFiles();
+
+  if (window.location.search.includes("locked=true")) {
+    setTimeout(() => {
+      showToast("🔒 Premium simulation room is locked in Demo Mode.");
+    }, 500);
+  }
 }
 
 // Live-feeling teammate nudges for the dashboard feed.
@@ -1594,6 +1765,10 @@ function hydrateDynamicUser() {
   } catch (e) {
     console.warn("Could not parse user object from localStorage", e);
   }
+  
+  if (user && user.companyName && !user.company) {
+    user.company = user.companyName;
+  }
 
   // Fallback if not logged in or missing data
   if (!user || !user.email) {
@@ -1662,6 +1837,18 @@ function hydrateDynamicUser() {
   if (cAvatar) cAvatar.innerText = initials;
   if (cName) cName.innerText = user.name;
   if (cRole) cRole.innerText = user.role;
+
+  // Handle demo active badge display
+  const demoBadge = document.getElementById("demoBadge");
+  if (demoBadge) {
+    if (user.role === "demo user" || localStorage.getItem("role") === "demo user" || window.location.search.includes("demo=true")) {
+      demoBadge.style.display = "flex";
+      demoBadge.classList.remove("hidden");
+    } else {
+      demoBadge.style.display = "none";
+      demoBadge.classList.add("hidden");
+    }
+  }
 }
 
 function initThemeToggle() {
@@ -1787,16 +1974,10 @@ function initLogoutFlow() {
   const handleLogout = (e) => {
     e.preventDefault();
     
-    // Clear dynamic session data
-    localStorage.removeItem("user");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userExperience");
-    localStorage.removeItem("candidateSetupComplete");
+    // Clear dynamic session data and storage
+    localStorage.clear();
+    sessionStorage.clear();
     alert("You have been logged out. Redirecting to homepage...");
-    
-    // Reset theme default
-    localStorage.removeItem("theme");
     
     // Add slide-out fade animation to body
     document.body.style.transition = "opacity 0.5s ease";
@@ -1815,7 +1996,7 @@ async function loadProfile() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const response = await fetch(
-    `http://127.0.0.1:5001/api/user-profile?email=${user.email}`
+    `${API_BASE_URL}/api/user-profile?email=${user.email}`
   );
 
   const data = await response.json();

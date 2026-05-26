@@ -8,6 +8,7 @@
   <script src="../data/mockAuth.js"></script>
   <script src="../data/mockProjects.js"></script>
   <script src="../utils/localStorage.js"></script>
+  <script src="../js/config.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2232,6 +2233,22 @@
       </div>
     </div>
 
+    <div style="display:flex;gap:12px;">
+      <div style="flex:1;">
+        <label style="font-size:11px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Experience Level</label>
+        <select id="inviteExperienceLevel" style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);outline:none;height:35px;">
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate" selected>Intermediate</option>
+          <option value="Advanced">Advanced</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label style="font-size:11px;font-weight:600;color:var(--subtext);display:block;margin-bottom:4px;">Invite Message</label>
+      <textarea id="inviteMessage" rows="2" placeholder="e.g. Hi, we're excited to invite you to our team sprint..." style="width:100%;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;font-size:13px;outline:none;background:var(--surface);color:var(--text);resize:none;font-family:inherit;">Hi, we are excited to invite you to our live engineering assessment sprint room. Please enter the sprint room to tackle these blockers!</textarea>
+    </div>
+
     <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
       <input type="checkbox" id="inviteTeamOption" style="cursor:pointer;" checked>
       <label for="inviteTeamOption" style="font-size:11.5px;color:var(--subtext);cursor:pointer;user-select:none;">Assign to active team workspace</label>
@@ -2379,6 +2396,8 @@
 <script>
 (function () {
   "use strict";
+
+  const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 
   // Parse recruiter email to extract name, company name, initials, etc. dynamically
   function parseEmailToProfile(email) {
@@ -3214,154 +3233,208 @@
         var skillsList = skills.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
         var primarySkill = skillsList[0] || "Problem Solving";
         var initials = name.split(" ").map(function(n) { return n[0]; }).join("").toUpperCase().slice(0, 2);
+        
+        var experienceLevel = el("inviteExperienceLevel").value;
+        var inviteMessage = el("inviteMessage").value.trim();
 
-        // 1. Create Dynamic Candidate Object
-        var newCandidate = {
-          id: Date.now(),
+        // Disabling submit button during submit
+        submitBtn.disabled = true;
+        var originalBtnText = submitBtn.innerText;
+        submitBtn.innerText = "Sending Invite...";
+
+        var payload = {
           name: name,
-          initials: initials,
+          email: email,
           college: college,
-          score: Math.floor(Math.random() * 15) + 80, // Dynamic score
-          progress: Math.floor(Math.random() * 20) + 40, // Dynamic progress
-          topSkill: primarySkill,
-          status: "on-track",
-          joinedMs: Date.now(),
-          skills: {
-            Leadership: Math.floor(Math.random() * 25) + 70,
-            Communication: Math.floor(Math.random() * 25) + 70,
-            Execution: Math.floor(Math.random() * 25) + 70,
-            ProblemSolving: Math.floor(Math.random() * 25) + 70,
-            Adaptability: Math.floor(Math.random() * 25) + 70
-          },
-          companyId: currentCompany
-        };
-
-        // Save Candidate Globally
-        ALL_CANDIDATES.unshift(newCandidate);
-        saveCandidates();
-        CANDIDATES = ALL_CANDIDATES.filter(function(c) { return c.companyId === currentCompany; });
-
-        // 2. Add Candidate to Simulation Pool for the selected project
-        var projPool = getProjectCandidates(assignedProject.id);
-        projPool.push({
-          id: newCandidate.id,
-          name: newCandidate.name,
-          email: email,
-          avatar: newCandidate.initials,
-          role: role,
-          status: "active"
-        });
-        saveProjectCandidates(assignedProject.id, projPool);
-
-        // 3. Assign Candidate to Simulation Room if check is marked
-        var assignToSim = el("inviteTeamOption").checked;
-        if (assignToSim) {
-          if (simType === "group") {
-            // Find or create group room
-            var groupSim = _simulations.find(function(s) {
-              return String(s.projectId) === String(assignedProject.id) && s.companyId === currentCompany && s.simulationType === "group" && s.status === "active";
-            });
-            if (groupSim) {
-              groupSim.candidates.push({
-                id: newCandidate.id,
-                name: newCandidate.name,
-                email: email,
-                avatar: newCandidate.initials,
-                role: role,
-                status: "active"
-              });
-              groupSim.activityLogs.push({ text: newCandidate.name + " joined team workspace", time: "just now" });
-            } else {
-              _simulations.push({
-                id: Date.now() + 1,
-                projectId: assignedProject.id,
-                companyId: currentCompany,
-                simulationType: "group",
-                candidates: [{
-                  id: newCandidate.id,
-                  name: newCandidate.name,
-                  email: email,
-                  avatar: newCandidate.initials,
-                  role: role,
-                  status: "active"
-                }],
-                createdAt: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString(),
-                status: "active",
-                workspaceChats: generateInitialMockChats([{
-                  id: newCandidate.id,
-                  name: newCandidate.name,
-                  avatar: newCandidate.initials
-                }], "group"),
-                activityLogs: generateInitialMockActivity([{
-                  id: newCandidate.id,
-                  name: newCandidate.name
-                }], "group")
-              });
-            }
-          } else {
-            // Create new individual simulation room
-            _simulations.push({
-              id: Date.now() + 1,
-              projectId: assignedProject.id,
-              companyId: currentCompany,
-              simulationType: "individual",
-              candidates: [{
-                id: newCandidate.id,
-                name: newCandidate.name,
-                email: email,
-                avatar: newCandidate.initials,
-                role: role,
-                status: "active"
-              }],
-              createdAt: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString(),
-              status: "active",
-              workspaceChats: generateInitialMockChats([{
-                id: newCandidate.id,
-                name: newCandidate.name,
-                avatar: newCandidate.initials
-              }], "individual"),
-              activityLogs: generateInitialMockActivity([{
-                id: newCandidate.id,
-                name: newCandidate.name
-              }], "individual")
-            });
-          }
-          saveSimulations();
-        }
-
-        // 4. Update Invite Records & Stats
-        saveInviteRecord({
-          id: Date.now(),
-          name: name,
-          email: email,
+          skills: skills,
+          simType: simType,
           role: role,
           projectId: assignedProject.id,
           projectTitle: assignedProject.title,
+          experienceLevel: experienceLevel,
+          message: inviteMessage,
           companyId: currentCompany,
-          invitedAt: new Date().toISOString()
+          companyName: recruiter.companyName || currentCompany,
+          recruiterId: recruiter.recruiterEmail || ""
+        };
+
+        fetch(API_BASE_URL + "/api/invites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        })
+        .then(function(res) {
+          if (!res.ok) {
+            return res.json().then(function(errData) {
+              throw new Error(errData.error || "Server returned status code " + res.status);
+            }).catch(function(jsonErr) {
+              if (res.status === 500) {
+                throw new Error("Database connection failed. Please ensure MongoDB is running.");
+              }
+              throw new Error("Server error: " + (jsonErr.message || res.statusText || "Internal Server Error"));
+            });
+          }
+          return res.json();
+        })
+        .then(function(data) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
+
+          if (data.success) {
+            // Save Candidate Globally in localStorage
+            var newCandidate = {
+              id: data.invite._id || Date.now(),
+              name: name,
+              initials: initials,
+              college: college,
+              score: Math.floor(Math.random() * 15) + 80,
+              progress: Math.floor(Math.random() * 20) + 40,
+              topSkill: primarySkill,
+              status: "on-track",
+              joinedMs: Date.now(),
+              skills: {
+                Leadership: Math.floor(Math.random() * 25) + 70,
+                Communication: Math.floor(Math.random() * 25) + 70,
+                Execution: Math.floor(Math.random() * 25) + 70,
+                ProblemSolving: Math.floor(Math.random() * 25) + 70,
+                Adaptability: Math.floor(Math.random() * 25) + 70
+              },
+              companyId: currentCompany
+            };
+
+            ALL_CANDIDATES.unshift(newCandidate);
+            saveCandidates();
+            CANDIDATES = ALL_CANDIDATES.filter(function(c) { return c.companyId === currentCompany; });
+
+            // Add Candidate to Simulation Pool for the selected project
+            var projPool = getProjectCandidates(assignedProject.id);
+            projPool.push({
+              id: newCandidate.id,
+              name: newCandidate.name,
+              email: email,
+              avatar: newCandidate.initials,
+              role: role,
+              status: "active"
+            });
+            saveProjectCandidates(assignedProject.id, projPool);
+
+            // Assign Candidate to Simulation Room if check is marked
+            var assignToSim = el("inviteTeamOption").checked;
+            if (assignToSim) {
+              if (simType === "group") {
+                var groupSim = _simulations.find(function(s) {
+                  return String(s.projectId) === String(assignedProject.id) && s.companyId === currentCompany && s.simulationType === "group" && s.status === "active";
+                });
+                if (groupSim) {
+                  groupSim.candidates.push({
+                    id: newCandidate.id,
+                    name: newCandidate.name,
+                    email: email,
+                    avatar: newCandidate.initials,
+                    role: role,
+                    status: "active"
+                  });
+                  groupSim.activityLogs.push({ text: newCandidate.name + " joined team workspace", time: "just now" });
+                } else {
+                  _simulations.push({
+                    id: Date.now() + 1,
+                    projectId: assignedProject.id,
+                    companyId: currentCompany,
+                    simulationType: "group",
+                    candidates: [{
+                      id: newCandidate.id,
+                      name: newCandidate.name,
+                      email: email,
+                      avatar: newCandidate.initials,
+                      role: role,
+                      status: "active"
+                    }],
+                    createdAt: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString(),
+                    status: "active",
+                    workspaceChats: generateInitialMockChats([{
+                      id: newCandidate.id,
+                      name: newCandidate.name,
+                      avatar: newCandidate.initials
+                    }], "group"),
+                    activityLogs: generateInitialMockActivity([{
+                      id: newCandidate.id,
+                      name: newCandidate.name
+                    }], "group")
+                  });
+                }
+              } else {
+                _simulations.push({
+                  id: Date.now() + 1,
+                  projectId: assignedProject.id,
+                  companyId: currentCompany,
+                  simulationType: "individual",
+                  candidates: [{
+                    id: newCandidate.id,
+                    name: newCandidate.name,
+                    email: email,
+                    avatar: newCandidate.initials,
+                    role: role,
+                    status: "active"
+                  }],
+                  createdAt: new Date().toLocaleTimeString() + " " + new Date().toLocaleDateString(),
+                  status: "active",
+                  workspaceChats: generateInitialMockChats([{
+                    id: newCandidate.id,
+                    name: newCandidate.name,
+                    avatar: newCandidate.initials
+                  }], "individual"),
+                  activityLogs: generateInitialMockActivity([{
+                    id: newCandidate.id,
+                    name: newCandidate.name
+                  }], "individual")
+                });
+              }
+              saveSimulations();
+            }
+
+            saveInviteRecord({
+              id: Date.now(),
+              name: name,
+              email: email,
+              role: role,
+              projectId: assignedProject.id,
+              projectTitle: assignedProject.title,
+              companyId: currentCompany,
+              invitedAt: new Date().toISOString()
+            });
+
+            updateStatCards();
+            renderTable();
+            renderSkillHeatmap();
+            renderDistChart();
+            if (_selectedSimProjectId && String(_selectedSimProjectId) === String(assignedProject.id)) {
+              renderPoolList();
+              renderCandidateChecklist();
+              renderActiveRooms();
+              updateWorkspaceStats();
+            }
+
+            showToast("Invite sent and candidate registered dynamically! 🎉", "success");
+            closeModal();
+            
+            // Reset fields
+            el("inviteName").value = "";
+            el("inviteEmail").value = "";
+            el("inviteCollege").value = "";
+            el("inviteSkills").value = "";
+            el("inviteMessage").value = "Hi, we are excited to invite you to our live engineering assessment sprint room. Please enter the sprint room to tackle these blockers!";
+            if (el("inviteProject")) el("inviteProject").value = "";
+          } else {
+            showToast("Failed to store invite: " + (data.error || "Unknown error"), "error");
+          }
+        })
+        .catch(function(err) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
+          
+          showToast("Server temporarily unavailable", "error");
+          console.error("Invite save failed:", err);
         });
-
-        // 5. Update UI instantly with NO page refresh!
-        updateStatCards();
-        renderTable();
-        renderSkillHeatmap();
-        renderDistChart();
-        if (_selectedSimProjectId && String(_selectedSimProjectId) === String(assignedProject.id)) {
-          renderPoolList();
-          renderCandidateChecklist();
-          renderActiveRooms();
-          updateWorkspaceStats();
-        }
-
-        showToast("Invite sent and candidate registered dynamically! 🎉", "success");
-        closeModal();
-        
-        // Reset fields
-        el("inviteName").value = "";
-        el("inviteEmail").value = "";
-        el("inviteCollege").value = "";
-        el("inviteSkills").value = "";
-        if (el("inviteProject")) el("inviteProject").value = "";
       });
     }
   }
@@ -4820,16 +4893,15 @@
 
   //LOGOUT FUNCTIONALITY
   document.getElementById("logoutBtn").addEventListener("click", () => {
+    // Clear saved login data
+    localStorage.clear();
+    sessionStorage.clear();
 
-  // Clear saved login data
-  localStorage.clear();
-  sessionStorage.clear();
+    // confirmation
+    alert("Logged out successfully!");
 
-  // confirmation
-  alert("Logged out successfully!");
-
-  // Redirect to login page
-  window.location.href = "/";
+    // Redirect to login page
+    window.location.href = "../../index.html";
   });
 
 
