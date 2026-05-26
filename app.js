@@ -696,9 +696,12 @@ function initAuthModal() {
           localStorage.setItem("user", JSON.stringify(userData));
           localStorage.setItem("role", "invited candidate");
           localStorage.setItem("companyId", invite.companyId);
+          localStorage.setItem("companyName", invite.companyName);
           localStorage.setItem("userName", invite.name);
           localStorage.setItem("userExperience", invite.experienceLevel);
           localStorage.setItem("dayzero_task_id", invite.projectId);
+          localStorage.setItem("projectId", invite.projectId);
+          localStorage.setItem("projectTitle", invite.projectTitle);
           localStorage.setItem("candidateSetupComplete", "true");
 
           authForm.reset();

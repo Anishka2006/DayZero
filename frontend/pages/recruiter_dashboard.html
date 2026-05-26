@@ -4893,16 +4893,15 @@
 
   //LOGOUT FUNCTIONALITY
   document.getElementById("logoutBtn").addEventListener("click", () => {
+    // Clear saved login data
+    localStorage.clear();
+    sessionStorage.clear();
 
-  // Clear saved login data
-  localStorage.clear();
-  sessionStorage.clear();
+    // confirmation
+    alert("Logged out successfully!");
 
-  // confirmation
-  alert("Logged out successfully!");
-
-  // Redirect to login page
-  window.location.href = "/";
+    // Redirect to login page
+    window.location.href = "../../index.html";
   });
 
 

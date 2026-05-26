@@ -1148,9 +1148,12 @@ function renderTaskGrid() {
       ? `<span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15);">🔒 Premium Locked</span>`
       : `<span style="font-size: 9.5px; font-weight: 600; padding: 2px 6px; border-radius: 99px; background: rgba(16, 185, 129, 0.08); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.15);">Collab: High</span>`;
 
+    const isInvitedProject = (localStorage.getItem("role") === "invited candidate" && (task.id === localStorage.getItem("projectId") || task.id === localStorage.getItem("dayzero_task_id")));
+    const btnText = isInvitedProject ? "Open Simulation" : "Enter Simulation Room";
+
     const buttonHtml = isLocked
       ? `<button class="primary-btn start-sim locked" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px; background: linear-gradient(135deg, #475569 0%, #334155 100%); border-color: #475569;">🔒 Unlock Premium Room</button>`
-      : `<button class="primary-btn start-sim" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px;">Enter Simulation Room</button>`;
+      : `<button class="primary-btn start-sim" data-task-id="${task.id}" style="width: 100%; font-weight: 600; margin-top: auto; border-radius: 6px; font-size: 12.5px; min-height: 34px;">${btnText}</button>`;
 
     const card = document.createElement("div");
     card.className = "card task-card";
@@ -1762,6 +1765,10 @@ function hydrateDynamicUser() {
   } catch (e) {
     console.warn("Could not parse user object from localStorage", e);
   }
+  
+  if (user && user.companyName && !user.company) {
+    user.company = user.companyName;
+  }
 
   // Fallback if not logged in or missing data
   if (!user || !user.email) {
@@ -1967,16 +1974,10 @@ function initLogoutFlow() {
   const handleLogout = (e) => {
     e.preventDefault();
     
-    // Clear dynamic session data
-    localStorage.removeItem("user");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userExperience");
-    localStorage.removeItem("candidateSetupComplete");
+    // Clear dynamic session data and storage
+    localStorage.clear();
+    sessionStorage.clear();
     alert("You have been logged out. Redirecting to homepage...");
-    
-    // Reset theme default
-    localStorage.removeItem("theme");
     
     // Add slide-out fade animation to body
     document.body.style.transition = "opacity 0.5s ease";
