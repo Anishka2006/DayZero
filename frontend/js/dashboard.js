@@ -1793,6 +1793,7 @@ function initLogoutFlow() {
     localStorage.removeItem("userRole");
     localStorage.removeItem("userExperience");
     localStorage.removeItem("candidateSetupComplete");
+    alert("You have been logged out. Redirecting to homepage...");
     
     // Reset theme default
     localStorage.removeItem("theme");
