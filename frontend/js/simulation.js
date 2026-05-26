@@ -1,8 +1,8 @@
-const API_BASE_URL = localStorage.getItem("dayzero_api_base") || (
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || !window.location.hostname)
-    ? "http://127.0.0.1:5001"
-    : "https://dayzero-backend.onrender.com"
-);
+let API_BASE_URL = localStorage.getItem("dayzero_api_base");
+if (!API_BASE_URL || API_BASE_URL.includes("localhost") || API_BASE_URL.includes("127.0.0.1")) {
+  API_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
+  localStorage.setItem("dayzero_api_base", API_BASE_URL);
+}
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 
 const STORAGE_KEYS = {
