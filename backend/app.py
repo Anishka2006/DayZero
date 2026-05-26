@@ -10,6 +10,7 @@ from db import users_collection
 from pymongo import MongoClient
 import pymongo
 from datetime import datetime
+from db import invited_candidates_collection
 
 app = Flask(__name__)
 
@@ -112,7 +113,7 @@ def create_invite():
         }
         
         # Force database ping to verify connection before executing write operation
-        mongo_client.admin.command('ping')
+        # mongo_client.admin.command('ping')
         
         # Insert or update
         invited_candidates_collection.update_one(
