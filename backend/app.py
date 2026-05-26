@@ -20,16 +20,8 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 CORS(
     app,
-    resources={
-        r"/api/*": {
-            "origins": [
-                "https://anishka2006.github.io",
-                "http://localhost:3000",
-                "http://localhost:5173"
-            ]
-        }
-    },
-    supports_credentials=True
+    resources={r"/api/*": {"origins": "*"}},
+    supports_credentials=False
 )
 
 @app.route("/api/user-profile", methods=["GET"])
@@ -71,8 +63,17 @@ def signup():
     return jsonify({"message": "User created", "user": user})
 
 
-@app.route("/api/invites", methods=["POST"])
+@app.route("/api/invites", methods=["POST", "OPTIONS"])
 def create_invite():
+    if request.method == "OPTIONS":
+        response = jsonify({"success": True})
+
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+
+        return response, 200
+    
     try:
         data = request.get_json() or {}
         
