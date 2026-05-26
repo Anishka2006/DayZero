@@ -1,8 +1,4 @@
-let API_BASE_URL = localStorage.getItem("dayzero_api_base");
-if (!API_BASE_URL || API_BASE_URL.includes("localhost") || API_BASE_URL.includes("127.0.0.1")) {
-  API_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
-  localStorage.setItem("dayzero_api_base", API_BASE_URL);
-}
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 const DEFAULT_API_BASE_URL = API_BASE_URL;
 
 const LOADING_MESSAGES = [
@@ -355,12 +351,12 @@ async function startLoadingSequence() {
 
   // Show fallback options after 2.5 seconds
   fallbackTimer = setTimeout(() => {
-    showFallback("Looking for the local backend... Or you can launch in offline Demo Mode immediately.");
+    showFallback("Connecting to live simulation server... Or launch in Demo Mode immediately.");
   }, 2500);
 
   // Show error / demo mode option after 6 seconds
   errorTimer = setTimeout(() => {
-    showError("Connection taking longer than expected. You can launch in Local Offline Mode.");
+    showError("Server temporarily unavailable. You can launch in Offline Demo Mode.");
   }, 6000);
 
   try {

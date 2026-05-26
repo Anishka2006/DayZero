@@ -9,7 +9,11 @@ load_dotenv()
 def test_invitation_db_flow():
     print("=== Testing Recruiter Invitation DB Flow ===")
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-    client = MongoClient(MONGO_URI)
+    if "mongodb+srv" in MONGO_URI:
+        import certifi
+        client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
+    else:
+        client = MongoClient(MONGO_URI)
     db = client["dayzero"]
     
     # Check collections

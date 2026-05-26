@@ -1,19 +1,21 @@
 from pymongo import MongoClient
-import certifi
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_URI = "MONGO_URI"
-MONGO_URI = os.getenv("MONGO_URI")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 print("MONGO_URI:", MONGO_URI)
 
-client = MongoClient(
-    MONGO_URI,
-    tls=True,
-    tlsCAFile=certifi.where()
-)
+if "mongodb+srv" in MONGO_URI:
+    import certifi
+    client = MongoClient(
+        MONGO_URI,
+        tls=True,
+        tlsCAFile=certifi.where()
+    )
+else:
+    client = MongoClient(MONGO_URI)
 
 db = client["dayzero"]
 

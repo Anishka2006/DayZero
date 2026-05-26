@@ -14,17 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const AUTH_BASE_URL = localStorage.getItem("dayzero_auth_base") || (
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || !window.location.hostname)
-    ? "http://localhost:8001"
-    : "https://madauth.onrender.com"
-);
-
-let PLATFORM_API_BASE_URL = localStorage.getItem("dayzero_api_base");
-if (!PLATFORM_API_BASE_URL || PLATFORM_API_BASE_URL.includes("localhost") || PLATFORM_API_BASE_URL.includes("127.0.0.1")) {
-  PLATFORM_API_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
-  localStorage.setItem("dayzero_api_base", PLATFORM_API_BASE_URL);
-}
+const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://madauth.onrender.com";
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 
 
 // Hardcoded approved recruiter domains

@@ -212,7 +212,11 @@ logging.basicConfig(
 
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-mongo_client = MongoClient(MONGO_URI)
+if "mongodb+srv" in MONGO_URI:
+    import certifi
+    mongo_client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
+else:
+    mongo_client = MongoClient(MONGO_URI)
 mongo_db = mongo_client["dayzero"]
 users_collection = mongo_db["users"]
 invited_candidates_collection = mongo_db["invited_candidates"]
