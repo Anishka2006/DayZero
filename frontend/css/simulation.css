@@ -850,7 +850,7 @@ textarea:focus-visible {
 
 .chat-body {
   margin: 5px 0 0;
-  color: #1f2937;
+  color: var(--text-color);
   font-size: 0.9rem;
   line-height: 1.48;
   white-space: pre-wrap;
