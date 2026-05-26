@@ -1809,6 +1809,7 @@ function initLogoutFlow() {
   if (sidebarLogout) sidebarLogout.addEventListener("click", handleLogout);
   if (drawerLogout) drawerLogout.addEventListener("click", handleLogout);
   if (navLogout) navLogout.addEventListener("click", handleLogout);
+  }
 async function loadProfile() {
   const user = JSON.parse(localStorage.getItem("user"));
 
