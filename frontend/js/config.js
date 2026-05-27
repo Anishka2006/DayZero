@@ -5,15 +5,15 @@
   const DEFAULT_API_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
   const DEFAULT_AUTH_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
 
-  // Sanitize localStorage of outdated localhost entries
+  // Sanitize localStorage of outdated entries
   let storedApiBase = localStorage.getItem("dayzero_api_base");
-  if (storedApiBase && (storedApiBase.includes("localhost") || storedApiBase.includes("127.0.0.1"))) {
+  if (storedApiBase && (storedApiBase.includes("localhost") || storedApiBase.includes("127.0.0.1") || storedApiBase.includes("madap.onrender.com"))) {
     localStorage.removeItem("dayzero_api_base");
     storedApiBase = null;
   }
 
   let storedAuthBase = localStorage.getItem("dayzero_auth_base");
-  if (storedAuthBase && (storedAuthBase.includes("localhost") || storedAuthBase.includes("127.0.0.1"))) {
+  if (storedAuthBase && (storedAuthBase.includes("localhost") || storedAuthBase.includes("127.0.0.1") || storedAuthBase.includes("madauth.onrender.com"))) {
     localStorage.removeItem("dayzero_auth_base");
     storedAuthBase = null;
   }
