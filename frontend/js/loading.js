@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || "https://madap.onrender.com";
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 const DEFAULT_API_BASE_URL = API_BASE_URL;
 
 const LOADING_MESSAGES = [
@@ -192,16 +192,20 @@ function selectedTaskContext(taskId) {
 }
 
 async function wakeBackendService() {
-  const attempts = [
-    { timeout: 1500, delay: 0 }
-  ];
-
+  const maxAttempts = 10;
+  const timeoutMs = 5000;
+  const delayMs = 1500;
   let lastError = null;
 
-  for (let index = 0; index < attempts.length; index += 1) {
-    const attempt = attempts[index];
+  setStatus("Connecting to backend server...");
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/health`, { method: "GET" }, attempt.timeout);
+      if (attempt > 1) {
+        setStatus(`Server is warming up. Waking it up (Attempt ${attempt}/${maxAttempts})...`);
+      }
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/health`, { method: "GET" }, timeoutMs);
       if (response.ok) {
         setStatus("Preparing live work environment...");
         hideFallback();
@@ -210,10 +214,15 @@ async function wakeBackendService() {
       lastError = new Error(`Health check returned ${response.status}`);
     } catch (error) {
       lastError = error;
+      console.warn(`Wake attempt ${attempt} failed:`, error.message || error);
+    }
+
+    if (attempt < maxAttempts) {
+      await sleep(delayMs);
     }
   }
 
-  throw lastError || new Error("Backend health check failed.");
+  throw lastError || new Error("Backend health check failed after multiple wake attempts.");
 }
 
 function generateLocalMockSession(taskId) {

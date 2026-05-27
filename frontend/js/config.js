@@ -2,8 +2,8 @@
   "use strict";
 
   // Deployed production backend URLs
-  const DEFAULT_API_BASE_URL = "https://madap.onrender.com";
-  const DEFAULT_AUTH_BASE_URL = "https://madauth.onrender.com";
+  const DEFAULT_API_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
+  const DEFAULT_AUTH_BASE_URL = "https://dayzero-backend-0n1y.onrender.com";
 
   // Sanitize localStorage of outdated localhost entries
   let storedApiBase = localStorage.getItem("dayzero_api_base");
