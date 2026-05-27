@@ -4668,11 +4668,6 @@ window.addEventListener("DOMContentLoaded", () => {
   setInterval(() => {
     const update = teammateUpdates[logIndex % teammateUpdates.length];
     
-    // Show dynamic toast notification
-    if (typeof showToast === 'function') {
-      showToast(`Signal: ${update.sender}: "${update.message.substring(0, 30)}..."`, "success");
-    }
-    
     // Append to live console timeline
     if (typeof addAiAlert === 'function') {
       addAiAlert('hint', `<strong>${update.sender}</strong>: ${update.message}`);
