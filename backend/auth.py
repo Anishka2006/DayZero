@@ -7,8 +7,54 @@ from pymongo import MongoClient
 
 load_dotenv()
 
-app = Flask(__name__)
-CORS(app)
+import re
+CORS(app, resources={r"/*": {
+    "origins": [
+        "https://anishka2006.github.io",
+        "https://saavi122.github.io",
+        re.compile(r"^https?://localhost(:\d+)?$"),
+        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$")
+    ],
+    "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
+}})
+
+@app.before_request
+def log_request_info():
+    app.logger.info("--- Auth Request Info ---")
+    app.logger.info(f"Method: {request.method}")
+    app.logger.info(f"Path: {request.path}")
+    app.logger.info(f"Origin: {request.headers.get('Origin')}")
+    if request.is_json:
+        app.logger.info(f"Payload: {request.get_json(silent=True)}")
+    app.logger.info("--------------------")
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(f"Global auth exception caught: {str(e)}", exc_info=True)
+    
+    # Check if PyMongo Error
+    import pymongo
+    if isinstance(e, pymongo.errors.PyMongoError):
+        return jsonify({
+            "success": False,
+            "error": "Database connection failed. Please ensure MongoDB Atlas connection is active.",
+            "details": str(e)
+        }), 500
+        
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "success": False,
+            "error": e.description,
+            "code": e.code
+        }), e.code
+        
+    return jsonify({
+        "success": False,
+        "error": "Internal auth server error occurred",
+        "details": str(e)
+    }), 500
 
 MONGO_URI = os.getenv("MONGO_URI")
 if not MONGO_URI:

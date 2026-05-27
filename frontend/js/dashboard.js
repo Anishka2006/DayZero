@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || "https://madap.onrender.com";
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 let workspaceFilesModulePromise = null;

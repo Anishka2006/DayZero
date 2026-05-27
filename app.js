@@ -14,8 +14,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://madauth.onrender.com";
-const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://madap.onrender.com";
+const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
 
 
 // Hardcoded approved recruiter domains
@@ -777,7 +777,7 @@ function initAuthModal() {
     submitBtn.innerText = "Please wait...";
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2s Fast-Response Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout for robust production connections
 
     try {
       const res = await fetch(url, {

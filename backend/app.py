@@ -18,11 +18,54 @@ app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-CORS(
-    app,
-    resources={r"/api/*": {"origins": "*"}},
-    supports_credentials=False
-)
+import re
+CORS(app, resources={r"/*": {
+    "origins": [
+        "https://anishka2006.github.io",
+        "https://saavi122.github.io",
+        re.compile(r"^https?://localhost(:\d+)?$"),
+        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$")
+    ],
+    "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
+}})
+
+@app.before_request
+def log_request_info():
+    app.logger.info("--- Request Info ---")
+    app.logger.info(f"Method: {request.method}")
+    app.logger.info(f"Path: {request.path}")
+    app.logger.info(f"Origin: {request.headers.get('Origin')}")
+    if request.is_json:
+        app.logger.info(f"Payload: {request.get_json(silent=True)}")
+    app.logger.info("--------------------")
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(f"Global exception caught: {str(e)}", exc_info=True)
+    
+    # Check if PyMongo Error
+    import pymongo
+    if isinstance(e, pymongo.errors.PyMongoError):
+        return jsonify({
+            "success": False,
+            "error": "Database connection failed. Please ensure MongoDB Atlas connection is active.",
+            "details": str(e)
+        }), 500
+        
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "success": False,
+            "error": e.description,
+            "code": e.code
+        }), e.code
+        
+    return jsonify({
+        "success": False,
+        "error": "Internal server error occurred",
+        "details": str(e)
+    }), 500
 
 @app.route("/api/user-profile", methods=["GET"])
 def get_user_profile():
@@ -67,8 +110,11 @@ def signup():
 def create_invite():
     if request.method == "OPTIONS":
         response = jsonify({"success": True})
-
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        origin = request.headers.get("Origin")
+        if origin:
+            response.headers.add("Access-Control-Allow-Origin", origin)
+        else:
+            response.headers.add("Access-Control-Allow-Origin", "*")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 
@@ -131,9 +177,16 @@ def create_invite():
         # mongo_client.admin.command('ping')
         
         # Insert or update
+        # Extract _id to avoid attempting to update the immutable _id field in existing documents
+        invite_data = invite.copy()
+        invite_id_val = invite_data.pop("_id")
+
         invited_candidates_collection.update_one(
             {"email": email},
-            {"$set": invite},
+            {
+                "$set": invite_data,
+                "$setOnInsert": {"_id": invite_id_val}
+            },
             upsert=True
         )
         
@@ -227,18 +280,7 @@ logging.basicConfig(
 
 
 
-MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    raise Exception("MONGO_URI environment variable is missing!")
-
-if "mongodb+srv" in MONGO_URI:
-    import certifi
-    mongo_client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
-else:
-    mongo_client = MongoClient(MONGO_URI)
-mongo_db = mongo_client["dayzero"]
-users_collection = mongo_db["users"]
-invited_candidates_collection = mongo_db["invited_candidates"]
+# Database collections are imported cleanly from db.py at the top of the file
 
 
 def update_candidate_mongodb_score(email_or_name: str | None, report: dict, submission_text: str):
