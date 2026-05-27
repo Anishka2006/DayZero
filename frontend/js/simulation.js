@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 
 const STORAGE_KEYS = {
@@ -1421,9 +1421,11 @@ function agentsForMission(mission) {
     ? mission.domain
     : roleDomain([mission && mission.role, mission && mission.headline, mission && mission.summary].join(" "));
   const order = TEAM_ORDER_BY_DOMAIN[domain] || TEAM_ORDER_BY_DOMAIN.pm;
+  const candidateAgentId = candidateAgentIdForMission(mission);
   return order
     .map((id) => agentById(id))
     .filter(Boolean)
+    .filter((agent) => agent.id !== candidateAgentId)
     .slice(0, 5)
     .map((agent) => ({ ...agent }));
 }
@@ -1434,7 +1436,8 @@ function isVisibleCoworker(agent) {
   }
   const name = String(agent.name || agent.agent_name || "").trim();
   const title = String(agent.title || agent.role || "").toLowerCase();
-  return Boolean(name) && !title.includes("evaluator") && !title.includes("observer");
+  const candidateAgentId = candidateAgentIdForMission(state.mission);
+  return Boolean(name) && agent.id !== candidateAgentId && !title.includes("evaluator") && !title.includes("observer");
 }
 
 function agentChannelId(agent) {
@@ -2256,7 +2259,7 @@ function chatTaskContext(selectedChannel, selectedAgent) {
 
 function isTransientBackendErrorMessage(message) {
   const text = String(message && (message.message || message.content || "") || "").trim();
-  return text.includes("Live teammate response is temporarily unavailable");
+  return text.includes("Switching to local teammate mode");
 }
 
 function normalizeIncomingAgentMessages(messages, channel, targetAgent = null) {
@@ -2488,7 +2491,7 @@ function buildLocalEvaluationReport(reason = "submitted") {
     strengths: checklist.passed.length ? checklist.passed : ["The workspace moved forward with concrete task-aligned changes."],
     weaknesses: checklist.failed,
     observer_notes: [
-      "Local evaluation was used because the live backend was unavailable during submission.",
+      "Local evaluation was used to keep the room moving during submission.",
       state.userMessageCount
         ? `The room saw ${state.userMessageCount} candidate update${state.userMessageCount === 1 ? "" : "s"} before submission.`
         : "The final delivery leaned more on workspace edits than room narration.",
@@ -2877,9 +2880,9 @@ function localAgentForMessage(text, targetAgent = null) {
     preferredId = "backend";
   }
 
-  return (state.agents || []).find((agent) => agent.id === preferredId)
-    || agentById(preferredId)
-    || (state.agents || [])[0]
+  const visibleAgents = state.agents && state.agents.length ? state.agents : agentsForMission(state.mission);
+  return visibleAgents.find((agent) => agent.id === preferredId)
+    || visibleAgents[0]
     || agentById("pm");
 }
 
@@ -3008,7 +3011,7 @@ async function startOrResumeSession() {
     setLiveBackendMode(false);
     seedLocalRoom();
     scrollChatToBottom();
-    showToast("Live backend unavailable. Running in local simulation mode.");
+    showToast("Running in local simulation mode.");
   }
 }
 
@@ -3095,10 +3098,10 @@ async function sendRoomMessage(rawText, targetChannel = null) {
     appendMessagesSequentially(localFallbackMessagesFor(text, channel, targetAgent), 180, 420);
     addTimelineEvent({
       title: "Local teammate fallback",
-      description: "Live backend chat was unavailable, so the room used task-specific local teammate replies.",
+      description: "The room used task-specific local teammate replies.",
       created_at: new Date().toISOString(),
     });
-    showToast("Live backend unavailable. Using local teammate replies.");
+    showToast("Using local teammate replies.");
   }
 }
 
@@ -3164,7 +3167,7 @@ async function runChecks() {
     hideTyping();
     setLiveBackendMode(false);
     appendMessagesSequentially(localFallbackMessagesFor(summary, channel, targetAgent), 180, 420);
-    showToast("Live backend unavailable. Checks handled locally.");
+    showToast("Checks handled locally.");
   }
 }
 
@@ -3353,12 +3356,12 @@ async function submitSimulation(reason = "submitted") {
     } catch (fallbackError) {
       addTimelineEvent({
         title: "Local SkillRecord generated",
-        description: "The backend was unavailable during submit, so DayZero created a local evaluation from the current workspace state.",
+        description: "DayZero created a local evaluation from the current workspace state.",
         created_at: new Date().toISOString(),
       });
       persistEvaluation(buildLocalEvaluationReport(reason));
       storeSessionId(null);
-      showToast("Backend unavailable. Opening local SkillRecord...");
+      showToast("Opening local SkillRecord...");
       window.setTimeout(() => {
         navigateToResults();
       }, 700);
@@ -3500,6 +3503,7 @@ function bindEvents() {
 async function init() {
   const role = localStorage.getItem("role") || "candidate";
   const taskId = sessionStorage.getItem(STORAGE_KEYS.dashboardTask) || localStorage.getItem(STORAGE_KEYS.dashboardTask) || "spotify-creator-retention";
+  const hasPreparedSession = Boolean(sessionStorage.getItem("dayzero_session_data"));
   
   // Unauthenticated user protection
   const user = localStorage.getItem("user");
@@ -3509,7 +3513,7 @@ async function init() {
   }
 
   // Demo user restricted tasks protection
-  if (role === "demo user") {
+  if (role === "demo user" && !hasPreparedSession) {
     const allowedDemoRooms = ["frontend-homeflow", "spotify-creator-retention"];
     if (allowedDemoRooms.indexOf(taskId) === -1) {
       window.location.href = "dashboard.html?demo=true&locked=true";

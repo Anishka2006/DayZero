@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
 const DEFAULT_API_BASE_URL = API_BASE_URL;
 
 const LOADING_MESSAGES = [
@@ -225,6 +225,69 @@ async function wakeBackendService() {
   throw lastError || new Error("Backend health check failed after multiple wake attempts.");
 }
 
+function loadingRoleDomain(value) {
+  const text = String(value || "").toLowerCase();
+  if (/\b(qa|quality|tester|testing|test engineer)\b/.test(text)) return "qa";
+  if (/\b(data|analyst|analytics|metric|forecast|experiment|sql|dashboard)\b/.test(text)) return "data";
+  if (/\b(design|designer|ux|ui|accessibility|prototype|microcopy|frontend|front-end|react|component|mobile|css|screen)\b/.test(text)) return "designer";
+  if (/\b(backend|api|server|cache|queue|database|migration|scaling|worker)\b/.test(text)) return "backend";
+  if (/\b(product|pm|launch|priority|roadmap|stakeholder|strategy)\b/.test(text)) return "pm";
+  return "pm";
+}
+
+function localOpeningMessagesForRole(role, taskId) {
+  const candidateAgentId = loadingRoleDomain(role);
+  const profiles = [
+    {
+      id: "pm",
+      speaker_name: "Asha",
+      speaker_title: "Product Manager",
+      avatar: "A",
+      message: taskId && taskId.includes("spotify")
+        ? "Let's pin the retention decision first, then name the metric caveat before we widen scope."
+        : "Let's scope the smallest safe room decision first, then say what waits.",
+    },
+    {
+      id: "backend",
+      speaker_name: "Ravi",
+      speaker_title: "Engineering Lead",
+      avatar: "R",
+      message: "I will watch the system contract and rollback path; keep the implementation risk explicit.",
+    },
+    {
+      id: "designer",
+      speaker_name: "Mira",
+      speaker_title: "Product Designer",
+      avatar: "M",
+      message: "I will keep the user-facing state calm: clear loading, error, retry, and accessibility behavior.",
+    },
+    {
+      id: "qa",
+      speaker_name: "Kenji",
+      speaker_title: "QA Engineer",
+      avatar: "K",
+      message: "I will push on release proof: one messy edge case, one retest path, and a clear ship or hold call.",
+    },
+    {
+      id: "data",
+      speaker_name: "Leah",
+      speaker_title: "Data Analyst",
+      avatar: "L",
+      message: "I will keep the success signal honest: metric, segment, trend, and caveat.",
+    },
+  ];
+
+  return profiles
+    .filter((profile) => profile.id !== candidateAgentId)
+    .slice(0, 2)
+    .map((profile) => ({
+      ...profile,
+      role: "agent",
+      channel: "team",
+      created_at: new Date().toISOString(),
+    }));
+}
+
 function generateLocalMockSession(taskId) {
   const role = sessionStorage.getItem("dayzero_role") || localStorage.getItem("userRole") || "Frontend";
   const difficulty = sessionStorage.getItem("dayzero_difficulty") || localStorage.getItem("userExperience") || "Medium";
@@ -237,49 +300,11 @@ function generateLocalMockSession(taskId) {
   if (taskId && taskId.includes("spotify")) {
     headline = "Creator Retention Campaign";
     summary = "Address conflicting metrics regarding creator retention versus user acquisition.";
-    initialMessages = [
-      {
-        speaker_name: "Sarah (Product Manager)",
-        speaker_title: "Product Lead",
-        avatar: "S",
-        role: "agent",
-        channel: "team",
-        message: "Welcome to the Stripe/Spotify sprint room! We need to analyze why creator retention metrics fell 12% in the last cohort. Let's inspect the dataset in the workspace.",
-        created_at: new Date().toISOString()
-      },
-      {
-        speaker_name: "Kenji (QA Engineer)",
-        speaker_title: "QA Lead",
-        avatar: "K",
-        role: "agent",
-        channel: "team",
-        message: "I've checked the telemetry. It looks like the experimental analytics logger might have been double-counting active sessions or duplicating events. I've left the files in the workspace.",
-        created_at: new Date().toISOString()
-      }
-    ];
+    initialMessages = localOpeningMessagesForRole(role, taskId);
   } else {
     headline = "Sprint Room Optimization";
     summary = "Execute task decisions rapidly, resolve blocker items, and verify metrics.";
-    initialMessages = [
-      {
-        speaker_name: "Sarah (Product Manager)",
-        speaker_title: "Product Lead",
-        avatar: "S",
-        role: "agent",
-        channel: "team",
-        message: `Welcome team! Let's get the ${role} requirements scoped and execute on this issue immediately. Check the files list in the workspace.`,
-        created_at: new Date().toISOString()
-      },
-      {
-        speaker_name: "Kenji (QA Engineer)",
-        speaker_title: "QA Lead",
-        avatar: "K",
-        role: "agent",
-        channel: "team",
-        message: "Hey! Ready to review and validate our changes. Let's make sure our checkout validation is covered.",
-        created_at: new Date().toISOString()
-      }
-    ];
+    initialMessages = localOpeningMessagesForRole(role, taskId);
   }
 
   return {
@@ -365,7 +390,7 @@ async function startLoadingSequence() {
 
   // Show error / demo mode option after 6 seconds
   errorTimer = setTimeout(() => {
-    showError("Server temporarily unavailable. You can launch in Offline Demo Mode.");
+    showError("You can launch in Offline Demo Mode.");
   }, 6000);
 
   try {
