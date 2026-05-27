@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://madauth.onrender.com";
-const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://madap.onrender.com";
 
 
 // Hardcoded approved recruiter domains
