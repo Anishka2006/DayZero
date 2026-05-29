@@ -51,16 +51,16 @@ class EvaluationLayer1:
         }}
         """
         
-        response = ask_ai(prompt)
+        response = ask_ai(prompt, agent="Quinn", route="evaluator", temperature=0.2, max_tokens=800)
         try:
             return json.loads(response)
         except:
             return {
-                "structure": 60,
-                "judgment": 60,
-                "clarity": 60,
-                "evidence_quality": 60,
-                "reasoning": "Fallback evaluation"
+                "structure": 0,
+                "judgment": 0,
+                "clarity": 0,
+                "evidence_quality": 0,
+                "reasoning": "Fallback evaluation could not verify enough evidence"
             }
 
 
@@ -80,10 +80,10 @@ class EvaluationLayer2:
         scores = session.get("scores") or {}
         
         ratings = {
-            "designer": scores.get("adaptability", 50),  # Design flexibility
-            "engineer": scores.get("technicalDepth", 50),  # Technical evaluation
-            "qa": scores.get("ownership", 50),  # Validation ownership
-            "pm": scores.get("prioritization", 50),  # Priority judgment
+            "designer": scores.get("adaptability", 0),  # Design flexibility
+            "engineer": scores.get("technicalDepth", 0),  # Technical evaluation
+            "qa": scores.get("ownership", 0),  # Validation ownership
+            "pm": scores.get("prioritization", 0),  # Priority judgment
         }
         
         # Weight adjustments based on behavioral signals
@@ -159,7 +159,7 @@ class EvaluationLayer3:
         }}
         """
         
-        response = ask_ai(prompt)
+        response = ask_ai(prompt, agent="Quinn", route="evaluator", temperature=0.2, max_tokens=900)
         try:
             return json.loads(response)
         except:
@@ -218,11 +218,13 @@ class SkillRecordBuilder:
         )
         
         # Synthesize overall score (weighted average)
+        layer1_numeric = [int(value) for value in layer1.values() if isinstance(value, (int, float))]
+        layer2_numeric = [int(value) for value in layer2.values() if isinstance(value, (int, float))]
         overall_score = int(
             (
-                sum(layer1.values()) / len(layer1) * 0.33 +
-                sum(layer2.values()) / len(layer2) * 0.33 +
-                layer3.get("overall_assessment", 60) * 0.34
+                (sum(layer1_numeric) / len(layer1_numeric) if layer1_numeric else 0) * 0.33 +
+                (sum(layer2_numeric) / len(layer2_numeric) if layer2_numeric else 0) * 0.33 +
+                int(layer3.get("overall_assessment", 0)) * 0.34
             )
         )
         
@@ -238,31 +240,31 @@ class SkillRecordBuilder:
             },
             "evaluation": {
                 "layer_1_ai_scoring": {
-                    "structure": layer1.get("structure", 60),
-                    "judgment": layer1.get("judgment", 60),
-                    "clarity": layer1.get("clarity", 60),
-                    "evidence_quality": layer1.get("evidence_quality", 60),
+                    "structure": layer1.get("structure", 0),
+                    "judgment": layer1.get("judgment", 0),
+                    "clarity": layer1.get("clarity", 0),
+                    "evidence_quality": layer1.get("evidence_quality", 0),
                 },
                 "layer_2_teammate_ratings": {
-                    "designer_feedback": layer2.get("designer", 60),
-                    "engineer_feedback": layer2.get("engineer", 60),
-                    "qa_feedback": layer2.get("qa", 60),
-                    "pm_feedback": layer2.get("pm", 60),
+                    "designer_feedback": layer2.get("designer", 0),
+                    "engineer_feedback": layer2.get("engineer", 0),
+                    "qa_feedback": layer2.get("qa", 0),
+                    "pm_feedback": layer2.get("pm", 0),
                 },
                 "layer_3_expert_review": {
-                    "behavioral_signal": layer3.get("behavioral_signal", 60),
-                    "pressure_handling": layer3.get("pressure_handling", 60),
-                    "communication_quality": layer3.get("communication_quality", 60),
-                    "risk_awareness": layer3.get("risk_awareness", 60),
+                    "behavioral_signal": layer3.get("behavioral_signal", 0),
+                    "pressure_handling": layer3.get("pressure_handling", 0),
+                    "communication_quality": layer3.get("communication_quality", 0),
+                    "risk_awareness": layer3.get("risk_awareness", 0),
                 },
             },
             "overall_score": overall_score,
             "skills": {
-                "problem_solving": layer1.get("judgment", 60),
-                "communication": layer3.get("communication_quality", 60),
-                "pressure_handling": layer3.get("pressure_handling", 60),
-                "collaboration": layer2.get("pm", 60),
-                "technical_reasoning": layer2.get("engineer", 60),
+                "problem_solving": layer1.get("judgment", 0),
+                "communication": layer3.get("communication_quality", 0),
+                "pressure_handling": layer3.get("pressure_handling", 0),
+                "collaboration": layer2.get("pm", 0),
+                "technical_reasoning": layer2.get("engineer", 0),
             },
             "summary": layer3.get("summary", "Candidate completed simulation."),
             "strengths": [

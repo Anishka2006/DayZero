@@ -101,6 +101,8 @@ class ObserverAgent(BaseAgent):
             ),
             temperature=0.25,
             max_tokens=900,
+            agent="Quinn",
+            route="evaluator",
         )
         if not data:
             return None
@@ -117,10 +119,10 @@ class ObserverAgent(BaseAgent):
 
     def _fallback_report(self, session: dict[str, Any]) -> dict[str, Any]:
         scores = session.get("scores") or {}
-        leadership = int(scores.get("leadership", 50))
-        communication = int(scores.get("communication", 50))
-        technical_depth = int(scores.get("technicalDepth", 50))
-        prioritization = int(scores.get("prioritization", 50))
+        leadership = int(scores.get("leadership", 0))
+        communication = int(scores.get("communication", 0))
+        technical_depth = int(scores.get("technicalDepth", 0))
+        prioritization = int(scores.get("prioritization", 0))
 
         recommendation = "Strong hire"
         if min(leadership, communication, technical_depth) < 58:

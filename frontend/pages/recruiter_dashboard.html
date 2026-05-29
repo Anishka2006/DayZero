@@ -2397,7 +2397,7 @@
 (function () {
   "use strict";
 
-  const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+  const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
 
   // Parse recruiter email to extract name, company name, initials, etc. dynamically
   function parseEmailToProfile(email) {
@@ -3269,7 +3269,7 @@
               throw new Error(errData.error || "Server returned status code " + res.status);
             }).catch(function(jsonErr) {
               if (res.status === 500) {
-                throw new Error("Database connection failed. Please ensure MongoDB is running.");
+                throw new Error("Invite save did not complete.");
               }
               throw new Error("Server error: " + (jsonErr.message || res.statusText || "Internal Server Error"));
             });
@@ -3432,7 +3432,7 @@
           submitBtn.disabled = false;
           submitBtn.innerText = originalBtnText;
           
-          showToast("Server temporarily unavailable", "error");
+          showToast("Please try again in a moment.", "error");
           console.error("Invite save failed:", err);
         });
       });

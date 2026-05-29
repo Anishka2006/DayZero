@@ -14,8 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
-const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const DAYZERO_RENDER_BACKEND_URL = "https://dayzero-2.onrender.com";
+const DAYZERO_LOCAL_BACKEND_URL = "http://127.0.0.1:5001";
+const DAYZERO_IS_LOCAL_PAGE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  || window.location.protocol === "file:";
+const DAYZERO_DEFAULT_BACKEND_URL = DAYZERO_IS_LOCAL_PAGE ? DAYZERO_LOCAL_BACKEND_URL : DAYZERO_RENDER_BACKEND_URL;
+const AUTH_BASE_URL = window.AUTH_BASE_URL || DAYZERO_DEFAULT_BACKEND_URL;
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || DAYZERO_DEFAULT_BACKEND_URL;
 
 
 // Hardcoded approved recruiter domains

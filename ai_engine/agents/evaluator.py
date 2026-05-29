@@ -52,10 +52,12 @@ LAYER 3 - Domain Expert Review: Synthesize behavioral evidence
 - Risk Awareness: Identification and mitigation of risks
 
 Evaluation rules:
-- If submission is empty: score 0-15
-- If submission is vague: score 15-35
-- If submission has clear decisions but weak implementation: score 35-55
-- If submission is strong and task-specific: score 70+
+- Score only human candidate messages and the candidate submission. Do not score agent messages as candidate skill.
+- Casual chat only: 0-20
+- Vague decision only: 20-40
+- Decision plus tradeoff: 40-60
+- Decision plus evidence and validation: 60-80
+- Complete strong workplace handoff with owner, risk, validation, metric or rollback: 80+
 - Do not produce generic praise. Tie every point to concrete behavior, tradeoffs, validation, or communication in the room.
 - Evaluate the work behavior, not just the final answer.
 - A strong SkillRecord should sound premium and human, like a senior manager's debrief.
@@ -161,7 +163,7 @@ def generate_report(session: dict, orchestrator_scores: dict = None) -> dict:
     import json
     
     prompt = build_summary_prompt(**context)
-    raw_response = ask_ai(prompt)
+    raw_response = ask_ai(prompt, agent="Quinn", route="evaluator", temperature=0.2, max_tokens=1100)
     
     # Parse and validate response
     try:
@@ -185,21 +187,21 @@ def _build_team_notes(session: dict) -> str:
     notes.append("=== LAYER 2: TEAMMATE FEEDBACK ===\n")
     
     # PM feedback
-    notes.append(f"Asha (PM): Prioritization={scores.get('prioritization', 50)}/100")
+    notes.append(f"Asha (PM): Prioritization={scores.get('prioritization', 0)}/100")
     decisions = memory.get("decisions") or []
     if decisions:
         notes.append(f"  - Key decision: {decisions[-1]}")
     notes.append("")
     
     # Engineer feedback
-    notes.append(f"Ravi (Engineering): Technical Depth={scores.get('technicalDepth', 50)}/100")
+    notes.append(f"Ravi (Engineering): Technical Depth={scores.get('technicalDepth', 0)}/100")
     references = memory.get("referenced_files") or []
     if references:
         notes.append(f"  - Referenced: {', '.join(references[-3:])}")
     notes.append("")
     
     # QA feedback
-    notes.append(f"Kenji (QA): Validation Score={scores.get('ownership', 50)}/100")
+    notes.append(f"Kenji (QA): Validation Score={scores.get('ownership', 0)}/100")
     passed_tests = memory.get("passed_tests") or []
     failed_tests = memory.get("failed_tests") or []
     if passed_tests or failed_tests:
@@ -207,7 +209,7 @@ def _build_team_notes(session: dict) -> str:
     notes.append("")
     
     # Data feedback
-    notes.append(f"Leah (Data): Communication={scores.get('communication', 50)}/100")
+    notes.append(f"Leah (Data): Communication={scores.get('communication', 0)}/100")
     if memory.get("mentioned_tradeoff"):
         notes.append("  - Tradeoff analysis: Present")
     notes.append("")
@@ -235,26 +237,26 @@ def _ensure_complete_report(report: dict, scores: dict) -> dict:
     # Ensure all main sections exist
     if "layer1_ai_score" not in report:
         report["layer1_ai_score"] = {
-            "structure": scores.get("leadership", 50),
-            "judgment": scores.get("prioritization", 50),
-            "clarity": scores.get("communication", 50),
-            "evidence_quality": scores.get("ownership", 50),
+            "structure": scores.get("leadership", 0),
+            "judgment": scores.get("prioritization", 0),
+            "clarity": scores.get("communication", 0),
+            "evidence_quality": scores.get("ownership", 0),
         }
     
     if "layer2_teammate_feedback" not in report:
         report["layer2_teammate_feedback"] = {
-            "designer_rating": scores.get("adaptability", 50),
-            "engineer_rating": scores.get("technicalDepth", 50),
-            "qa_rating": scores.get("ownership", 50),
-            "pm_rating": scores.get("prioritization", 50),
+            "designer_rating": scores.get("adaptability", 0),
+            "engineer_rating": scores.get("technicalDepth", 0),
+            "qa_rating": scores.get("ownership", 0),
+            "pm_rating": scores.get("prioritization", 0),
         }
     
     if "layer3_expert_review" not in report:
         report["layer3_expert_review"] = {
-            "behavioral_signal": sum(scores.values()) // len(scores) if scores else 50,
-            "pressure_handling": scores.get("adaptability", 50),
-            "communication_quality": scores.get("communication", 50),
-            "risk_awareness": scores.get("technicalDepth", 50),
+            "behavioral_signal": sum(scores.values()) // len(scores) if scores else 0,
+            "pressure_handling": scores.get("adaptability", 0),
+            "communication_quality": scores.get("communication", 0),
+            "risk_awareness": scores.get("technicalDepth", 0),
         }
     
     # Calculate overall score if not present
@@ -266,21 +268,21 @@ def _ensure_complete_report(report: dict, scores: dict) -> dict:
             all_scores.extend(report["layer2_teammate_feedback"].values())
         if "layer3_expert_review" in report:
             all_scores.extend(report["layer3_expert_review"].values())
-        report["overall_score"] = round(sum(all_scores) / len(all_scores)) if all_scores else 50
+        report["overall_score"] = round(sum(all_scores) / len(all_scores)) if all_scores else 0
     
     # Ensure skill scores
     if "skill_record" not in report and "skill_scores" not in report:
         report["skill_record"] = {
-            "problem_solving": scores.get("prioritization", 50),
-            "communication": scores.get("communication", 50),
-            "role_judgment": scores.get("leadership", 50),
-            "technical_reasoning": scores.get("technicalDepth", 50),
-            "collaboration": scores.get("adaptability", 50),
+            "problem_solving": scores.get("prioritization", 0),
+            "communication": scores.get("communication", 0),
+            "role_judgment": scores.get("leadership", 0),
+            "technical_reasoning": scores.get("technicalDepth", 0),
+            "collaboration": scores.get("adaptability", 0),
         }
     
     # Ensure recommendation
     if "hiring_recommendation" not in report:
-        overall = report.get("overall_score", 50)
+        overall = report.get("overall_score", 0)
         if overall >= 84:
             report["hiring_recommendation"] = "Strong Hire"
         elif overall >= 70:
@@ -305,37 +307,37 @@ def _ensure_complete_report(report: dict, scores: dict) -> dict:
 
 def _fallback_evaluation(scores: dict) -> dict:
     """Fallback evaluation structure when LLM response fails."""
-    avg_score = round(sum(scores.values()) / len(scores)) if scores else 50
+    avg_score = round(sum(scores.values()) / len(scores)) if scores else 0
     
     return {
         "layer1_ai_score": {
-            "structure": scores.get("leadership", 50),
-            "judgment": scores.get("prioritization", 50),
-            "clarity": scores.get("communication", 50),
-            "evidence_quality": scores.get("ownership", 50),
+            "structure": scores.get("leadership", 0),
+            "judgment": scores.get("prioritization", 0),
+            "clarity": scores.get("communication", 0),
+            "evidence_quality": scores.get("ownership", 0),
         },
         "layer2_teammate_feedback": {
-            "designer_rating": scores.get("adaptability", 50),
-            "engineer_rating": scores.get("technicalDepth", 50),
-            "qa_rating": scores.get("ownership", 50),
-            "pm_rating": scores.get("prioritization", 50),
+            "designer_rating": scores.get("adaptability", 0),
+            "engineer_rating": scores.get("technicalDepth", 0),
+            "qa_rating": scores.get("ownership", 0),
+            "pm_rating": scores.get("prioritization", 0),
         },
         "layer3_expert_review": {
             "behavioral_signal": avg_score,
-            "pressure_handling": scores.get("adaptability", 50),
-            "communication_quality": scores.get("communication", 50),
-            "risk_awareness": scores.get("technicalDepth", 50),
+            "pressure_handling": scores.get("adaptability", 0),
+            "communication_quality": scores.get("communication", 0),
+            "risk_awareness": scores.get("technicalDepth", 0),
         },
         "overall_score": avg_score,
         "summary": "Candidate participated in a 5-day work simulation and demonstrated core competencies.",
         "strengths": ["Engaged with team", "Made visible decisions", "Handled pressure"],
         "risks": ["Could strengthen validation", "Scope clarity needed"],
         "skill_record": {
-            "problem_solving": scores.get("prioritization", 50),
-            "communication": scores.get("communication", 50),
-            "role_judgment": scores.get("leadership", 50),
-            "technical_reasoning": scores.get("technicalDepth", 50),
-            "collaboration": scores.get("adaptability", 50),
+            "problem_solving": scores.get("prioritization", 0),
+            "communication": scores.get("communication", 0),
+            "role_judgment": scores.get("leadership", 0),
+            "technical_reasoning": scores.get("technicalDepth", 0),
+            "collaboration": scores.get("adaptability", 0),
         },
         "evidence": ["Participated in team discussions", "Made prioritization decisions"],
         "improvement_plan": ["Strengthen validation practices", "Improve scope communication"],
