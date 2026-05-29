@@ -10,7 +10,7 @@
   />
   <link rel="stylesheet" href="main.css" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
   />
 </head>
@@ -41,11 +41,21 @@
   <section class="hero" id="product">
     <div class="container hero-inner">
       <div class="hero-content reveal">
-        <p class="hero-tag">AI-Powered Hiring Platform</p>
+        <div class="hero-tag-container">
+          <span class="hero-tag">AI-Powered Hiring Platform</span>
+          <span class="hero-tag-dot"></span>
+        </div>
 
         <h1 class="hero-title">
-          Experience Work Before Your Day One!
+          Experience<br />
+          Work Before<br />
+          Your <span class="highlight-text">Day One</span>!
         </h1>
+
+        <div class="hero-quote">
+          <span class="quote-pill"></span>
+          <span class="quote-text">Hire based on skills, not just resumes.</span>
+        </div>
 
         <p class="hero-sub">
           DayZero enables companies to assess real candidate potential through
@@ -459,7 +469,7 @@
   <script>
     // Theme Switcher for Landing Page
     const toggleBtn = document.getElementById("themeToggleBtn");
-    const savedTheme = localStorage.getItem("theme") || "light";
+    const savedTheme = localStorage.getItem("theme") || "dark";
 
     function applyTheme(theme) {
       if (theme === "dark") {
