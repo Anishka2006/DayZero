@@ -50,12 +50,12 @@ DEFAULT_MEMORY = {
 }
 
 DEFAULT_SCORES = {
-    "leadership": 50,
-    "communication": 50,
-    "ownership": 50,
-    "prioritization": 50,
-    "adaptability": 50,
-    "technicalDepth": 50,
+    "leadership": 0,
+    "communication": 0,
+    "ownership": 0,
+    "prioritization": 0,
+    "adaptability": 0,
+    "technicalDepth": 0,
 }
 
 
@@ -410,7 +410,7 @@ class SimulationOrchestrator:
         memory["timeline"].append(timeline_event)
         memory["team_introduced"] = True
 
-        initial_messages = self._initial_messages_for(task)
+        initial_messages = self._initial_messages_for(task, memory, scores)
         transcript = [
             self._message_payload(entry, created_at=_utc_now())
             for entry in initial_messages
@@ -1053,45 +1053,68 @@ class SimulationOrchestrator:
         slug = re.sub(r"[^a-z0-9]+", "-", str(value or "war-room").lower()).strip("-")
         return slug[:48] or "war-room"
 
-    def _initial_messages_for(self, task: dict[str, Any]) -> list[dict[str, Any]]:
-        room = task.get("room") or {}
-        blockers = room.get("blockers") or []
-        first_blocker = blockers[0] if blockers else task.get("problem")
+    def _initial_messages_for(
+        self,
+        task: dict[str, Any],
+        memory: dict[str, Any],
+        scores: dict[str, int],
+    ) -> list[dict[str, Any]]:
         anchor = self._role_anchor_agent(task)
-        lead = self.pm_agent if self._agent_visible_for_task(self.pm_agent, task) else self._agent_pool(task)[0]
-        focus_file = self._first_workspace_file(task)
-        messages = [
-            {
-                "name": lead.name,
-                "role": lead.role,
-                "avatar": lead.avatar,
-                "message": (
-                    f"We are in #{task['channel']} for {task['title']}. "
-                    "The fastest path is to stabilize the user-impacting issue first, then leave polish for later."
-                ),
+        visible_pool = self._agent_pool(task)
+        lead = self.pm_agent if self._agent_visible_for_task(self.pm_agent, task) else (visible_pool[0] if visible_pool else anchor)
+        lineup = [
+            agent
+            for agent in self._unique_agents([lead, anchor] + visible_pool)
+            if self._agent_visible_for_task(agent, task)
+        ][:2]
+        event = {
+            "event_type": "simulation_start",
+            "task": task,
+            "candidate_message": "",
+            "current_task": {
+                "taskTitle": task.get("title"),
+                "company": task.get("company"),
+                "role": task.get("role"),
+                "scenario": task.get("problem"),
+                "skills": task.get("requirements") or [],
+                "files": task.get("files") or [],
             },
-            {
-                "name": anchor.name,
-                "role": anchor.role,
-                "avatar": anchor.avatar,
-                "message": (
-                    f"Starting with {focus_file}. "
-                    "That should tell us where the risky behavior is showing up."
-                ),
-            },
-        ]
-        if anchor.id != self.qa_agent.id and self._agent_visible_for_task(self.qa_agent, task):
-            messages.append(
-                {
-                    "name": "Kenji",
-                    "role": "QA Engineer",
-                    "avatar": "K",
-                    "message": f"Keeping an eye on release risk. The first thing to prove is: {first_blocker}",
-                }
-            )
+            "channel_id": "team",
+            "room_pressure": self._pressure_level(task),
+            "observer_notes_summary": "Room opened; no candidate behavior yet.",
+            "question_allowed": False,
+        }
+
+        messages = []
+        rolling_context: list[str] = []
+        for index, agent in enumerate(lineup):
+            agent_event = {
+                **event,
+                "room_context": rolling_context[-4:],
+                "speaker_position": index + 1,
+                "team_lineup": [teammate.name for teammate in lineup],
+                "previous_agent_reply": messages[-1]["message"] if messages else "",
+            }
+            reply = agent.generate_response(agent_event, memory, scores)
+            if not reply:
+                reply = self._safe_fallback_for(agent, agent_event, memory)
+            reply = self._sanitize_file_references(reply, task)
+            if self._reply_has_question(reply):
+                reply = self._remove_questions(reply) or self._safe_fallback_for(agent, agent_event, memory)
+            if self._looks_incomplete_reply(reply):
+                reply = self._safe_fallback_for(agent, agent_event, memory)
+            message = {
+                "name": agent.name,
+                "role": agent.role,
+                "avatar": agent.avatar,
+                "message": self._shorten_agent_reply(reply),
+            }
+            messages.append(message)
+            rolling_context.append(f"{agent.name}: {message['message']}")
+
         unique: list[dict[str, Any]] = []
         seen: set[str] = set()
-        for message in messages[:3]:
+        for message in messages[:2]:
             name = str(message.get("name") or "")
             if name in seen:
                 continue
@@ -1236,6 +1259,14 @@ class SimulationOrchestrator:
     def _update_scores(self, scores: dict[str, int], event: dict[str, Any]) -> None:
         message = str(event.get("candidate_message") or "").lower()
         event_type = str(event.get("event_type") or "")
+        if not message.strip():
+            return
+
+        words = re.findall(r"[a-z0-9_]+", message)
+        greeting_only = bool(re.fullmatch(r"(hi+|hello+|hey+|yo+|sup)[!. ]*", message.strip()))
+        if greeting_only or len(words) <= 2:
+            self._bump(scores, "communication", 6)
+            return
 
         if any(token in message for token in ("plan", "first", "then", "priority")):
             self._bump(scores, "leadership", 8)
@@ -1248,6 +1279,32 @@ class SimulationOrchestrator:
         if any(token in message for token in ("tradeoff", "cut", "focus", "deadline", "scope")):
             self._bump(scores, "prioritization", 8)
             self._bump(scores, "leadership", 4)
+
+        decision_signal = any(token in message for token in ("decision", "we should", "i will", "i'll", "ship", "hold", "prioritize", "first"))
+        tradeoff_signal = any(token in message for token in ("tradeoff", "cut", "defer", "scope", "instead", "not ship", "leave out"))
+        evidence_signal = any(token in message for token in ("because", "evidence", "metric", "data", "trend", "log", "ticket", "customer", "support"))
+        validation_signal = any(token in message for token in ("test", "validate", "validation", "retest", "proof", "edge", "rollback", "monitor"))
+        ownership_signal = any(token in message for token in ("owner", "handoff", "next step", "eta", "i will", "i'll", "assign"))
+        technical_signal = any(token in message for token in ("api", "backend", "retry", "payload", "database", "cache", "queue", "mobile safari", "contract"))
+
+        if decision_signal:
+            self._bump(scores, "leadership", 12)
+            self._bump(scores, "prioritization", 12)
+            self._bump(scores, "communication", 8)
+        if tradeoff_signal:
+            self._bump(scores, "prioritization", 14)
+            self._bump(scores, "adaptability", 8)
+        if evidence_signal:
+            self._bump(scores, "communication", 8)
+            self._bump(scores, "ownership", 8)
+        if validation_signal:
+            self._bump(scores, "ownership", 16)
+            self._bump(scores, "technicalDepth", 12)
+        if ownership_signal:
+            self._bump(scores, "ownership", 14)
+            self._bump(scores, "leadership", 8)
+        if technical_signal:
+            self._bump(scores, "technicalDepth", 12)
 
         if event_type == "crisis_triggered":
             self._bump(scores, "adaptability", 10)
@@ -1278,6 +1335,7 @@ class SimulationOrchestrator:
         generated: list[dict[str, Any]] = []
         rolling_context = list(room_context)
         question_used_this_turn = False
+        observer_notes_summary = self._observer_notes_summary(session)
         logger.info(
             "orchestrator_lineup session=%s event=%s channel=%s agents=%s candidate=%s",
             session.get("id", ""),
@@ -1303,14 +1361,11 @@ class SimulationOrchestrator:
                 "target_agent_id": event.get("target_agent_id"),
             }
 
-            if self._should_use_guardrail_reply(event):
-                reply = self._contextual_nudge_for(agent, event, session["task"], memory)
-                logger.info("agent_reply_repaired reason=low_signal_guardrail agent=%s", agent.id)
-            else:
-                reply = agent.generate_response(agent_event, memory, scores)
+            agent_event["observer_notes_summary"] = observer_notes_summary
+            reply = agent.generate_response(agent_event, memory, scores)
 
             if not reply:
-                reply = self._safe_fallback_for(agent, event)
+                reply = self._safe_fallback_for(agent, event, memory)
 
             reply = self._sanitize_file_references(reply, session["task"])
             if self._reply_has_question(reply):
@@ -1319,15 +1374,15 @@ class SimulationOrchestrator:
                     memory["last_question_reply_count"] = int(memory.get("agent_reply_count", 0))
                 else:
                     logger.info("agent_reply_repaired reason=question agent=%s", agent.id)
-                    reply = self._remove_questions(reply) or self._contextual_nudge_for(agent, event, session["task"], memory)
+                    reply = self._remove_questions(reply) or self._safe_fallback_for(agent, event, memory)
 
             if self._is_repetitive_reply(reply, memory):
                 logger.info("agent_reply_repaired reason=repetitive agent=%s", agent.id)
-                reply = self._contextual_nudge_for(agent, event, session["task"], memory)
+                reply = self._safe_fallback_for(agent, event, memory)
 
             if self._looks_incomplete_reply(reply):
                 logger.info("agent_reply_repaired reason=incomplete agent=%s original=%s", agent.id, reply)
-                reply = self._contextual_nudge_for(agent, event, session["task"], memory)
+                reply = self._safe_fallback_for(agent, event, memory)
 
             reply = self._sanitize_file_references(reply, session["task"])
             payload = self._message_payload(
@@ -1618,6 +1673,12 @@ class SimulationOrchestrator:
 
         return self.observer_agent.generate_response({**event, "room_context": room_context}, memory, scores)
 
+    def _observer_notes_summary(self, session: dict[str, Any]) -> str:
+        notes = [str(note).strip() for note in session.get("observer_notes") or [] if str(note).strip()]
+        if not notes:
+            return ""
+        return " | ".join(notes[-3:])[:700]
+
     def _skill_focus_for(self, memory: dict[str, Any], event: dict[str, Any]) -> str:
         event_type = str(event.get("event_type") or "")
         if event_type == "crisis_triggered":
@@ -1655,7 +1716,7 @@ class SimulationOrchestrator:
             return [self.data_agent] if self._agent_visible_for_task(self.data_agent, task) else [self.pm_agent if self._agent_visible_for_task(self.pm_agent, task) else self._role_anchor_agent(task)]
 
         if event_type == "submit_solution":
-            return [self.pm_agent]
+            return [self.pm_agent] if self._agent_visible_for_task(self.pm_agent, task) else [self._role_anchor_agent(task)]
 
         if event_type in ("tests_failed", "tests_passed", "run_tests"):
             lineup = [self.qa_agent, self._technical_or_data_agent(task, message)]
@@ -1806,10 +1867,11 @@ class SimulationOrchestrator:
 
     def _agent_pool(self, task: dict[str, Any] | None = None) -> list[Any]:
         agents = [self.pm_agent, self.backend_agent, self.designer_agent, self.qa_agent, self.data_agent]
-        return agents[:5]
+        candidate_agent_id = self._candidate_agent_id(task)
+        return [agent for agent in agents if agent.id != candidate_agent_id][:5]
 
     def _agent_visible_for_task(self, agent: Any, task: dict[str, Any] | None) -> bool:
-        return bool(agent) and agent.id in {"pm", "backend", "designer", "qa", "data"}
+        return bool(agent) and agent.id in {"pm", "backend", "designer", "qa", "data"} and agent.id != self._candidate_agent_id(task)
 
     def _rank_agents_for_event(self, event: dict[str, Any], memory: dict[str, Any]) -> list[Any]:
         task = event.get("task") or {}
@@ -1939,7 +2001,7 @@ class SimulationOrchestrator:
             lineup.append(self.qa_agent)
         visible = [agent for agent in self._unique_agents(lineup) if self._agent_visible_for_task(agent, task)]
         crisis = task.get("room") or {}
-        response_count = 3 if str(crisis.get("severity") or "").lower() == "critical" else 2
+        response_count = 2
         return (visible or self._agent_pool(task))[:response_count]
 
     def _unique_agents(self, agents: list[Any]) -> list[Any]:
@@ -2110,7 +2172,7 @@ class SimulationOrchestrator:
 
         return None
 
-    def _safe_fallback_for(self, agent: Any, event: dict[str, Any]) -> str:
+    def _legacy_safe_fallback_for(self, agent: Any, event: dict[str, Any]) -> str:
         message = str(event.get("candidate_message") or "").lower()
         greeting = any(word in message for word in ("hello", "hi", "hey"))
 
@@ -2130,6 +2192,64 @@ class SimulationOrchestrator:
             return "hey, I can help pin down the metric" if greeting else "name the signal and the caveat"
 
         return "okay, keep going"
+
+    def _safe_fallback_for(
+        self,
+        agent: Any,
+        event: dict[str, Any],
+        memory: dict[str, Any] | None = None,
+    ) -> str:
+        memory = memory or {}
+        message = str(event.get("candidate_message") or "").lower()
+        task = event.get("task") or {}
+        title = task.get("title") or "this task"
+        requirement = (task.get("requirements") or ["the main outcome"])[0]
+        focus_file = self._first_workspace_file(task)
+        turn = max(0, int(memory.get("agent_reply_count", 0)))
+        greeting = bool(re.fullmatch(r"(hi+|hello+|hey+|yo+|sup)[!. ]*", message.strip()))
+        has_decision = any(token in message for token in ("ship", "cut", "defer", "priority", "first", "then", "rollback"))
+
+        if agent.id == self.pm_agent.id:
+            options = [
+                f"Let's keep {title} narrow: protect {requirement} first and say what waits.",
+                "I can live with that direction if the deferred work is explicit and the customer impact stays first.",
+                f"Use {focus_file} as the shared reference, then make one ship-or-hold call.",
+            ]
+            return "Hey, room is ready. Start with one decision and one thing you are not taking on." if greeting else options[(turn + int(has_decision)) % len(options)]
+
+        if agent.id == self.backend_agent.id:
+            options = [
+                "From engineering, name the expected success, failure, retry, and rollback behavior before widening scope.",
+                f"I'd keep the technical path tied to {focus_file} and avoid a broad rewrite until QA has a retest target.",
+                "That can work if the contract is clear enough for the client and rollback path to behave predictably.",
+            ]
+            return "Hey. Bring me the broken behavior or API path and I will sanity-check the smallest safe fix." if greeting else options[turn % len(options)]
+
+        if agent.id == self.designer_agent.id:
+            options = [
+                "For UX, keep the recovery state calm: what happened, what is safe, and what the user can do next.",
+                f"I'd make {focus_file} clearer before adding polish; uncertainty is what users will feel first.",
+                "If we ship this, loading, error, and retry states need to look intentional rather than patched on.",
+            ]
+            return "Hey, I am here for the user-facing state when you are ready." if greeting else options[turn % len(options)]
+
+        if agent.id == self.qa_agent.id:
+            options = [
+                "I am okay moving forward only after one messy path and one rollback check are named.",
+                f"For QA, {focus_file} needs a retest target; otherwise we are just trusting the plan.",
+                "That sounds shippable only if we prove the failure path, not just the happy path.",
+            ]
+            return "Hey. I will watch the release risk; give me the edge case when you have it." if greeting else options[turn % len(options)]
+
+        if agent.id == self.data_agent.id:
+            options = [
+                "From data, pick one signal that proves the decision worked and one caveat that could mislead us.",
+                f"I'd keep the metric tied to {requirement}; extra dashboards will slow the call down.",
+                "The room can use the metric, but only if we name the segment and the limitation clearly.",
+            ]
+            return "Hey. I can help keep the success signal honest." if greeting else options[turn % len(options)]
+
+        return "Keep it concrete: decision, tradeoff, validation, and next owner."
 
     def _resolve_phase(self, event: dict[str, Any], memory: dict[str, Any]) -> str:
         event_type = str(event.get("event_type") or "")
@@ -2246,21 +2366,21 @@ class SimulationOrchestrator:
                 "speaker_title": "Product Manager",
                 "strength": decisions[-1] if decisions else "Kept the room moving toward a decision instead of treating the task like a solo exercise.",
                 "risk": "Scope and deferred work need to stay explicit when the room pressure changes.",
-                "score": int(scores.get("prioritization", scores.get("leadership", 60))),
+                "score": int(scores.get("prioritization", scores.get("leadership", 0))),
             },
             {
                 "speaker_name": "Ravi",
                 "speaker_title": "Engineering Lead",
                 "strength": f"Anchored the technical discussion to {focus_file} and the behavior that needed to hold under pressure.",
                 "risk": risks[-1] if risks else "Rollback and failure-mode language could be sharper before a real release call.",
-                "score": int(scores.get("technicalDepth", 60)),
+                "score": int(scores.get("technicalDepth", 0)),
             },
             {
                 "speaker_name": "Kenji",
                 "speaker_title": "QA Engineer",
                 "strength": validation[-1] if validation else "Showed awareness that a decision needs proof, not just confidence.",
                 "risk": "The final handoff should name the exact validation gate and the edge case still being watched.",
-                "score": int((scores.get("ownership", 60) + scores.get("technicalDepth", 60)) / 2),
+                "score": int((scores.get("ownership", 0) + scores.get("technicalDepth", 0)) / 2),
             },
         ]
 
@@ -2303,16 +2423,51 @@ class SimulationOrchestrator:
             "implemented",
             "fixed",
         )
+        strict_cap = self._strict_evaluation_cap(session)
 
         if not submission and not user_messages:
-            return 32
+            return min(32, strict_cap)
         if "fixme" in lowered and not any(term in lowered for term in decision_terms):
-            return 44
+            return min(44, strict_cap)
         if len(meaningful_words) < 12 and len(user_messages) <= 1:
-            return 38
+            return min(38, strict_cap)
         if len(meaningful_words) < 25:
-            return 48
-        return None
+            return min(48, strict_cap)
+        return strict_cap if strict_cap < 100 else None
+
+    def _strict_evaluation_cap(self, session: dict[str, Any]) -> int:
+        submission = str(session.get("submission") or "").strip()
+        user_text = " ".join(
+            str(entry.get("message") or "")
+            for entry in session.get("transcript") or []
+            if str(entry.get("role") or "").lower() == "user"
+        )
+        combined = f"{user_text} {submission}".lower()
+        words = re.findall(r"[a-z0-9_]+", combined)
+        meaningful_words = [
+            word for word in words
+            if word not in {"hi", "hello", "hey", "yo", "sup", "thanks", "okay", "ok"}
+        ]
+        if not meaningful_words:
+            return 15
+
+        decision = any(token in combined for token in ("decision", "we should", "i will", "i'll", "ship", "hold", "priority", "prioritize", "first"))
+        tradeoff = any(token in combined for token in ("tradeoff", "cut", "defer", "scope", "instead", "not ship", "leave out", "smallest"))
+        evidence = any(token in combined for token in ("because", "evidence", "metric", "data", "trend", "log", "ticket", "customer", "support", "segment"))
+        validation = any(token in combined for token in ("test", "validate", "validation", "retest", "proof", "edge", "rollback", "monitor", "mobile safari"))
+        handoff = any(token in combined for token in ("owner", "handoff", "next step", "eta", "rollback trigger", "support update", "release note"))
+
+        if len(meaningful_words) < 8 and not decision:
+            return 20
+        if decision and not tradeoff and not validation and not evidence:
+            return 40
+        if decision and tradeoff and not (evidence and validation):
+            return 60
+        if decision and evidence and validation and not handoff:
+            return 80
+        if decision and tradeoff and evidence and validation and handoff:
+            return 100
+        return 45
 
     def _simple_report_summary(self, scores: dict[str, int]) -> str:
         overall = self._average_score(scores)
@@ -2481,7 +2636,7 @@ class SimulationOrchestrator:
         return round(sum(values) / len(values)) if values else 0
 
     def _bump(self, scores: dict[str, int], key: str, amount: int) -> None:
-        current = int(scores.get(key, 50))
+        current = int(scores.get(key, 0))
         scores[key] = max(0, min(100, current + amount))
 
 

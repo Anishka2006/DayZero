@@ -1,14 +1,14 @@
-def call_gemini(prompt):
-    return "Mock response for: " + prompt
+from __future__ import annotations
 
-''' switch to real API call when ready
+from ai_engine.core.llm import ask_ai
 
-import google.generativeai as genai
 
-genai.configure(api_key="YOUR_REAL_KEY")
-
-def call_gemini(prompt):
-    model = genai.GenerativeModel("gemini-pro")
-    response = model.generate_content(prompt)
-    return response.text
-'''
+def call_gemini(prompt: str) -> str:
+    return ask_ai(
+        prompt=prompt,
+        agent="GeminiBackup",
+        route="summary",
+        fallback_chain=["gemini:gemini-flash", "gemini:gemini-flash-lite"],
+        max_tokens=320,
+        temperature=0.4,
+    ) or ""

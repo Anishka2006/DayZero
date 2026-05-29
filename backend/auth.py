@@ -1,78 +1,40 @@
+from __future__ import annotations
+
 import os
-import requests
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import re
+import uuid
+from datetime import datetime
+
+import pymongo
 from dotenv import load_dotenv
-from pymongo import MongoClient
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from werkzeug.security import check_password_hash, generate_password_hash
+
+try:
+    from .db import invited_candidates_collection, users_collection
+except ImportError:
+    from db import invited_candidates_collection, users_collection
 
 load_dotenv()
 
-import re
+app = Flask(__name__)
+app.logger.setLevel(os.getenv("DAYZERO_LOG_LEVEL", "INFO").upper())
+
 CORS(app, resources={r"/*": {
     "origins": [
         "https://anishka2006.github.io",
         "https://saavi122.github.io",
+        re.compile(r"^https://.*\.github\.io$"),
+        re.compile(r"^https://.*\.onrender\.com$"),
         re.compile(r"^https?://localhost(:\d+)?$"),
-        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$")
+        re.compile(r"^https?://127\.0\.0\.1(:\d+)?$"),
     ],
     "methods": ["GET", "POST", "OPTIONS", "PUT", "DELETE"],
-    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
 }})
 
-@app.before_request
-def log_request_info():
-    app.logger.info("--- Auth Request Info ---")
-    app.logger.info(f"Method: {request.method}")
-    app.logger.info(f"Path: {request.path}")
-    app.logger.info(f"Origin: {request.headers.get('Origin')}")
-    if request.is_json:
-        app.logger.info(f"Payload: {request.get_json(silent=True)}")
-    app.logger.info("--------------------")
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    app.logger.error(f"Global auth exception caught: {str(e)}", exc_info=True)
-    
-    # Check if PyMongo Error
-    import pymongo
-    if isinstance(e, pymongo.errors.PyMongoError):
-        return jsonify({
-            "success": False,
-            "error": "Database connection failed. Please ensure MongoDB Atlas connection is active.",
-            "details": str(e)
-        }), 500
-        
-    from werkzeug.exceptions import HTTPException
-    if isinstance(e, HTTPException):
-        return jsonify({
-            "success": False,
-            "error": e.description,
-            "code": e.code
-        }), e.code
-        
-    return jsonify({
-        "success": False,
-        "error": "Internal auth server error occurred",
-        "details": str(e)
-    }), 500
-
-MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    raise Exception("MONGO_URI environment variable is missing!")
-
-if "mongodb+srv" in MONGO_URI:
-    import certifi
-    mongo_client = MongoClient(MONGO_URI, tls=True, tlsCAFile=certifi.where())
-else:
-    mongo_client = MongoClient(MONGO_URI)
-mongo_db = mongo_client["dayzero"]
-invited_candidates_collection = mongo_db["invited_candidates"]
-
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-# Approved company email domains for recruiters
 APPROVED_RECRUITER_DOMAINS = {
     "google.com",
     "microsoft.com",
@@ -99,237 +61,177 @@ APPROVED_RECRUITER_DOMAINS = {
 }
 
 
-def supabase_config_missing():
-    return not SUPABASE_URL or not SUPABASE_KEY
+@app.before_request
+def log_request_info():
+    app.logger.info(
+        "auth_request method=%s path=%s origin=%s",
+        request.method,
+        request.path,
+        request.headers.get("Origin"),
+    )
+
+
+@app.errorhandler(Exception)
+def handle_exception(exc):
+    app.logger.error("Global auth exception caught: %s", exc, exc_info=True)
+    from werkzeug.exceptions import HTTPException
+
+    if isinstance(exc, pymongo.errors.PyMongoError):
+        return jsonify({"success": False, "error": "Could not complete that request. Please try again."}), 500
+    if isinstance(exc, HTTPException):
+        return jsonify({"success": False, "error": exc.description, "code": exc.code}), exc.code
+    return jsonify({"success": False, "error": "Something went wrong. Please try again."}), 500
 
 
 def get_email_domain(email: str) -> str:
-    """Extract domain from email"""
-    try:
-        return email.split("@")[1].lower()
-    except IndexError:
-        return ""
+    parts = str(email or "").split("@", 1)
+    return parts[1].lower() if len(parts) == 2 else ""
 
 
 def is_approved_recruiter_domain(email: str) -> bool:
-    """Check if email domain is approved for recruiters"""
-    domain = get_email_domain(email)
-    return domain in APPROVED_RECRUITER_DOMAINS
+    return get_email_domain(email) in APPROVED_RECRUITER_DOMAINS
+
+
+def public_user(user: dict) -> dict:
+    return {
+        "id": str(user.get("_id") or user.get("id") or ""),
+        "name": user.get("name") or "User",
+        "email": user.get("email"),
+        "role": user.get("role") or "user",
+        "companyId": user.get("companyId"),
+        "companyName": user.get("companyName"),
+        "projectId": user.get("projectId"),
+        "projectTitle": user.get("projectTitle"),
+        "experienceLevel": user.get("experienceLevel"),
+        "assignedRole": user.get("assignedRole"),
+    }
+
+
+def invite_details_for(email: str) -> dict:
+    invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+    if not invite:
+        return {}
+    return {
+        "companyId": invite.get("companyId"),
+        "companyName": invite.get("companyName"),
+        "projectId": invite.get("projectId"),
+        "projectTitle": invite.get("projectTitle"),
+        "experienceLevel": invite.get("experienceLevel"),
+        "assignedRole": invite.get("role"),
+    }
 
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "DayZero auth server running"}), 200
+    return jsonify({"ok": True, "message": "DayZero auth server running"}), 200
 
 
 @app.route("/signup", methods=["POST"])
+@app.route("/api/signup", methods=["POST"])
 def signup():
-    if supabase_config_missing():
-        return jsonify({"error": "Supabase env not configured"}), 500
-
-    data = request.get_json() or {}
-
-    name = data.get("name", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    role = data.get("role", "user")
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name") or "").strip()
+    email = str(data.get("email") or "").strip().lower()
+    password = str(data.get("password") or "")
+    role = str(data.get("role") or "user").strip().lower()
 
     if not name or not email or not password:
-        return jsonify({"error": "All fields required"}), 400
-
-    if role not in ["user", "recruiter"]:
-        return jsonify({"error": "Invalid role"}), 400
-
-    if role == "user":
-        try:
-            invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
-            if not invite:
-                return jsonify({
-                    "error": "not_invited",
-                    "message": "Your email is not invited by any recruiter yet. Redirecting to Public Demo Mode.",
-                    "redirect_to_demo": True
-                }), 403
-        except Exception as db_err:
-            app.logger.error(f"Database error during signup validation: {db_err}")
-            return jsonify({
-                "error": "database_error",
-                "message": "Database connection failed. Redirecting to Demo Mode.",
-                "redirect_to_demo": True
-            }), 403
-
-
-    # Validate recruiter email domain
-    if role == "recruiter":
-        if not is_approved_recruiter_domain(email):
-            domain = get_email_domain(email)
-            return jsonify({
-                "error": f"Recruiter registration requires a company email domain. '{domain}' is not approved. Please use an official company email address from an approved organization."
-            }), 403
-
-    try:
-        res = requests.post(
-            f"{SUPABASE_URL}/auth/v1/signup",
-            headers={
-                "apikey": SUPABASE_KEY,
-                "Content-Type": "application/json",
-            },
-            json={
-                "email": email,
-                "password": password,
-                "data": {
-                    "full_name": name,
-                    "role": role,
-                },
-            },
-            timeout=5,
-        )
-
-        payload = res.json()
-
-        if res.status_code >= 400:
-            return jsonify({
-                "error": payload.get("msg")
-                or payload.get("error_description")
-                or payload.get("error")
-                or "Signup failed"
-            }), res.status_code
-
-        user = payload.get("user") or {}
-
+        return jsonify({"success": False, "error": "Name, email, and password are required."}), 400
+    if role == "candidate":
+        role = "user"
+    if role not in {"user", "invited candidate", "recruiter", "demo user"}:
+        return jsonify({"success": False, "error": "Invalid role."}), 400
+    if role == "recruiter" and not is_approved_recruiter_domain(email):
         return jsonify({
-            "message": "Signup successful",
-            "user": {
-                "id": user.get("id"),
-                "name": name,
-                "email": email,
-                "role": role,
-            }
-        }), 200
+            "success": False,
+            "error": "Recruiter registration requires an approved company email.",
+        }), 403
 
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "Signup took too long. Try again."}), 504
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    invite_details = invite_details_for(email) if role in {"user", "invited candidate"} else {}
+    if invite_details:
+        role = "invited candidate"
+
+    user = {
+        "id": str(uuid.uuid4()),
+        "name": name,
+        "email": email,
+        "role": role,
+        "password_hash": generate_password_hash(password),
+        "updatedAt": datetime.utcnow().isoformat(),
+        **invite_details,
+    }
+
+    users_collection.update_one(
+        {"email": email},
+        {
+            "$set": user,
+            "$setOnInsert": {
+                "_id": user["id"],
+                "createdAt": datetime.utcnow().isoformat(),
+                "score": 0,
+                "progress": 0,
+            },
+        },
+        upsert=True,
+    )
+    saved = users_collection.find_one({"email": email}) or user
+    return jsonify({"success": True, "message": "Signup successful", "user": public_user(saved)}), 200
 
 
 @app.route("/login", methods=["POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
-    if supabase_config_missing():
-        return jsonify({"error": "Supabase env not configured"}), 500
-
-    data = request.get_json() or {}
-
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
-    requested_role = data.get("role")
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email") or "").strip().lower()
+    password = str(data.get("password") or "")
+    requested_role = str(data.get("role") or "").strip().lower()
 
     if not email or not password:
-        return jsonify({"error": "Email and password required"}), 400
+        return jsonify({"success": False, "error": "Email and password are required."}), 400
 
-    try:
-        res = requests.post(
-            f"{SUPABASE_URL}/auth/v1/token?grant_type=password",
-            headers={
-                "apikey": SUPABASE_KEY,
-                "Content-Type": "application/json",
-            },
-            json={
-                "email": email,
-                "password": password,
-            },
-            timeout=5,
+    user = users_collection.find_one({"email": email})
+    stored_hash = str((user or {}).get("password_hash") or "")
+    legacy_password = str((user or {}).get("password") or "")
+    password_ok = bool(stored_hash and check_password_hash(stored_hash, password)) or bool(legacy_password and legacy_password == password)
+    if not user or not password_ok:
+        return jsonify({"success": False, "error": "Invalid email or password."}), 401
+
+    user_role = str(user.get("role") or "user").lower()
+    if requested_role and requested_role not in {user_role, "candidate"}:
+        return jsonify({"success": False, "error": f"This account is registered as '{user_role}'."}), 403
+
+    invite_details = invite_details_for(email)
+    if invite_details and user_role in {"user", "candidate", "invited candidate"}:
+        users_collection.update_one(
+            {"email": email},
+            {"$set": {"role": "invited candidate", **invite_details, "updatedAt": datetime.utcnow().isoformat()}},
         )
+        user = users_collection.find_one({"email": email}) or user
 
-        payload = res.json()
-
-        if res.status_code >= 400:
-            return jsonify({
-                "error": payload.get("msg")
-                or payload.get("error_description")
-                or payload.get("error")
-                or "Login failed"
-            }), res.status_code
-
-        user = payload.get("user") or {}
-        metadata = user.get("user_metadata") or {}
-
-        user_role = metadata.get("role", "user")
-        user_name = metadata.get("full_name", "User")
-
-        if requested_role and requested_role != user_role:
-            return jsonify({
-                "error": f"This account is registered as '{user_role}', not '{requested_role}'."
-            }), 403
-
-        invite_details = None
-        if user_role == "user":
-            try:
-                invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
-                if invite:
-                    invite_details = {
-                        "companyId": invite.get("companyId"),
-                        "companyName": invite.get("companyName"),
-                        "projectId": invite.get("projectId"),
-                        "projectTitle": invite.get("projectTitle"),
-                        "experienceLevel": invite.get("experienceLevel"),
-                        "role": invite.get("role")
-                    }
-                else:
-                    return jsonify({
-                        "error": "not_invited",
-                        "message": "Your email is not invited by any recruiter yet. Redirecting to Public Demo Mode.",
-                        "redirect_to_demo": True
-                    }), 403
-            except Exception as db_err:
-                app.logger.error(f"Database error during login validation: {db_err}")
-                return jsonify({
-                    "error": "database_error",
-                    "message": "Database connection failed. Redirecting to Demo Mode.",
-                    "redirect_to_demo": True
-                }), 403
-
-        user_data = {
-            "id": user.get("id"),
-            "name": user_name,
-            "email": user.get("email", email),
-            "role": user_role,
-        }
-        if invite_details:
-            user_data.update(invite_details)
-
-        return jsonify({
-            "message": "Login successful",
-            "access_token": payload.get("access_token"),
-            "user": user_data
-        }), 200
-
-
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "Login took too long. Try again."}), 504
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "success": True,
+        "message": "Login successful",
+        "access_token": str(user.get("_id") or user.get("id") or ""),
+        "user": public_user(user),
+    }), 200
 
 
 @app.route("/request-demo", methods=["POST"])
 def request_demo():
-    data = request.get_json() or {}
-
-    name = data.get("name", "").strip()
-    phone = data.get("phone", "").strip()
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name") or "").strip()
+    phone = str(data.get("phone") or "").strip()
 
     if not name or not phone:
-        return jsonify({"error": "All fields required"}), 400
+        return jsonify({"success": False, "error": "All fields required"}), 400
 
-    return jsonify({"message": "Demo request submitted"}), 200
+    return jsonify({"success": True, "message": "Demo request submitted"}), 200
 
 
 @app.route("/approved-recruiter-domains", methods=["GET"])
 def get_approved_domains():
-    """Return list of approved recruiter domains for frontend validation"""
-    return jsonify({
-        "domains": sorted(list(APPROVED_RECRUITER_DOMAINS))
-    }), 200
+    return jsonify({"domains": sorted(APPROVED_RECRUITER_DOMAINS)}), 200
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=8001, use_reloader=False)
+    app.run(debug=False, host="0.0.0.0", port=int(os.getenv("AUTH_PORT", 8001)), use_reloader=False)

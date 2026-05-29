@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
 const ORCHESTRATOR_STATE_KEY = "dayzero_orchestrator_state";
 const WORKSPACE_FILES_MODULE_PATH = "../../../workspaceFiles.js";
 let workspaceFilesModulePromise = null;
@@ -937,7 +937,7 @@ crisisOptions.forEach(option => {
       showToast("Crisis recorded. The team is reacting live.");
     } catch (error) {
       console.error("Crisis routing error:", error);
-      showToast("Crisis recorded, but the live PM response failed.");
+      showToast("Crisis recorded. PM response will continue in room mode.");
     }
   });
 });
@@ -1058,15 +1058,20 @@ function getTasksForCurrentProfile() {
   const allTasks = (TASKS[candRole] && TASKS[candRole][level]) || [];
   
   if (role === "invited candidate") {
+    // Isolated company view: only show tasks belonging to this company, or the explicitly assigned task
     const assignedProjectId = localStorage.getItem("projectId") || "";
+    const companyId = localStorage.getItem("companyId") || "";
     const companyName = localStorage.getItem("companyName") || "";
-    const projectTitle = localStorage.getItem("projectTitle") || "Assigned Simulation Sprint";
-    const assignedRole = localStorage.getItem("assignedRole") || localStorage.getItem("userRole") || candRole;
-
-    // Filter matching task strictly by assigned project ID to avoid showing other random/hardcoded company projects
-    let filtered = [];
-    if (assignedProjectId) {
-      // Look for the template task in TASKS
+    
+    // Filter matching task
+    let filtered = allTasks.filter(task => {
+      // Matches task ID or companyId (case insensitive)
+      return task.id === assignedProjectId || task.company.toLowerCase() === companyId.toLowerCase();
+    });
+    
+    // If no task matched but they have an assigned task, let's inject it dynamically!
+    if (filtered.length === 0 && assignedProjectId) {
+      // Find the template task in all task lists
       let foundTemplate = null;
       for (const r in TASKS) {
         for (const l in TASKS[r]) {
@@ -1082,24 +1087,27 @@ function getTasksForCurrentProfile() {
       const template = foundTemplate || {
         id: assignedProjectId,
         label: "Corporate Task",
-        title: projectTitle,
+        title: localStorage.getItem("projectTitle") || "Assigned Simulation Sprint",
         description: "Execute the assigned simulation room for your company hiring round.",
-        role: assignedRole,
-        time: localStorage.getItem("simulationType") === "5-day Sprint" ? "5 days" : "1 hour",
+        role: candRole,
+        time: "1 hour",
         difficulty: level,
         skills: ["Strategy", "Execution"]
       };
       
       filtered = [{
         ...template,
-        title: projectTitle,
-        role: assignedRole,
         company: companyName || "Corporate Partner",
-        logo: companyName ? companyName.charAt(0).toUpperCase() : "🏢"
+        logo: (companyName ? companyName.charAt(0) : "🏢")
       }];
     }
     
-    return filtered;
+    // Customize all company fields dynamically to match their assigned corporate branding
+    return filtered.map(task => ({
+      ...task,
+      company: companyName || task.company,
+      logo: companyName ? companyName.charAt(0) : task.logo
+    }));
   }
   
   return allTasks;
@@ -1123,21 +1131,7 @@ function renderTaskGrid() {
     const taskTime = simType === "5-day Sprint" ? "5 days" : task.time;
     
     // Dynamic values for a rich hackathon-winning simulator feel
-    let progress = [35, 62, 0, 78, 45][index % 5];
-    
-    // Calculate progress dynamically if candidate role is invited candidate
-    if (localStorage.getItem("role") === "invited candidate") {
-      const isCompleted = localStorage.getItem("dayzero_sprint_completed") === "true" || localStorage.getItem("inviteStatus") === "completed";
-      const hasStarted = localStorage.getItem("dayzero_task_id") === task.id && localStorage.getItem("dayzero_orchestrator_state");
-      if (isCompleted) {
-        progress = 100;
-      } else if (hasStarted) {
-        progress = 45; // Active simulation huddle
-      } else {
-        progress = 0; // Fresh invite task
-      }
-    }
-
+    const progress = [35, 62, 0, 78, 45][index % 5];
     const trust = [92, 94, 88, 96, 91][index % 5];
     const confidence = ["High", "Optimal", "High", "Excellent", "Stable"][index % 5];
     const aiSupport = index % 2 === 0 ? "Active" : "Ready";
@@ -1339,79 +1333,7 @@ function bindCandidateProfileSelections() {
   });
 }
 
-async function initializeCandidateProfile() {
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("user"));
-  } catch (e) {
-    console.warn("Could not parse user object from localStorage", e);
-  }
-
-  const role = localStorage.getItem("role") || (user && user.role) || "candidate";
-
-  if (role === "invited candidate" && user && user.email) {
-    try {
-      const email = user.email;
-      let invite = null;
-
-      // 1. Fetch dynamic assigned workspace/project data using backend APIs
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/candidate/workspace?email=${encodeURIComponent(email)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.success && (data.workspace || data.invite)) {
-            invite = data.workspace || data.invite;
-          }
-        }
-      } catch (e) {
-        console.warn("Failed fetching from api/candidate/workspace, trying fallback:", e);
-      }
-
-      // 2. Fallback to validation API
-      if (!invite) {
-        const response = await fetch(`${API_BASE_URL}/api/invites/validate?email=${encodeURIComponent(email)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.success && data.invited) {
-            invite = data.invite;
-          }
-        }
-      }
-
-      // 3. Sync properties into localStorage
-      if (invite) {
-        localStorage.setItem("role", "invited candidate");
-        localStorage.setItem("companyId", invite.companyId || "");
-        localStorage.setItem("companyName", invite.companyName || "");
-        localStorage.setItem("userName", invite.name || "");
-        localStorage.setItem("userExperience", invite.experienceLevel || "Intermediate");
-        localStorage.setItem("dayzero_task_id", invite.projectId || "");
-        localStorage.setItem("projectId", invite.projectId || "");
-        localStorage.setItem("projectTitle", invite.projectTitle || "Assigned Simulation Sprint");
-        localStorage.setItem("simulationType", invite.simType || "1-hour Task");
-        localStorage.setItem("inviteStatus", invite.status || "active");
-        if (invite.role) {
-          localStorage.setItem("userRole", invite.role);
-          localStorage.setItem("assignedRole", invite.role);
-        }
-
-        // Keep user object in sync
-        user.name = invite.name || user.name;
-        user.companyName = invite.companyName || user.companyName;
-        user.company = invite.companyName || user.company;
-        user.companyId = invite.companyId || user.companyId;
-        user.projectId = invite.projectId || user.projectId;
-        user.projectTitle = invite.projectTitle || user.projectTitle;
-        user.experienceLevel = invite.experienceLevel || user.experienceLevel;
-        user.assignedRole = invite.role || user.assignedRole;
-        user.role = "invited candidate";
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-    } catch (err) {
-      console.error("Error fetching dynamic workspace on load:", err);
-    }
-  }
-
+function initializeCandidateProfile() {
   setCandidateRole(localStorage.getItem("userRole"));
   if (!localStorage.getItem("userExperience")) {
     localStorage.setItem("userExperience", "Intermediate");
@@ -1425,7 +1347,6 @@ async function initializeCandidateProfile() {
   bindCandidateProfileSelections();
   updateCandidateSummary();
   hydrateDashboardWorkspaceFiles();
-  hydrateDynamicUser();
 
   if (window.location.search.includes("locked=true")) {
     setTimeout(() => {
@@ -2182,16 +2103,6 @@ function initInteractiveElements() {
 
   if (stripeApplyBtn) {
     stripeApplyBtn.addEventListener("click", () => {
-      const role = localStorage.getItem("role") || "candidate";
-      if (role === "demo user") {
-        const modal = document.getElementById("demoLockModal");
-        if (modal) {
-          modal.style.display = "flex";
-          modal.classList.remove("hidden");
-          return;
-        }
-      }
-      
       stripeApplyBtn.disabled = true;
       stripeApplyBtn.style.opacity = "0.7";
       stripeApplyBtn.textContent = "Applying...";
@@ -3075,16 +2986,6 @@ document.querySelectorAll(".project-card").forEach(card => {
 
   if (applyBtn && applyBtn.textContent.includes("Start 5-Day Sprint")) {
     applyBtn.addEventListener("click", () => {
-      const role = localStorage.getItem("role") || "candidate";
-      if (role === "demo user") {
-        const modal = document.getElementById("demoLockModal");
-        if (modal) {
-          modal.style.display = "flex";
-          modal.classList.remove("hidden");
-          return;
-        }
-      }
-
       // Create Overlay
       const overlay = document.createElement("div");
       overlay.className = "onboarding-overlay";
@@ -4313,16 +4214,7 @@ async function initializeLiveSimulation(forceRefresh = false) {
   if (!teamChatHistory) return loadOrchestratorState();
 
   const role = getCandidateRole();
-  let cached = loadOrchestratorState();
-  const assignedProjectId = localStorage.getItem("projectId");
-  const roleType = localStorage.getItem("role");
-
-  // Wipe cached simulation state if it belongs to a different project than recruiter-assigned one
-  if (roleType === "invited candidate" && cached && cached.task && assignedProjectId && cached.task.id !== assignedProjectId) {
-    clearCandidateSimulationState();
-    cached = loadOrchestratorState();
-  }
-
+  const cached = loadOrchestratorState();
   if (cached.session_id && !forceRefresh && cached.role === role) {
     if (cached.task) {
       updateTaskFromSimulation(cached.task);
@@ -4339,18 +4231,7 @@ async function initializeLiveSimulation(forceRefresh = false) {
   const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      role,
-      task_id: assignedProjectId || undefined,
-      participant_name: localStorage.getItem("userName") || undefined,
-      task_context: roleType === "invited candidate" ? {
-        id: assignedProjectId,
-        company: localStorage.getItem("companyName") || "LinkedIn",
-        title: localStorage.getItem("projectTitle") || "LinkedIn ML Core Project",
-        role: localStorage.getItem("assignedRole") || localStorage.getItem("userRole") || role,
-        description: "Execute the assigned simulation room for your company hiring round."
-      } : undefined
-    })
+    body: JSON.stringify({ role })
   });
   const data = await response.json();
 
@@ -4554,8 +4435,8 @@ if (teamChatInput) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await initializeCandidateProfile();
+document.addEventListener("DOMContentLoaded", () => {
+  initializeCandidateProfile();
   initializeLiveSimulation().catch((error) => {
     console.error("Simulation init error:", error);
   });
@@ -4667,11 +4548,6 @@ window.addEventListener("DOMContentLoaded", () => {
   let logIndex = 0;
   setInterval(() => {
     const update = teammateUpdates[logIndex % teammateUpdates.length];
-    
-    // Show dynamic toast notification
-    if (typeof showToast === 'function') {
-      showToast(`Signal: ${update.sender}: "${update.message.substring(0, 30)}..."`, "success");
-    }
     
     // Append to live console timeline
     if (typeof addAiAlert === 'function') {
