@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
+const API_BASE_URL = window.API_BASE_URL || "https://dayzero-2.onrender.com";
 const DEFAULT_API_BASE_URL = API_BASE_URL;
 
 const LOADING_MESSAGES = [

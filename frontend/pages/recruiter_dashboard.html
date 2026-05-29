@@ -1670,6 +1670,7 @@
             <option value="">All Status</option>
             <option value="on-track">On Track</option>
             <option value="at-risk">At Risk</option>
+            <option value="invited">Invited</option>
             <option value="shortlisted">Shortlisted</option>
             <option value="Shortlisted">Shortlisted (decided)</option>
             <option value="Interviewing">Interviewing</option>
@@ -2397,7 +2398,7 @@
 (function () {
   "use strict";
 
-  const API_BASE_URL = window.API_BASE_URL || ((["localhost", "127.0.0.1"].includes(window.location.hostname) || window.location.protocol === "file:") ? "http://127.0.0.1:5001" : "https://dayzero-2.onrender.com");
+  const API_BASE_URL = window.API_BASE_URL || "https://dayzero-2.onrender.com";
 
   // Parse recruiter email to extract name, company name, initials, etc. dynamically
   function parseEmailToProfile(email) {
@@ -2618,6 +2619,7 @@
       "Shortlisted": '<span class="badge indigo dot-badge">Shortlisted</span>',
       "at-risk":     '<span class="badge amber dot-badge">At Risk</span>',
       "on-track":    '<span class="badge green dot-badge">On Track</span>',
+      "invited":     '<span class="badge blue dot-badge">Invited</span>',
       "Rejected":    '<span class="badge red dot-badge">Rejected</span>',
       "Interviewing":'<span class="badge blue dot-badge">Interviewing</span>'
     };
@@ -3283,21 +3285,21 @@
           if (data.success) {
             // Save Candidate Globally in localStorage
             var newCandidate = {
-              id: data.invite._id || Date.now(),
+              id: data.invite.id || data.invite._id || Date.now(),
               name: name,
               initials: initials,
               college: college,
-              score: Math.floor(Math.random() * 15) + 80,
-              progress: Math.floor(Math.random() * 20) + 40,
+              score: 0,
+              progress: 0,
               topSkill: primarySkill,
-              status: "on-track",
+              status: "invited",
               joinedMs: Date.now(),
               skills: {
-                Leadership: Math.floor(Math.random() * 25) + 70,
-                Communication: Math.floor(Math.random() * 25) + 70,
-                Execution: Math.floor(Math.random() * 25) + 70,
-                ProblemSolving: Math.floor(Math.random() * 25) + 70,
-                Adaptability: Math.floor(Math.random() * 25) + 70
+                Leadership: 0,
+                Communication: 0,
+                Execution: 0,
+                ProblemSolving: 0,
+                Adaptability: 0
               },
               companyId: currentCompany
             };
@@ -3414,7 +3416,7 @@
               updateWorkspaceStats();
             }
 
-            showToast("Invite sent and candidate registered! 🎉", "success");
+            showToast("✓ Candidate Invited Successfully 🎉", "success");
             closeModal();
             
             // Reset fields
@@ -3428,12 +3430,20 @@
             showToast("Failed to store invite: " + (data.error || "Unknown error"), "error");
           }
         })
-        .catch(function(err) {
+        .catch(function(error) {
           submitBtn.disabled = false;
           submitBtn.innerText = originalBtnText;
+          console.error(error);
           
-          showToast("Please try again in a moment.", "error");
-          console.error("Invite save failed:", err);
+          var msg = "Unexpected error";
+          if (error && error.message) {
+            msg = error.message;
+          }
+          if (error && error.response && error.response.data) {
+            msg = error.response.data.message || error.response.data.error || msg;
+          }
+          
+          showToast(msg, "error");
         });
       });
     }

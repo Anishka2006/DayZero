@@ -8,10 +8,10 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 try:
     from .db import db as mongo_db
-    from .db import invited_candidates_collection, users_collection
+    from .db import invited_candidates_collection, users_collection, projects_collection
 except ImportError:
     from db import db as mongo_db
-    from db import invited_candidates_collection, users_collection
+    from db import invited_candidates_collection, users_collection, projects_collection
 from pymongo import MongoClient
 import pymongo
 from datetime import datetime
@@ -251,6 +251,7 @@ def login():
 
 
 @app.route("/api/invites", methods=["POST", "OPTIONS"])
+@app.route("/api/invite-candidate", methods=["POST", "OPTIONS"])
 def create_invite():
     if request.method == "OPTIONS":
         response = jsonify({"success": True})
@@ -265,18 +266,21 @@ def create_invite():
         return response, 200
     
     try:
-        data = request.get_json() or {}
+        app.logger.info("Invite Request Received")
         
-        email = data.get("email", "").strip().lower()
-        name = data.get("name", "").strip()
-        college = data.get("college", "").strip()
-        skills = data.get("skills", "")
-        sim_type = data.get("simType", "individual")
-        role = data.get("role", "Frontend Engineer")
+        data = request.get_json(silent=True) or {}
+        
+        email = (data.get("candidateEmail") or data.get("email") or "").strip().lower()
+        name = (data.get("candidateName") or data.get("name") or "").strip()
+        college = (data.get("college") or "").strip()
+        skills = data.get("skills") or ""
+        sim_type = data.get("simulationType") or data.get("simType") or "individual"
+        role = data.get("role") or "Frontend Engineer"
         project_id = data.get("projectId")
-        project_title = data.get("projectTitle", "")
-        experience_level = data.get("experienceLevel", "Intermediate")
-        message = data.get("message", "")
+        project_simulation = data.get("projectSimulation")
+        project_title = data.get("projectTitle") or project_simulation or ""
+        experience_level = data.get("experienceLevel") or "Intermediate"
+        message = data.get("inviteMessage") or data.get("message") or ""
         
         # Recruiter and company info
         company_id = data.get("companyId", "").strip().lower()
@@ -284,18 +288,67 @@ def create_invite():
         recruiter_id = data.get("recruiterId", "").strip()
         
         if not email or not name:
+            app.logger.error("Invite validation failed: Candidate Email and Name are required")
             return jsonify({"success": False, "error": "Candidate Email and Name are required"}), 400
+            
+        # Dynamic project matching and assignment via projects_collection
+        assigned_project = None
+        
+        # 1. Search by project ID in db
+        if project_id:
+            assigned_project = projects_collection.find_one({"id": project_id}) or projects_collection.find_one({"_id": project_id})
+            
+        # 2. Search by exact project title
+        if not assigned_project and project_title:
+            assigned_project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(project_title)}$", "$options": "i"}})
+            
+        # 3. Search by containing project title (substring)
+        if not assigned_project and project_title:
+            assigned_project = projects_collection.find_one({"title": {"$regex": re.escape(project_title), "$options": "i"}})
+            
+        # 4. Special fallback: if "Linked Frontend Console" or "Frontend Console", match it
+        if not assigned_project and ("Frontend Console" in project_title or "Linked Frontend Console" in project_title):
+            assigned_project = projects_collection.find_one({"title": {"$regex": "Frontend Console", "$options": "i"}})
+            
+        # 5. If STILL not found, let's create this project dynamically in db so that it exists and has a real ID!
+        if not assigned_project:
+            new_project_id = project_id or str(uuid.uuid4())
+            new_project_title = project_title or "Linked Frontend Console"
+            assigned_project = {
+                "_id": new_project_id,
+                "id": new_project_id,
+                "title": new_project_title,
+                "description": "Develop the primary consumer interaction interface.",
+                "techStack": "React, TypeScript, TailwindCSS, Vite",
+                "deadline": "2026-10-01",
+                "status": "Planning",
+                "createdAt": datetime.utcnow().isoformat(),
+                "companyId": company_id or "default"
+            }
+            projects_collection.update_one(
+                {"title": new_project_title},
+                {"$set": assigned_project},
+                upsert=True
+            )
+            # Re-fetch the saved project
+            assigned_project = projects_collection.find_one({"title": new_project_title})
+            
+        # Overwrite values with verified database records
+        project_id = assigned_project.get("id") or str(assigned_project.get("_id"))
+        project_title = assigned_project.get("title")
+        
+        app.logger.info(f"Project Assigned: {project_title} (ID: {project_id})")
             
         token = str(uuid.uuid4())
         invite_id = str(uuid.uuid4())
         
         invite = {
             "_id": invite_id,
-            "id": invite_id, # Step 3 requirement
+            "id": invite_id,
             "email": email,
             "name": name,
-            "candidateName": name, # Step 3 requirement
-            "candidateEmail": email, # Step 3 requirement
+            "candidateName": name,
+            "candidateEmail": email,
             "college": college,
             "skills": skills,
             "simType": sim_type,
@@ -307,21 +360,17 @@ def create_invite():
             "companyId": company_id,
             "companyName": company_name,
             "recruiterId": recruiter_id,
-            "projectAssigned": project_id, # Step 3 requirement
-            "roleAssigned": role, # Step 3 requirement
-            "inviteStatus": "active", # Step 3 requirement
+            "projectAssigned": project_id,
+            "roleAssigned": role,
+            "inviteStatus": "active",
             "status": "active",
             "token": token,
-            "inviteToken": token, # Step 3 requirement
+            "inviteToken": token,
             "createdAt": datetime.utcnow().isoformat(),
-            "updatedAt": datetime.utcnow().isoformat() # Step 3 requirement
+            "updatedAt": datetime.utcnow().isoformat()
         }
         
-        # Force database ping to verify connection before executing write operation
-        # mongo_client.admin.command('ping')
-        
-        # Insert or update
-        # Extract _id to avoid attempting to update the immutable _id field in existing documents
+        # Save to database
         invite_data = invite.copy()
         invite_id_val = invite_data.pop("_id")
 
@@ -334,9 +383,12 @@ def create_invite():
             upsert=True
         )
         
+        app.logger.info(f"Candidate Saved: {name} ({email})")
+        app.logger.info(f"Invite Sent Successfully to {email}")
+        
         return jsonify({
             "success": True, 
-            "message": "Invite created successfully", 
+            "message": "✓ Candidate Invited Successfully", 
             "inviteId": invite_id,
             "inviteToken": token,
             "invite": invite
@@ -346,13 +398,13 @@ def create_invite():
         app.logger.error(f"Database connection failure during invite creation: {db_err}")
         return jsonify({
             "success": False, 
-            "error": "Could not complete that request. Please try again."
+            "error": f"Database error: {db_err}"
         }), 500
     except Exception as e:
         app.logger.error(f"Unexpected crash during invite creation: {e}")
         return jsonify({
             "success": False, 
-            "error": "Something went wrong while creating the invite."
+            "error": f"Unexpected backend error: {e}"
         }), 500
 
 
@@ -955,4 +1007,24 @@ def ping_llm():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=int(os.getenv("PORT", 5001)))
+    port = int(os.getenv("PORT", 5001))
+    
+    # Verify MongoDB Connection on startup
+    try:
+        from db import get_client
+        client = get_client()
+        # Ping the admin database to verify connection
+        client.admin.command('ping')
+        print("Connected to MongoDB")
+        app.logger.info("Connected to MongoDB successfully.")
+    except Exception as db_err:
+        print(f"Failed to connect to MongoDB: {db_err}")
+        app.logger.error(f"Failed to connect to MongoDB: {db_err}")
+        
+    print(f"Server running on PORT {port}")
+    app.logger.info(f"Server running on PORT {port}")
+    
+    print("Invite routes registered")
+    app.logger.info("Invite routes registered: POST /api/invites, POST /api/invite-candidate")
+    
+    app.run(debug=False, host="0.0.0.0", port=port)
