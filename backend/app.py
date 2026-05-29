@@ -657,12 +657,39 @@ def home():
 
 @app.route("/health", methods=["GET"])
 def health():
+    import urllib.parse
     provider = configured_provider()
+    
+    db_status = "Unknown"
+    db_error = None
+    masked_uri = "None"
+    
+    try:
+        from db import get_client, MONGO_URI
+        if MONGO_URI:
+            parsed = urllib.parse.urlparse(MONGO_URI)
+            netloc = parsed.netloc
+            if "@" in netloc:
+                netloc = "masked_user:masked_password@" + netloc.split("@", 1)[1]
+            masked_uri = urllib.parse.urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+            
+        client = get_client()
+        client.admin.command('ping')
+        db_status = "Connected"
+    except Exception as e:
+        db_status = "Failed"
+        db_error = str(e)
+        
     return jsonify({
         "ok": True,
         "llm_configured": has_llm_config(),
         "llm_provider": provider,
         "llm_model": default_model_for(provider) if provider else None,
+        "database": {
+            "status": db_status,
+            "error": db_error,
+            "uri": masked_uri
+        }
     }), 200
 
 
