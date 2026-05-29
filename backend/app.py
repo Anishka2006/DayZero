@@ -56,7 +56,7 @@ def handle_exception(e):
     if isinstance(e, pymongo.errors.PyMongoError):
         return jsonify({
             "success": False,
-            "error": "Could not complete that request. Please try again."
+            "error": f"Database error: {str(e)}"
         }), 500
         
     from werkzeug.exceptions import HTTPException
@@ -69,7 +69,7 @@ def handle_exception(e):
         
     return jsonify({
         "success": False,
-        "error": "Something went wrong. Please try again."
+        "error": f"Unexpected backend error: {str(e)}"
     }), 500
 
 @app.route("/api/user-profile", methods=["GET"])
