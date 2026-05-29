@@ -253,6 +253,7 @@ def login():
 @app.route("/api/invites", methods=["POST", "OPTIONS"])
 @app.route("/api/invite-candidate", methods=["POST", "OPTIONS"])
 def create_invite():
+    import traceback
     if request.method == "OPTIONS":
         response = jsonify({"success": True})
         origin = request.headers.get("Origin")
@@ -266,9 +267,14 @@ def create_invite():
         return response, 200
     
     try:
-        app.logger.info("Invite Request Received")
+        app.logger.info("[INVITE ROUTE DEBUG] --- STARTING CREATE INVITE FLOW ---")
+        
+        # 1. Log Request Info
+        app.logger.info(f"[INVITE ROUTE DEBUG] Request URL: {request.url}")
+        app.logger.info(f"[INVITE ROUTE DEBUG] Request Headers: {dict(request.headers)}")
         
         data = request.get_json(silent=True) or {}
+        app.logger.info(f"[INVITE ROUTE DEBUG] Request Body/Payload: {data}")
         
         email = (data.get("candidateEmail") or data.get("email") or "").strip().lower()
         name = (data.get("candidateName") or data.get("name") or "").strip()
@@ -287,8 +293,10 @@ def create_invite():
         company_name = data.get("companyName", "").strip()
         recruiter_id = data.get("recruiterId", "").strip()
         
+        app.logger.info(f"[INVITE ROUTE DEBUG] Parsed fields: Email={email}, Name={name}, ProjectID={project_id}, ProjectTitle={project_title}")
+        
         if not email or not name:
-            app.logger.error("Invite validation failed: Candidate Email and Name are required")
+            app.logger.error("[INVITE ROUTE DEBUG] Invite validation failed: Candidate Email and Name are required")
             return jsonify({"success": False, "error": "Candidate Email and Name are required"}), 400
             
         # Dynamic project matching and assignment via projects_collection
@@ -296,19 +304,43 @@ def create_invite():
         
         # 1. Search by project ID in db
         if project_id:
-            assigned_project = projects_collection.find_one({"id": project_id}) or projects_collection.find_one({"_id": project_id})
+            app.logger.info(f"[INVITE ROUTE DEBUG] Querying projects_collection by ID: {project_id}")
+            try:
+                assigned_project = projects_collection.find_one({"id": project_id}) or projects_collection.find_one({"_id": project_id})
+                app.logger.info(f"[INVITE ROUTE DEBUG] Project find_one by ID result: {assigned_project}")
+            except Exception as find_err:
+                app.logger.error(f"[INVITE ROUTE DEBUG] Failed to find project by ID: {find_err}")
+                raise find_err
             
         # 2. Search by exact project title
         if not assigned_project and project_title:
-            assigned_project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(project_title)}$", "$options": "i"}})
+            app.logger.info(f"[INVITE ROUTE DEBUG] Querying projects_collection by exact Title (case-insensitive): {project_title}")
+            try:
+                assigned_project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(project_title)}$", "$options": "i"}})
+                app.logger.info(f"[INVITE ROUTE DEBUG] Project find_one by exact Title result: {assigned_project}")
+            except Exception as find_err:
+                app.logger.error(f"[INVITE ROUTE DEBUG] Failed to find project by exact Title: {find_err}")
+                raise find_err
             
         # 3. Search by containing project title (substring)
         if not assigned_project and project_title:
-            assigned_project = projects_collection.find_one({"title": {"$regex": re.escape(project_title), "$options": "i"}})
+            app.logger.info(f"[INVITE ROUTE DEBUG] Querying projects_collection by substring Title (case-insensitive): {project_title}")
+            try:
+                assigned_project = projects_collection.find_one({"title": {"$regex": re.escape(project_title), "$options": "i"}})
+                app.logger.info(f"[INVITE ROUTE DEBUG] Project find_one by substring Title result: {assigned_project}")
+            except Exception as find_err:
+                app.logger.error(f"[INVITE ROUTE DEBUG] Failed to find project by substring Title: {find_err}")
+                raise find_err
             
         # 4. Special fallback: if "Linked Frontend Console" or "Frontend Console", match it
         if not assigned_project and ("Frontend Console" in project_title or "Linked Frontend Console" in project_title):
-            assigned_project = projects_collection.find_one({"title": {"$regex": "Frontend Console", "$options": "i"}})
+            app.logger.info(f"[INVITE ROUTE DEBUG] Querying projects_collection by fallback 'Frontend Console'")
+            try:
+                assigned_project = projects_collection.find_one({"title": {"$regex": "Frontend Console", "$options": "i"}})
+                app.logger.info(f"[INVITE ROUTE DEBUG] Project find_one by fallback Title result: {assigned_project}")
+            except Exception as find_err:
+                app.logger.error(f"[INVITE ROUTE DEBUG] Failed to find project by fallback Title: {find_err}")
+                raise find_err
             
         # 5. If STILL not found, let's create this project dynamically in db so that it exists and has a real ID!
         if not assigned_project:
@@ -325,19 +357,26 @@ def create_invite():
                 "createdAt": datetime.utcnow().isoformat(),
                 "companyId": company_id or "default"
             }
-            projects_collection.update_one(
-                {"title": new_project_title},
-                {"$set": assigned_project},
-                upsert=True
-            )
-            # Re-fetch the saved project
-            assigned_project = projects_collection.find_one({"title": new_project_title})
+            app.logger.info(f"[INVITE ROUTE DEBUG] Project not found. Seeding new project in projects_collection: {assigned_project}")
+            try:
+                projects_collection.update_one(
+                    {"title": new_project_title},
+                    {"$set": assigned_project},
+                    upsert=True
+                )
+                app.logger.info("[INVITE ROUTE DEBUG] Project seeded successfully!")
+                # Re-fetch the saved project
+                assigned_project = projects_collection.find_one({"title": new_project_title})
+                app.logger.info(f"[INVITE ROUTE DEBUG] Re-fetched seeded project: {assigned_project}")
+            except Exception as seed_err:
+                app.logger.error(f"[INVITE ROUTE DEBUG] Failed to seed project: {seed_err}")
+                raise seed_err
             
         # Overwrite values with verified database records
         project_id = assigned_project.get("id") or str(assigned_project.get("_id"))
         project_title = assigned_project.get("title")
         
-        app.logger.info(f"Project Assigned: {project_title} (ID: {project_id})")
+        app.logger.info(f"[INVITE ROUTE DEBUG] Verified Project Assigned: {project_title} (ID: {project_id})")
             
         token = str(uuid.uuid4())
         invite_id = str(uuid.uuid4())
@@ -374,17 +413,23 @@ def create_invite():
         invite_data = invite.copy()
         invite_id_val = invite_data.pop("_id")
 
-        invited_candidates_collection.update_one(
-            {"email": email},
-            {
-                "$set": invite_data,
-                "$setOnInsert": {"_id": invite_id_val}
-            },
-            upsert=True
-        )
+        app.logger.info(f"[INVITE ROUTE DEBUG] Saving candidate invite in invited_candidates_collection: email={email}, invite_id={invite_id_val}")
+        try:
+            update_res = invited_candidates_collection.update_one(
+                {"email": email},
+                {
+                    "$set": invite_data,
+                    "$setOnInsert": {"_id": invite_id_val}
+                },
+                upsert=True
+            )
+            app.logger.info(f"[INVITE ROUTE DEBUG] update_one result: matched={update_res.matched_count}, modified={update_res.modified_count}, upserted_id={update_res.upserted_id}")
+        except Exception as save_err:
+            app.logger.error(f"[INVITE ROUTE DEBUG] Failed to save candidate invite: {save_err}")
+            raise save_err
         
-        app.logger.info(f"Candidate Saved: {name} ({email})")
-        app.logger.info(f"Invite Sent Successfully to {email}")
+        app.logger.info(f"[INVITE ROUTE DEBUG] Candidate Saved successfully: {name} ({email})")
+        app.logger.info(f"[INVITE ROUTE DEBUG] Invite Sent Successfully to {email}!")
         
         return jsonify({
             "success": True, 
@@ -395,16 +440,20 @@ def create_invite():
         }), 201
         
     except pymongo.errors.PyMongoError as db_err:
-        app.logger.error(f"Database connection failure during invite creation: {db_err}")
+        tb = traceback.format_exc()
+        app.logger.error(f"[INVITE ROUTE DEBUG] Database connection failure during invite creation:\n{tb}")
         return jsonify({
             "success": False, 
-            "error": f"Database error: {db_err}"
+            "error": f"Database error: {db_err}",
+            "traceback": tb
         }), 500
     except Exception as e:
-        app.logger.error(f"Unexpected crash during invite creation: {e}")
+        tb = traceback.format_exc()
+        app.logger.error(f"[INVITE ROUTE DEBUG] Unexpected crash during invite creation:\n{tb}")
         return jsonify({
             "success": False, 
-            "error": f"Unexpected backend error: {e}"
+            "error": f"Unexpected backend error: {e}",
+            "traceback": tb
         }), 500
 
 
