@@ -1,17 +1,10 @@
 (function () {
   "use strict";
 
-  const RENDER_BACKEND_URL = "https://dayzero-2.onrender.com";
+  const RENDER_BACKEND_URL = "https://dayzero-backend-0n1y.onrender.com";
   let apiBaseUrl = RENDER_BACKEND_URL;
 
-  // 1. Check if defined in import.meta.env (Vite context)
-  try {
-    if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL) {
-      apiBaseUrl = import.meta.env.VITE_API_URL;
-    }
-  } catch (e) {}
-
-  // 2. Check if defined in process.env (Node context)
+  // 1. Check if defined in process.env (Node context)
   try {
     if (typeof process !== "undefined" && process.env && process.env.VITE_API_URL) {
       apiBaseUrl = process.env.VITE_API_URL;

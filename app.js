@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const DAYZERO_RENDER_BACKEND_URL = "https://dayzero-2.onrender.com";
+const DAYZERO_RENDER_BACKEND_URL = "https://dayzero-backend-0n1y.onrender.com";
 const AUTH_BASE_URL = window.AUTH_BASE_URL || window.API_BASE_URL || DAYZERO_RENDER_BACKEND_URL;
 const PLATFORM_API_BASE_URL = window.API_BASE_URL || DAYZERO_RENDER_BACKEND_URL;
 
