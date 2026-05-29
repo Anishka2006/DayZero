@@ -703,6 +703,7 @@ function initAuthModal() {
           localStorage.setItem("dayzero_task_id", invite.projectId);
           localStorage.setItem("projectId", invite.projectId);
           localStorage.setItem("projectTitle", invite.projectTitle);
+          localStorage.setItem("userRole", invite.role);
           localStorage.setItem("candidateSetupComplete", "true");
 
           authForm.reset();

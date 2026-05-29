@@ -748,15 +748,88 @@ def chat():
     return jsonify(response), 200
 
 
+def _resolve_db_driven_simulation_args(payload: dict):
+    import uuid
+    task_id = request.args.get("task_id") or payload.get("task_id")
+    role = request.args.get("role") or payload.get("role")
+    participant_name = request.args.get("participant_name") or payload.get("participant_name")
+    task_context = payload.get("task_context") or {}
+
+    email = payload.get("candidateEmail") or payload.get("email")
+    project_id_arg = payload.get("projectId") or task_id
+    
+    # 1. Look up invite by email to find assigned project
+    invite = None
+    if email:
+        invite = invited_candidates_collection.find_one({"email": email.strip().lower(), "status": "active"})
+        if invite:
+            project_id_arg = invite.get("projectId") or project_id_arg
+            role = invite.get("role") or role
+            participant_name = invite.get("name") or participant_name
+            
+    # 2. Look up project details in database
+    project = None
+    if project_id_arg:
+        project = projects_collection.find_one({"id": project_id_arg}) or projects_collection.find_one({"_id": project_id_arg})
+        
+    if not project and invite and invite.get("projectTitle"):
+        project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(invite.get('projectTitle'))}$", "$options": "i"}})
+        
+    # 3. If found in database, override context dynamically!
+    if project or invite:
+        db_context = {
+            "id": project_id_arg or str(uuid.uuid4()),
+            "company": (invite.get("companyName") if invite else None) or (project.get("companyId") if project else None) or "Corporate Partner",
+            "title": (project.get("title") if project else None) or (invite.get("projectTitle") if invite else None) or "Assigned Simulation Sprint",
+            "role": role or (project.get("role") if project else None) or "Software Engineer",
+            "description": (project.get("description") if project else None) or "Develop the primary user interface and logic for the assigned corporate simulation room.",
+            "difficulty": (invite.get("experienceLevel") if invite else None) or (project.get("difficulty") if project else None) or "Intermediate",
+        }
+        
+        # Add tech stack & skills
+        skills = (invite.get("skills") if invite else None) or (project.get("techStack") if project else None)
+        if skills:
+            if isinstance(skills, list):
+                db_context["skills"] = [str(s).strip() for s in skills]
+            else:
+                db_context["skills"] = [str(s).strip() for s in str(skills).split(",")]
+                
+        # Resolve files
+        if project and project.get("workspace_files"):
+            db_context["workspace_files"] = project.get("workspace_files")
+            
+        task_context = {**db_context, **task_context}
+        
+        # Dynamically set task_id based on role to load correct starter files & agents
+        if not task_id:
+            role_lower = str(db_context["role"]).lower()
+            if any(token in role_lower for token in ("frontend", "web", "react", "html", "css", "js", "client", "interface")):
+                task_id = "vr-marketplace"
+            elif any(token in role_lower for token in ("backend", "api", "server", "database", "sql")):
+                task_id = "login-recovery"
+            elif any(token in role_lower for token in ("qa", "test", "quality")):
+                task_id = "qa-release"
+            elif any(token in role_lower for token in ("data", "analyst", "metrics", "fraud")):
+                task_id = "fraud-dashboard"
+            elif any(token in role_lower for token in ("design", "designer", "ux", "ui")):
+                task_id = "docs-update"
+            else:
+                task_id = "mobile-growth"
+                
+    return task_id, role, participant_name, task_context
+
+
 @app.route("/api/simulation/start", methods=["GET", "POST"])
 def api_start_simulation():
     payload = request.get_json(silent=True) or {}
 
+    task_id, role, participant_name, task_context = _resolve_db_driven_simulation_args(payload)
+    
     data = start_simulation(
-        task_id=request.args.get("task_id") or payload.get("task_id"),
-        role=request.args.get("role") or payload.get("role"),
-        participant_name=request.args.get("participant_name") or payload.get("participant_name"),
-        task_context=payload.get("task_context"),
+        task_id=task_id,
+        role=role,
+        participant_name=participant_name,
+        task_context=task_context,
     )
 
     return jsonify(data), 200
@@ -766,11 +839,13 @@ def api_start_simulation():
 def legacy_start_simulation():
     payload = request.get_json(silent=True) or {}
 
+    task_id, role, participant_name, task_context = _resolve_db_driven_simulation_args(payload)
+    
     data = start_simulation(
-        task_id=payload.get("task_id"),
-        role=payload.get("role"),
-        participant_name=payload.get("participant_name"),
-        task_context=payload.get("task_context"),
+        task_id=task_id,
+        role=role,
+        participant_name=participant_name,
+        task_context=task_context,
     )
 
     return jsonify({
@@ -789,11 +864,13 @@ def legacy_start_simulation():
 def api_create_session():
     payload = request.get_json(silent=True) or {}
 
+    task_id, role, participant_name, task_context = _resolve_db_driven_simulation_args(payload)
+    
     data = start_simulation(
-        task_id=payload.get("task_id"),
-        role=payload.get("role"),
-        participant_name=payload.get("participant_name"),
-        task_context=payload.get("task_context"),
+        task_id=task_id,
+        role=role,
+        participant_name=participant_name,
+        task_context=task_context,
     )
 
     return jsonify(data), 200

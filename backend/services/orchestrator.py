@@ -671,8 +671,11 @@ class SimulationOrchestrator:
         if any(token in role_text for token in ("qa", "quality", "tester", "testing")):
             return self._task_payload("qa-release", task_context=task_context)
 
-        if any(token in role_text for token in ("backend", "api", "server")):
+        if any(token in role_text for token in ("backend", "api", "server", "database", "sql")):
             return self._task_payload("login-recovery", task_context=task_context)
+
+        if any(token in role_text for token in ("frontend", "web", "react", "html", "css", "js", "client", "interface")):
+            return self._task_payload("vr-marketplace", task_context=task_context)
 
         if any(token in role_text for token in ("product", "growth", "mobile")):
             return self._task_payload("mobile-growth", task_context=task_context)

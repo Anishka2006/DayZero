@@ -4213,7 +4213,8 @@ function predictTypingName(userText, phase) {
 async function initializeLiveSimulation(forceRefresh = false) {
   if (!teamChatHistory) return loadOrchestratorState();
 
-  const role = getCandidateRole();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const role = user.assignedRole || user.role || getCandidateRole();
   const cached = loadOrchestratorState();
   if (cached.session_id && !forceRefresh && cached.role === role) {
     if (cached.task) {
@@ -4228,10 +4229,17 @@ async function initializeLiveSimulation(forceRefresh = false) {
     return cached;
   }
 
+  const payload = {
+    role: role,
+    email: user.email || "",
+    projectId: user.projectId || localStorage.getItem("projectId") || "",
+    participant_name: user.name || localStorage.getItem("userName") || "You"
+  };
+
   const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role })
+    body: JSON.stringify(payload)
   });
   const data = await response.json();
 
