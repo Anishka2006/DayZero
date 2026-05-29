@@ -332,7 +332,7 @@
     .badge.amber { background: var(--amber-bg); color: var(--amber-text); }
     .badge.red { background: var(--red-bg); color: var(--red-text); }
     .badge.blue { background: var(--blue-bg); color: var(--blue-text); }
-    .badge.indigo { background: var(--indigo-bg); color: #4338ca; }
+    .badge.indigo { background: var(--indigo-bg); color: var(--indigo); }
     .dot-badge::before { content: '●'; margin-right: 3px; font-size: 9px; }
 
     .action-btn {
@@ -364,7 +364,7 @@
     .feed-item:hover { background: var(--surface2); }
     .feed-item.feed-new { animation: feedPop 0.4s ease; }
     @keyframes feedPop {
-      from { background: #e0e7ff; transform: translateY(-4px); opacity: 0; }
+      from { background: var(--indigo-bg); transform: translateY(-4px); opacity: 0; }
       to { background: transparent; transform: translateY(0); opacity: 1; }
     }
     .feed-icon {
@@ -434,12 +434,12 @@
       flex: 1; padding: 9px; border-radius: 8px; font-size: 13px; font-weight: 700;
       border: 1px solid; cursor: pointer; transition: all 0.15s;
     }
-    .dec-btn.shortlist { background: var(--green-bg); color: var(--green-text); border-color: #a7f3d0; }
-    .dec-btn.shortlist:hover { background: #d1fae5; }
-    .dec-btn.reject { background: var(--red-bg); color: var(--red-text); border-color: #fecaca; }
-    .dec-btn.reject:hover { background: #fee2e2; }
-    .dec-btn.interview { background: var(--indigo-bg); color: #4338ca; border-color: #c7d2fe; }
-    .dec-btn.interview:hover { background: #e0e7ff; }
+    .dec-btn.shortlist { background: var(--green-bg); color: var(--green-text); border-color: var(--green); }
+    .dec-btn.shortlist:hover { background: var(--green); color: var(--surface); }
+    .dec-btn.reject { background: var(--red-bg); color: var(--red-text); border-color: var(--red); }
+    .dec-btn.reject:hover { background: var(--red); color: var(--surface); }
+    .dec-btn.interview { background: var(--indigo-bg); color: var(--indigo); border-color: var(--indigo); }
+    .dec-btn.interview:hover { background: var(--indigo); color: white; }
 
     .section-head { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -931,7 +931,7 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
-      background: #f8fafc;
+      background: var(--surface2);
     }
     .chat-msg-item {
       display: flex;
@@ -1070,7 +1070,7 @@
       border-radius: 0 var(--radius) var(--radius) 0;
       padding: 10px;
       font-size: 12px;
-      color: #312e81;
+      color: var(--text);
     }
     .observation-panel-box p {
       margin-bottom: 6px;
@@ -1137,7 +1137,7 @@
       }
     }
     .logout-btn {
-      margin-top: 150px;
+      margin-top: 6px;
       color: #ff4d4f;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -2888,9 +2888,9 @@
 
     // Decision banner
     var decBanner = "";
-    if (c.status==="Shortlisted")  decBanner='<div style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">✓ Shortlisted this session</div>';
-    if (c.status==="Rejected")     decBanner='<div style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">✕ Passed / Rejected</div>';
-    if (c.status==="Interviewing") decBanner='<div style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">📅 Interview Scheduled</div>';
+    if (c.status==="Shortlisted")  decBanner='<div style="background:var(--green-bg);color:var(--green-text);border:1px solid var(--green);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">✓ Shortlisted this session</div>';
+    if (c.status==="Rejected")     decBanner='<div style="background:var(--red-bg);color:var(--red-text);border:1px solid var(--red);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">✕ Passed / Rejected</div>';
+    if (c.status==="Interviewing") decBanner='<div style="background:var(--indigo-bg);color:var(--indigo);border:1px solid var(--indigo);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:14px;text-align:center;">📅 Interview Scheduled</div>';
 
     if (el("spSub")) el("spSub").textContent = c.name+" · "+c.college;
 
@@ -3414,7 +3414,7 @@
               updateWorkspaceStats();
             }
 
-            showToast("Invite sent and candidate registered dynamically! 🎉", "success");
+            showToast("Invite sent and candidate registered! 🎉", "success");
             closeModal();
             
             // Reset fields
@@ -4892,17 +4892,23 @@
   }
 
   //LOGOUT FUNCTIONALITY
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    // Clear saved login data
-    localStorage.clear();
-    sessionStorage.clear();
-
-    // confirmation
-    alert("Logged out successfully!");
-
-    // Redirect to login page
-    window.location.href = "../../index.html";
-  });
+  function initLogoutBtn() {
+    var logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        // Clear saved login data
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // confirmation
+        alert("Logged out successfully!");
+        
+        // Redirect to login page
+        window.location.href = "../../index.html";
+      });
+    }
+  }
 
 
   function generateInitialMockActivity(candidates, type) {
@@ -5285,6 +5291,7 @@
     initInviteModal();
     initExport();
     initSidebarNav();
+    initLogoutBtn();
     initKeyboard();
 
     if (window.lucide) lucide.createIcons();

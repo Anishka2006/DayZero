@@ -8,8 +8,13 @@ html {
   scroll-behavior: smooth;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Outfit", sans-serif;
+  letter-spacing: -0.02em;
+}
+
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
   background: #f8fafc;
   color: #0f172a;
   line-height: 1.6;
@@ -99,7 +104,7 @@ section {
 }
 
 .hero {
-  padding-top: 72px;
+  padding-top: 20px;
   padding-bottom: 56px;
   position: relative;
   overflow: hidden;
@@ -122,6 +127,53 @@ section {
   text-transform: uppercase;
   color: #4f46e5;
   margin-bottom: 16px;
+}
+
+.hero-tag-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hero-tag-container .hero-tag {
+  margin-bottom: 0 !important;
+}
+
+.hero-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4f46e5;
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.6);
+  display: inline-block;
+}
+
+.highlight-text {
+  color: #5956EB;
+  display: inline-block;
+}
+
+.hero-quote {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.quote-pill {
+  width: 28px;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+}
+
+.quote-text {
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-family: "Outfit", sans-serif;
+  color: #334155;
+  letter-spacing: -0.01em;
 }
 
 .hero-title {
@@ -195,11 +247,20 @@ section {
 .dashboard-card,
 .rec-dashboard-metric,
 .rec-dashboard-score {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  border-color: rgba(79, 70, 229, 0.3);
 }
 
 .dashboard-row,
@@ -236,15 +297,21 @@ section {
   font-size: 0.96rem;
 }
 
-.dashboard-percentage,
-.dashboard-score,
-.dashboard-highlight {
+.dashboard-percentage {
   color: #4f46e5;
   font-weight: 800;
 }
 
 .dashboard-score {
-  font-size: 1.8rem;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #4f46e5;
+  line-height: 1.1;
+}
+
+.dashboard-highlight {
+  color: #7c3aed;
+  font-weight: 800;
 }
 
 .hero-progress-bar-bg,
@@ -291,7 +358,7 @@ section {
 
 .team-value.accent,
 .accent {
-  color: #7c3aed;
+  color: #d97706; /* Vibrant amber/gold for light mode */
 }
 
 .team-divider {
@@ -1061,16 +1128,65 @@ section {
    ========================================================================== */
 body.dark {
   background:
-    radial-gradient(circle at top right, rgba(77, 163, 255, 0.08), transparent 40%),
-    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.06), transparent 40%),
-    #050816 !important;
+    radial-gradient(circle at top right, rgba(99, 102, 241, 0.12), transparent 45%),
+    radial-gradient(circle at bottom left, rgba(124, 92, 255, 0.08), transparent 45%),
+    #060a13 !important;
   color: #E6ECFF !important;
 }
 
 body.dark .navbar {
-  background: rgba(10, 15, 36, 0.85) !important;
-  border-bottom-color: rgba(124, 92, 255, 0.12) !important;
+  background: rgba(8, 12, 26, 0.8) !important;
+  border-bottom-color: rgba(124, 92, 255, 0.15) !important;
   backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.dark .navbar.navbar-scrolled {
+  background: rgba(8, 12, 26, 0.95) !important;
+  border-bottom-color: rgba(124, 92, 255, 0.22) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark .hero-glow {
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.28) 0%, rgba(77, 163, 255, 0.12) 50%, transparent 100%) !important;
+  filter: blur(60px) !important;
+  width: 320px !important;
+  height: 320px !important;
+}
+
+body.dark .hero-bg-abstract {
+  background: radial-gradient(circle, rgba(77, 163, 255, 0.15) 0%, rgba(124, 92, 255, 0.05) 50%, transparent 100%) !important;
+  filter: blur(60px) !important;
+  width: 300px !important;
+  height: 300px !important;
+}
+
+body.dark .highlight-text {
+  background: linear-gradient(135deg, #7C5CFF 0%, #4DA3FF 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+body.dark .hero-tag-dot {
+  background: #7C5CFF !important;
+  box-shadow: 0 0 10px rgba(124, 92, 255, 0.8), 0 0 20px rgba(124, 92, 255, 0.4) !important;
+  animation: pulseGlow 2s infinite alternate !important;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 6px rgba(124, 92, 255, 0.6); }
+  100% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 14px rgba(124, 92, 255, 1), 0 0 24px rgba(124, 92, 255, 0.6); }
+}
+
+body.dark .quote-pill {
+  background: linear-gradient(90deg, #7C5CFF, #4DA3FF) !important;
+  box-shadow: 0 0 8px rgba(77, 163, 255, 0.4) !important;
+}
+
+body.dark .quote-text {
+  color: #cbd5e1 !important;
 }
 
 body.dark .nav-link {
@@ -1088,23 +1204,28 @@ body.dark .nav-link.login-link {
 body.dark .btn-primary {
   background: linear-gradient(135deg, #7C5CFF 0%, #4DA3FF 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 16px rgba(124, 92, 255, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(124, 92, 255, 0.35) !important;
   border: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 body.dark .btn-primary:hover {
-  box-shadow: 0 4px 20px rgba(124, 92, 255, 0.45) !important;
+  box-shadow: 0 6px 24px rgba(124, 92, 255, 0.5), 0 0 12px rgba(77, 163, 255, 0.2) !important;
+  transform: translateY(-2px) scale(1.02);
 }
 
 body.dark .btn-secondary {
-  background: #10182F !important;
+  background: rgba(16, 24, 47, 0.5) !important;
   color: #E6ECFF !important;
-  border-color: rgba(124, 92, 255, 0.2) !important;
+  border: 1px solid rgba(124, 92, 255, 0.25) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 body.dark .btn-secondary:hover {
-  background: #151F3D !important;
+  background: rgba(22, 32, 64, 0.6) !important;
   border-color: #7C5CFF !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
 }
 
 body.dark .dashboard-card,
@@ -1114,23 +1235,77 @@ body.dark .trust-strip,
 body.dark .problem-card,
 body.dark .benefit-card,
 body.dark .step-card {
-  background: #10182F !important;
-  border: 1px solid rgba(124, 92, 255, 0.12) !important;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(16, 20, 38, 0.65) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(124, 92, 255, 0.15) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35) !important;
   color: #E6ECFF !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body.dark .dashboard-card:hover,
+body.dark .rec-dashboard-metric:hover,
+body.dark .rec-dashboard-score:hover,
 body.dark .problem-card:hover,
 body.dark .benefit-card:hover,
 body.dark .step-card:hover {
-  background: #151F3D !important;
+  background: rgba(22, 28, 54, 0.75) !important;
   border-color: #7C5CFF !important;
-  box-shadow: 0 20px 40px rgba(124, 92, 255, 0.15) !important;
+  box-shadow: 0 24px 60px rgba(124, 92, 255, 0.22) !important;
+  transform: translateY(-4px);
+}
+
+body.dark .dashboard-label {
+  color: #7C5CFF !important;
+}
+
+body.dark .dashboard-percentage {
+  color: #7C5CFF !important;
+}
+
+body.dark .dashboard-score {
+  color: #4DA3FF !important;
+  text-shadow: 0 0 12px rgba(77, 163, 255, 0.25);
+}
+
+body.dark .dashboard-highlight {
+  color: #7C5CFF !important;
+  text-shadow: 0 0 10px rgba(124, 92, 255, 0.2);
+}
+
+body.dark .team-label {
+  color: #94A3B8 !important;
+}
+
+body.dark .team-value {
+  color: #ffffff !important;
+}
+
+body.dark .team-value.accent,
+body.dark .accent {
+  color: #f59e0b !important;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
+}
+
+body.dark .dashboard-meta strong {
+  color: #ffffff !important;
+}
+
+body.dark .hero-progress-bar-bg,
+body.dark .rec-progress-bar-bg {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.dark .hero-progress-bar,
+body.dark .rec-progress-bar1,
+body.dark .rec-progress-bar2,
+body.dark .rec-progress-bar3 {
+  background: linear-gradient(90deg, #7C5CFF, #4DA3FF) !important;
 }
 
 body.dark .dashboard-title,
 body.dark .dashboard-task-title,
-body.dark .team-value,
 body.dark .trust-item h4,
 body.dark .problem-card h3,
 body.dark .benefit-card h3,
@@ -1144,7 +1319,6 @@ body.dark .footer-logo {
 body.dark .hero-sub,
 body.dark .hero-support,
 body.dark .dashboard-meta,
-body.dark .team-label,
 body.dark .trust-item p,
 body.dark .section-heading p,
 body.dark .problem-card p,
@@ -1162,7 +1336,7 @@ body.dark .problem-icon,
 body.dark .benefit-icon,
 body.dark .step-number {
   background: rgba(124, 92, 255, 0.1) !important;
-  color: #4FFFD1 !important; /* Cyan accent */
+  color: #4FFFD1 !important;
 }
 
 body.dark .problem-card:hover .problem-icon,
@@ -1179,7 +1353,7 @@ body.dark .footer-copyright {
 }
 
 body.dark .footer {
-  background: #0A0F24 !important;
+  background: #080c16 !important;
   border-top: 1px solid rgba(124, 92, 255, 0.12) !important;
 }
 
@@ -1281,4 +1455,143 @@ body.dark .email-domain-warning.info {
   background-color: rgba(59, 130, 246, 0.1) !important;
   border-color: rgba(59, 130, 246, 0.25) !important;
   color: #60a5fa !important;
+}
+
+/* =========================================
+   THEME SWITCH BUTTON PREMIUM STYLING
+   ========================================= */
+.theme-btn {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease !important;
+}
+
+.theme-btn:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-1px);
+}
+
+body.dark .theme-btn {
+  background: rgba(16, 20, 38, 0.5) !important;
+  border-color: rgba(124, 92, 255, 0.2) !important;
+  color: #E6ECFF !important;
+}
+
+body.dark .theme-btn:hover {
+  background: rgba(16, 20, 38, 0.8) !important;
+  border-color: #7C5CFF !important;
+}
+
+/* =========================================
+   FLOATING WIDGETS
+   ========================================= */
+.floating-widgets {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 999;
+}
+
+.floating-widget-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-widget-btn:hover {
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+/* Mascot Face Icon styling */
+.mascot-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mascot-face {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.mascot-eyes {
+  display: flex;
+  gap: 6px;
+}
+
+.mascot-eyes span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #4f46e5;
+  position: relative;
+  animation: blink 4s infinite;
+}
+
+@keyframes blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+/* Dark Mode Mascot & Widgets */
+body.dark .floating-widget-btn {
+  background: rgba(16, 20, 38, 0.7) !important;
+  border-color: rgba(124, 92, 255, 0.16) !important;
+  color: #E6ECFF !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark .floating-widget-btn:hover {
+  color: #7C5CFF !important;
+  border-color: #7C5CFF !important;
+  box-shadow: 0 12px 36px rgba(124, 92, 255, 0.25) !important;
+}
+
+body.dark .mascot-btn {
+  background: #10182F !important;
+  border-color: rgba(124, 92, 255, 0.2) !important;
+}
+
+body.dark .mascot-face {
+  background: #0A0F24 !important;
+  border-color: rgba(124, 92, 255, 0.25) !important;
+}
+
+body.dark .mascot-eyes span {
+  background: #4DA3FF !important;
+  box-shadow: 0 0 8px #4DA3FF !important;
 }
