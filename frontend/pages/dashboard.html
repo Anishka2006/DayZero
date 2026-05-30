@@ -56,6 +56,7 @@
           <div class="avatar" id="studentAvatar">S</div>
           <div class="sidebar-user-details">
             <span id="sidebarUserName">Saavi</span>
+            <span id="sidebarUserSelectedRole" class="selected-role-text" style="font-size: 10px; color: var(--subtext); display: none; margin-top: 1px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;"></span>
             <span id="sidebarCompanyBadge" class="company-badge">GMAIL</span>
           </div>
         </div>
@@ -87,7 +88,7 @@
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
           ">
             <span style="width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
-            DEMO MODE ACTIVE
+            DEMO WORKSPACE
           </div>
         </div>
 
@@ -1238,7 +1239,11 @@ Enable seamless billing subscriptions and automated payouts for verified creator
       }
 
       localStorage.setItem("dayzero_task_id", taskId);
-      window.location.href = "simulation.html";
+      if (role === "invited candidate") {
+        window.location.href = "loading.html";
+      } else {
+        window.location.href = "simulation.html";
+      }
     });
   });
 

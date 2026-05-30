@@ -8,10 +8,10 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 try:
     from .db import db as mongo_db
-    from .db import invited_candidates_collection, users_collection, projects_collection
+    from .db import invited_candidates_collection, users_collection, projects_collection, invites_collection
 except ImportError:
     from db import db as mongo_db
-    from db import invited_candidates_collection, users_collection, projects_collection
+    from db import invited_candidates_collection, users_collection, projects_collection, invites_collection
 from pymongo import MongoClient
 import pymongo
 from datetime import datetime
@@ -140,6 +140,68 @@ def _public_user(user: dict) -> dict:
     }
 
 
+def _clean(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    return value
+
+
+def _first_present(*values):
+    for value in values:
+        cleaned = _clean(value)
+        if cleaned is not None:
+            return cleaned
+    return None
+
+
+def _normalize_invite_record(primary: dict | None, fallback: dict | None = None) -> dict | None:
+    if not primary and not fallback:
+        return None
+
+    primary = dict(primary or {})
+    fallback = dict(fallback or {})
+    normalized = {**fallback, **primary}
+
+    normalized["email"] = _first_present(primary.get("email"), primary.get("candidateEmail"), fallback.get("email"), fallback.get("candidateEmail"))
+    normalized["name"] = _first_present(primary.get("name"), primary.get("candidateName"), fallback.get("name"), fallback.get("candidateName"), "Invited Candidate")
+    normalized["companyId"] = _first_present(primary.get("companyId"), primary.get("company"), fallback.get("companyId"), fallback.get("company"))
+    normalized["companyName"] = _first_present(primary.get("companyName"), primary.get("company"), fallback.get("companyName"), fallback.get("company"))
+    normalized["projectId"] = _first_present(primary.get("projectId"), primary.get("projectAssigned"), fallback.get("projectId"), fallback.get("projectAssigned"))
+    normalized["projectTitle"] = _first_present(primary.get("projectTitle"), primary.get("projectName"), fallback.get("projectTitle"), fallback.get("projectName"))
+    normalized["projectName"] = _first_present(primary.get("projectName"), primary.get("projectTitle"), fallback.get("projectName"), fallback.get("projectTitle"))
+    normalized["role"] = _first_present(primary.get("role"), primary.get("assignedRole"), primary.get("roleAssigned"), fallback.get("role"), fallback.get("assignedRole"), fallback.get("roleAssigned"), "Frontend Engineer")
+    normalized["roleAssigned"] = _first_present(primary.get("roleAssigned"), primary.get("assignedRole"), primary.get("role"), fallback.get("roleAssigned"), fallback.get("assignedRole"), fallback.get("role"))
+    normalized["assignedRole"] = _first_present(primary.get("assignedRole"), primary.get("roleAssigned"), primary.get("role"), fallback.get("assignedRole"), fallback.get("roleAssigned"), fallback.get("role"))
+    normalized["experienceLevel"] = _first_present(primary.get("experienceLevel"), fallback.get("experienceLevel"), "Intermediate")
+    normalized["status"] = _first_present(primary.get("status"), primary.get("inviteStatus"), fallback.get("status"), fallback.get("inviteStatus"), "active")
+    normalized["inviteStatus"] = _first_present(primary.get("inviteStatus"), primary.get("status"), fallback.get("inviteStatus"), fallback.get("status"), "active")
+
+    return normalized
+
+
+def _get_valid_invite(email: str):
+    email_clean = str(email or "").strip().lower()
+
+    invite = invited_candidates_collection.find_one({"email": email_clean})
+    db_invite = invites_collection.find_one({"email": email_clean})
+    
+    merged = None
+    if db_invite:
+        merged = _normalize_invite_record(db_invite, invite)
+    elif invite:
+        merged = _normalize_invite_record(invite)
+        
+    if merged:
+        status = str(merged.get("status") or merged.get("inviteStatus") or "").strip().lower()
+        if status in {"invited", "accepted", "active"}:
+            return merged
+            
+    return None
+
+
 @app.route("/signup", methods=["POST"])
 @app.route("/api/signup", methods=["POST"])
 def signup():
@@ -165,7 +227,7 @@ def signup():
 
     invite_details = {}
     if role in {"user", "invited candidate"}:
-        invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+        invite = _get_valid_invite(email)
         if invite:
             invite_details = {
                 "companyId": invite.get("companyId"),
@@ -173,7 +235,7 @@ def signup():
                 "projectId": invite.get("projectId"),
                 "projectTitle": invite.get("projectTitle"),
                 "experienceLevel": invite.get("experienceLevel"),
-                "assignedRole": invite.get("role"),
+                "assignedRole": invite.get("assignedRole"),
             }
             role = "invited candidate"
 
@@ -226,7 +288,7 @@ def login():
     if requested_role and requested_role not in {user_role, "candidate"}:
         return jsonify({"success": False, "error": f"This account is registered as '{user_role}'."}), 403
 
-    invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+    invite = _get_valid_invite(email)
     if invite and user_role in {"user", "candidate", "invited candidate"}:
         users_collection.update_one(
             {"email": email},
@@ -237,7 +299,7 @@ def login():
                 "projectId": invite.get("projectId"),
                 "projectTitle": invite.get("projectTitle"),
                 "experienceLevel": invite.get("experienceLevel"),
-                "assignedRole": invite.get("role"),
+                "assignedRole": invite.get("assignedRole"),
             }},
         )
         user = users_collection.find_one({"email": email}) or user
@@ -479,14 +541,123 @@ def get_invites():
 @app.route("/api/invites/validate", methods=["GET"])
 def validate_invite():
     email = request.args.get("email", "").strip().lower()
+    
+    # 9. Add logs: LOGIN EMAIL
+    print(f"LOGIN EMAIL: {email}")
+    app.logger.info(f"LOGIN EMAIL: {email}")
+    
     if not email:
+        print("ACCESS DENIED")
+        app.logger.info("ACCESS DENIED")
         return jsonify({"success": False, "error": "Email is required"}), 400
         
-    invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
+    invite = _get_valid_invite(email)
+    invite_found = invite is not None
+    
+    # 9. Add logs: INVITE FOUND
+    print(f"INVITE FOUND: {invite_found}")
+    app.logger.info(f"INVITE FOUND: {invite_found}")
+    
+    # 9. Add logs: INVITE STATUS
+    invite_status = str(invite.get("status") or invite.get("inviteStatus") or "none").strip().lower() if invite else "none"
+    print(f"INVITE STATUS: {invite_status}")
+    app.logger.info(f"INVITE STATUS: {invite_status}")
+    
     if not invite:
+        # 9. Add logs: ACCESS DENIED
+        print("ACCESS DENIED")
+        app.logger.info("ACCESS DENIED")
         return jsonify({"success": True, "invited": False}), 200
         
-    invite["_id"] = str(invite["_id"])
+    # 9. Add logs: ACCESS GRANTED
+    print("ACCESS GRANTED")
+    app.logger.info("ACCESS GRANTED")
+
+    # Ensure projectId and projectTitle map to the actual MongoDB project document!
+    real_project_id = invite.get("projectId")
+    real_project_title = invite.get("projectTitle")
+    db_project = None
+    
+    if real_project_id:
+        db_project = projects_collection.find_one({"id": real_project_id}) or projects_collection.find_one({"_id": real_project_id})
+    if not db_project and real_project_title:
+        db_project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(real_project_title)}$", "$options": "i"}})
+        
+    if not db_project:
+        # Dynamically seed it in MongoDB Atlas!
+        new_project_id = str(uuid.uuid4())
+        new_project_title = real_project_title or "LinkedIn ML Core Engine"
+        db_project = {
+            "_id": new_project_id,
+            "id": new_project_id,
+            "title": new_project_title,
+            "description": "Develop the primary user interface and logic for the assigned corporate simulation room.",
+            "techStack": "React, TypeScript, TailwindCSS, Vite",
+            "deadline": "2026-10-01",
+            "status": "Planning",
+            "createdAt": datetime.utcnow().isoformat(),
+            "companyId": invite.get("companyId") or "default"
+        }
+        projects_collection.update_one(
+            {"title": new_project_title},
+            {"$set": db_project},
+            upsert=True
+        )
+        db_project = projects_collection.find_one({"title": new_project_title})
+
+    if db_project:
+        real_project_id = db_project.get("id") or str(db_project.get("_id"))
+        real_project_title = db_project.get("title")
+        invite["projectId"] = real_project_id
+        invite["projectTitle"] = real_project_title
+        invite["projectName"] = real_project_title
+        
+    invite["assignedRole"] = invite.get("role") or invite.get("roleAssigned") or "Frontend Engineer"
+    invite["role"] = invite.get("role") or invite.get("roleAssigned") or "Frontend Engineer"
+
+    # Always synchronize/update candidate profile in the users collection with the latest invite details!
+    print("Synchronizing candidate profile in users collection with the latest invite details")
+    app.logger.info("Synchronizing candidate profile in users collection with the latest invite details")
+    
+    invite_details = {
+        "companyId": invite.get("companyId"),
+        "companyName": invite.get("companyName"),
+        "projectId": invite.get("projectId"),
+        "projectTitle": invite.get("projectTitle"),
+        "projectName": invite.get("projectTitle"),
+        "experienceLevel": invite.get("experienceLevel"),
+        "assignedRole": invite.get("assignedRole"),
+    }
+    
+    user_id = str(uuid.uuid4())
+    user_update = {
+        "name": invite.get("name") or invite.get("candidateName") or "Invited Candidate",
+        "role": "invited candidate",
+        "updatedAt": datetime.utcnow().isoformat(),
+        **invite_details,
+    }
+    
+    users_collection.update_one(
+        {"email": email},
+        {
+            "$set": user_update,
+            "$setOnInsert": {
+                "id": user_id,
+                "_id": user_id,
+                "password_hash": generate_password_hash("password123"), # Safe fallback
+                "createdAt": datetime.utcnow().isoformat(),
+                "score": 0,
+                "progress": 0,
+            },
+        },
+        upsert=True,
+    )
+
+    if "_id" in invite:
+        invite["_id"] = str(invite["_id"])
+    else:
+        invite["_id"] = invite.get("id") or "invite-id"
+
     return jsonify({"success": True, "invited": True, "invite": invite}), 200
 
 
@@ -761,11 +932,11 @@ def _resolve_db_driven_simulation_args(payload: dict):
     # 1. Look up invite by email to find assigned project
     invite = None
     if email:
-        invite = invited_candidates_collection.find_one({"email": email.strip().lower(), "status": "active"})
+        invite = _get_valid_invite(email)
         if invite:
             project_id_arg = invite.get("projectId") or project_id_arg
-            role = invite.get("role") or role
-            participant_name = invite.get("name") or participant_name
+            role = invite.get("role") or invite.get("roleAssigned") or invite.get("assignedRole") or role
+            participant_name = invite.get("name") or invite.get("candidateName") or participant_name
             
     # 2. Look up project details in database
     project = None
@@ -799,6 +970,14 @@ def _resolve_db_driven_simulation_args(payload: dict):
             db_context["workspace_files"] = project.get("workspace_files")
             
         task_context = {**db_context, **task_context}
+        
+        # If the resolved role is generic, overwrite it with the actual task role
+        role_val = db_context.get("role") or role
+        if role_val and any(generic in str(role_val).lower() for generic in ("candidate", "user", "guest")):
+            actual_role = (invite.get("role") or invite.get("roleAssigned") or invite.get("assignedRole") if invite else None) or (project.get("role") if project else None)
+            if actual_role:
+                db_context["role"] = actual_role
+                role = actual_role
         
         # Dynamically set task_id based on role to load correct starter files & agents
         if not task_id:

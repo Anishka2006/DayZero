@@ -2737,6 +2737,17 @@ function backendTaskContext() {
 }
 
 async function createSession() {
+  let email = "";
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const userObj = JSON.parse(userStr);
+      email = userObj.email || "";
+    }
+  } catch (e) {
+    console.warn("Failed to parse user from localStorage in createSession", e);
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -2745,8 +2756,11 @@ async function createSession() {
       role: currentRole(),
       participant_name: candidateName(),
       task_context: backendTaskContext(),
+      email: email,
+      candidateEmail: email,
     }),
   });
+
   if (!response.ok) {
     throw new Error("Could not create session.");
   }

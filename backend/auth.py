@@ -12,9 +12,9 @@ from flask_cors import CORS
 from werkzeug.security import check_password_hash, generate_password_hash
 
 try:
-    from .db import invited_candidates_collection, users_collection
+    from .db import invited_candidates_collection, users_collection, invites_collection
 except ImportError:
-    from db import invited_candidates_collection, users_collection
+    from db import invited_candidates_collection, users_collection, invites_collection
 
 load_dotenv()
 
@@ -102,22 +102,31 @@ def public_user(user: dict) -> dict:
         "companyName": user.get("companyName"),
         "projectId": user.get("projectId"),
         "projectTitle": user.get("projectTitle"),
+        "projectName": user.get("projectName") or user.get("projectTitle"),
         "experienceLevel": user.get("experienceLevel"),
         "assignedRole": user.get("assignedRole"),
     }
 
 
 def invite_details_for(email: str) -> dict:
-    invite = invited_candidates_collection.find_one({"email": email, "status": "active"})
-    if not invite:
+    email_clean = str(email or "").strip().lower()
+    invite = invited_candidates_collection.find_one({"email": email_clean})
+    db_invite = invites_collection.find_one({"email": email_clean})
+    record = {**(invite or {}), **(db_invite or {})}
+    if not record:
+        return {}
+    status = str(record.get("status") or record.get("inviteStatus") or "").strip().lower()
+    if status not in {"invited", "accepted", "active"}:
         return {}
     return {
-        "companyId": invite.get("companyId"),
-        "companyName": invite.get("companyName"),
-        "projectId": invite.get("projectId"),
-        "projectTitle": invite.get("projectTitle"),
-        "experienceLevel": invite.get("experienceLevel"),
-        "assignedRole": invite.get("role"),
+        "name": record.get("name") or record.get("candidateName"),
+        "companyId": record.get("companyId") or record.get("company"),
+        "companyName": record.get("companyName") or record.get("company"),
+        "projectId": record.get("projectId") or record.get("projectAssigned"),
+        "projectTitle": record.get("projectTitle") or record.get("projectName"),
+        "projectName": record.get("projectName") or record.get("projectTitle"),
+        "experienceLevel": record.get("experienceLevel"),
+        "assignedRole": record.get("assignedRole") or record.get("roleAssigned") or record.get("role"),
     }
 
 
@@ -189,7 +198,33 @@ def login():
     if not email or not password:
         return jsonify({"success": False, "error": "Email and password are required."}), 400
 
+    invite_details = invite_details_for(email)
     user = users_collection.find_one({"email": email})
+    if not user and invite_details:
+        user = {
+            "id": str(uuid.uuid4()),
+            "name": invite_details.get("name") or "Invited Candidate",
+            "email": email,
+            "role": "invited candidate",
+            "password_hash": generate_password_hash(password),
+            "updatedAt": datetime.utcnow().isoformat(),
+            **invite_details,
+        }
+        users_collection.update_one(
+            {"email": email},
+            {
+                "$set": user,
+                "$setOnInsert": {
+                    "_id": user["id"],
+                    "createdAt": datetime.utcnow().isoformat(),
+                    "score": 0,
+                    "progress": 0,
+                },
+            },
+            upsert=True,
+        )
+        user = users_collection.find_one({"email": email}) or user
+
     stored_hash = str((user or {}).get("password_hash") or "")
     legacy_password = str((user or {}).get("password") or "")
     password_ok = bool(stored_hash and check_password_hash(stored_hash, password)) or bool(legacy_password and legacy_password == password)
@@ -200,7 +235,6 @@ def login():
     if requested_role and requested_role not in {user_role, "candidate"}:
         return jsonify({"success": False, "error": f"This account is registered as '{user_role}'."}), 403
 
-    invite_details = invite_details_for(email)
     if invite_details and user_role in {"user", "candidate", "invited candidate"}:
         users_collection.update_one(
             {"email": email},

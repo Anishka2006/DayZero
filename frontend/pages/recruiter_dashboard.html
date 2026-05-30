@@ -3966,35 +3966,25 @@
   }
 
   function loadCandidates() {
-    var stored = null;
-    try {
-      stored = window.storageUtils ? window.storageUtils.get("recruiter_candidates") : JSON.parse(localStorage.getItem("recruiter_candidates"));
-    } catch (e) {}
-    
-    if (stored && stored.length > 0) {
-      ALL_CANDIDATES = stored;
-    } else {
-      // Seed default candidates with companyIds
-      ALL_CANDIDATES = [
-        { id:1,  name:"Reha Yadav",    initials:"RY", college:"IIT Guwahati",         score:95, progress:82, topSkill:"Prioritization", status:"shortlisted", joinedMs: Date.now()-2*60*1000,      skills:{Leadership:91,Communication:84,Execution:79,ProblemSolving:88,Adaptability:95}, companyId: "google" },
-        { id:2,  name:"Arjun Sharma",   initials:"AS", college:"IIT Delhi",          score:89, progress:71, topSkill:"Execution",       status:"on-track",    joinedMs: Date.now()-8*60*1000,      skills:{Leadership:78,Communication:80,Execution:91,ProblemSolving:82,Adaptability:85}, companyId: "amazon" },
-        { id:3,  name:"Priya Mehta",    initials:"PM", college:"BITS Pilani",        score:86, progress:68, topSkill:"Leadership",      status:"shortlisted", joinedMs: Date.now()-15*60*1000,     skills:{Leadership:92,Communication:88,Execution:73,ProblemSolving:79,Adaptability:80}, companyId: "google" },
-        { id:4,  name:"Kiran Patel",    initials:"KP", college:"NIT Trichy",         score:84, progress:60, topSkill:"Communication",   status:"on-track",    joinedMs: Date.now()-22*60*1000,     skills:{Leadership:70,Communication:90,Execution:77,ProblemSolving:81,Adaptability:74}, companyId: "microsoft" },
-        { id:5,  name:"Aditya Rao",     initials:"AR", college:"VIT Vellore",        score:80, progress:55, topSkill:"Problem Solving", status:"on-track",    joinedMs: Date.now()-30*60*1000,     skills:{Leadership:72,Communication:75,Execution:80,ProblemSolving:87,Adaptability:78}, companyId: "amazon" },
-        { id:6,  name:"Sneha Joshi",    initials:"SJ", college:"DTU Delhi",          score:78, progress:50, topSkill:"Adaptability",    status:"on-track",    joinedMs: Date.now()-60*60*1000,     skills:{Leadership:68,Communication:76,Execution:74,ProblemSolving:72,Adaptability:85}, companyId: "netflix" },
-        { id:7,  name:"Rohit Nair",     initials:"RN", college:"NSIT Delhi",         score:74, progress:44, topSkill:"Execution",       status:"at-risk",     joinedMs: Date.now()-2*60*60*1000,   skills:{Leadership:60,Communication:68,Execution:80,ProblemSolving:65,Adaptability:70}, companyId: "google" },
-        { id:8,  name:"Meera Iyer",     initials:"MI", college:"SPIT Mumbai",        score:72, progress:40, topSkill:"Communication",   status:"on-track",    joinedMs: Date.now()-2*60*60*1000,   skills:{Leadership:65,Communication:79,Execution:68,ProblemSolving:70,Adaptability:74}, companyId: "microsoft" },
-        { id:9,  name:"Vivek Kumar",    initials:"VK", college:"RVCE Bangalore",     score:69, progress:38, topSkill:"Leadership",      status:"at-risk",     joinedMs: Date.now()-3*60*60*1000,   skills:{Leadership:74,Communication:60,Execution:65,ProblemSolving:62,Adaptability:69}, companyId: "openai" },
-        { id:10, name:"Pooja Gupta",    initials:"PG", college:"Thapar Patiala",     score:91, progress:74, topSkill:"Strategy",        status:"shortlisted", joinedMs: Date.now()-5*60*1000,      skills:{Leadership:85,Communication:88,Execution:82,ProblemSolving:90,Adaptability:88}, companyId: "openai" },
-        { id:11, name:"Sameer Khan",    initials:"SK", college:"COEP Pune",          score:76, progress:52, topSkill:"Problem Solving", status:"on-track",    joinedMs: Date.now()-45*60*1000,     skills:{Leadership:71,Communication:73,Execution:74,ProblemSolving:83,Adaptability:75}, companyId: "google" },
-        { id:12, name:"Ananya Reddy",   initials:"AR", college:"IIIT Hyderabad",     score:83, progress:63, topSkill:"Adaptability",    status:"on-track",    joinedMs: Date.now()-20*60*1000,     skills:{Leadership:76,Communication:80,Execution:79,ProblemSolving:81,Adaptability:86}, companyId: "amazon" },
-        { id:13, name:"Dev Malhotra",   initials:"DM", college:"IIT Bombay",         score:66, progress:35, topSkill:"Communication",   status:"at-risk",     joinedMs: Date.now()-4*60*60*1000,   skills:{Leadership:58,Communication:72,Execution:60,ProblemSolving:64,Adaptability:62}, companyId: "netflix" },
-        { id:14, name:"Tanvi Singh",    initials:"TS", college:"Manipal University", score:79, progress:56, topSkill:"Leadership",      status:"on-track",    joinedMs: Date.now()-60*60*1000,     skills:{Leadership:80,Communication:74,Execution:75,ProblemSolving:76,Adaptability:77}, companyId: "google" }
-      ];
-      saveCandidates();
-    }
+    // 1. Seed/load default baseline candidates (so pre-existing UI works perfectly)
+    ALL_CANDIDATES = [
+      { id:1,  name:"Reha Yadav",    initials:"RY", college:"IIT Guwahati",         score:95, progress:82, topSkill:"Prioritization", status:"shortlisted", joinedMs: Date.now()-2*60*1000,      skills:{Leadership:91,Communication:84,Execution:79,ProblemSolving:88,Adaptability:95}, companyId: "google" },
+      { id:2,  name:"Arjun Sharma",   initials:"AS", college:"IIT Delhi",          score:89, progress:71, topSkill:"Execution",       status:"on-track",    joinedMs: Date.now()-8*60*1000,      skills:{Leadership:78,Communication:80,Execution:91,ProblemSolving:82,Adaptability:85}, companyId: "amazon" },
+      { id:3,  name:"Priya Mehta",    initials:"PM", college:"BITS Pilani",        score:86, progress:68, topSkill:"Leadership",      status:"shortlisted", joinedMs: Date.now()-15*60*1000,     skills:{Leadership:92,Communication:88,Execution:73,ProblemSolving:79,Adaptability:80}, companyId: "google" },
+      { id:4,  name:"Kiran Patel",    initials:"KP", college:"NIT Trichy",         score:84, progress:60, topSkill:"Communication",   status:"on-track",    joinedMs: Date.now()-22*60*1000,     skills:{Leadership:70,Communication:90,Execution:77,ProblemSolving:81,Adaptability:74}, companyId: "microsoft" },
+      { id:5,  name:"Aditya Rao",     initials:"AR", college:"VIT Vellore",        score:80, progress:55, topSkill:"Problem Solving", status:"on-track",    joinedMs: Date.now()-30*60*1000,     skills:{Leadership:72,Communication:75,Execution:80,ProblemSolving:87,Adaptability:78}, companyId: "amazon" },
+      { id:6,  name:"Sneha Joshi",    initials:"SJ", college:"DTU Delhi",          score:78, progress:50, topSkill:"Adaptability",    status:"on-track",    joinedMs: Date.now()-60*60*1000,     skills:{Leadership:68,Communication:76,Execution:74,ProblemSolving:72,Adaptability:85}, companyId: "netflix" },
+      { id:7,  name:"Rohit Nair",     initials:"RN", college:"NSIT Delhi",         score:74, progress:44, topSkill:"Execution",       status:"at-risk",     joinedMs: Date.now()-2*60*60*1000,   skills:{Leadership:60,Communication:68,Execution:80,ProblemSolving:65,Adaptability:70}, companyId: "google" },
+      { id:8,  name:"Meera Iyer",     initials:"MI", college:"SPIT Mumbai",        score:72, progress:40, topSkill:"Communication",   status:"on-track",    joinedMs: Date.now()-2*60*60*1000,   skills:{Leadership:65,Communication:79,Execution:68,ProblemSolving:70,Adaptability:74}, companyId: "microsoft" },
+      { id:9,  name:"Vivek Kumar",    initials:"VK", college:"RVCE Bangalore",     score:69, progress:38, topSkill:"Leadership",      status:"at-risk",     joinedMs: Date.now()-3*60*60*1000,   skills:{Leadership:74,Communication:60,Execution:65,ProblemSolving:62,Adaptability:69}, companyId: "openai" },
+      { id:10, name:"Pooja Gupta",    initials:"PG", college:"Thapar Patiala",     score:91, progress:74, topSkill:"Strategy",        status:"shortlisted", joinedMs: Date.now()-5*60*1000,      skills:{Leadership:85,Communication:88,Execution:82,ProblemSolving:90,Adaptability:88}, companyId: "openai" },
+      { id:11, name:"Sameer Khan",    initials:"SK", college:"COEP Pune",          score:76, progress:52, topSkill:"Problem Solving", status:"on-track",    joinedMs: Date.now()-45*60*1000,     skills:{Leadership:71,Communication:73,Execution:74,ProblemSolving:83,Adaptability:75}, companyId: "google" },
+      { id:12, name:"Ananya Reddy",   initials:"AR", college:"IIIT Hyderabad",     score:83, progress:63, topSkill:"Adaptability",    status:"on-track",    joinedMs: Date.now()-20*60*1000,     skills:{Leadership:76,Communication:80,Execution:79,ProblemSolving:81,Adaptability:86}, companyId: "amazon" },
+      { id:13, name:"Dev Malhotra",   initials:"DM", college:"IIT Bombay",         score:66, progress:35, topSkill:"Communication",   status:"at-risk",     joinedMs: Date.now()-4*60*60*1000,   skills:{Leadership:58,Communication:72,Execution:60,ProblemSolving:64,Adaptability:62}, companyId: "netflix" },
+      { id:14, name:"Tanvi Singh",    initials:"TS", college:"Manipal University", score:79, progress:56, topSkill:"Leadership",      status:"on-track",    joinedMs: Date.now()-60*60*1000,     skills:{Leadership:80,Communication:74,Execution:75,ProblemSolving:76,Adaptability:77}, companyId: "google" }
+    ];
 
-    // Check if the current company has any candidates. If not, seed a rich set dynamically!
+    // Seed for current company if empty
     var companyCands = ALL_CANDIDATES.filter(function(c) { return c.companyId === currentCompany; });
     if (companyCands.length === 0) {
       var seedNames = [
@@ -4029,12 +4019,90 @@
         };
       });
       ALL_CANDIDATES = ALL_CANDIDATES.concat(newCands);
-      saveCandidates();
     }
     
-    // Assign CANDIDATES to be the filtered candidate list for currentCompany!
     CANDIDATES = ALL_CANDIDATES.filter(function(c) { return c.companyId === currentCompany; });
+
+    // Fetch live invited candidates from MongoDB and merge them
+    var companyId = currentCompany || "";
+    var recruiterId = recruiter.recruiterEmail || recruiter.email || "";
+    if (!companyId && !recruiterId) return;
+
+    var params = [];
+    if (companyId)   params.push("companyId="   + encodeURIComponent(companyId));
+    if (recruiterId) params.push("recruiterId=" + encodeURIComponent(recruiterId));
+    var url = (window.API_BASE_URL || "") + "/api/invites?" + params.join("&");
+
+    fetch(url)
+      .then(function(res) {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        if (!data.success || !Array.isArray(data.invites) || data.invites.length === 0) return;
+
+        var changed = false;
+        data.invites.forEach(function(inv) {
+          var email = (inv.email || inv.candidateEmail || "").toLowerCase();
+          var id    = inv.id || inv._id || inv.candidateId || inv.inviteId || "";
+
+          // Check if already exists in ALL_CANDIDATES
+          var exists = ALL_CANDIDATES.find(function(c) {
+            return (email && (c.email || "").toLowerCase() === email) || (id && String(c.id) === String(id));
+          });
+          if (exists) {
+            // Keep status in sync in case status changed
+            if (exists.status !== "invited" && exists.status !== "shortlisted" && exists.status !== "on-track" && exists.status !== "at-risk") {
+              exists.status = inv.status || inv.inviteStatus || "invited";
+            }
+            return;
+          }
+
+          var name     = inv.name || inv.candidateName || "Invited Candidate";
+          var initials = name.split(" ").map(function(n) { return n[0] || ""; }).join("").toUpperCase().slice(0, 2) || "IC";
+          var skillsRaw = inv.skills;
+          var topSkill  = "Problem Solving";
+          if (Array.isArray(skillsRaw) && skillsRaw.length) {
+            topSkill = skillsRaw[0];
+          } else if (typeof skillsRaw === "string" && skillsRaw.trim()) {
+            topSkill = skillsRaw.split(",")[0].trim();
+          }
+
+          ALL_CANDIDATES.unshift({
+            id:          id || ("inv-" + email),
+            name:        name,
+            email:       email,
+            initials:    initials,
+            college:     inv.college || "",
+            score:       0,
+            progress:    0,
+            topSkill:    topSkill,
+            status:      inv.status || inv.inviteStatus || "invited",
+            joinedMs:    inv.createdAt ? new Date(inv.createdAt).getTime() : Date.now(),
+            skills:      { Leadership: 0, Communication: 0, Execution: 0, ProblemSolving: 0, Adaptability: 0 },
+            companyId:   companyId
+          });
+          changed = true;
+        });
+
+        if (changed) {
+          saveCandidates();
+          CANDIDATES = ALL_CANDIDATES.filter(function(c) { return c.companyId === currentCompany; });
+          updateStatCards();
+          renderTable();
+          renderSkillHeatmap();
+          renderDistChart();
+        }
+      })
+      .catch(function(err) {
+        console.warn("[DayZero] Could not load invited candidates from backend:", err);
+      });
   }
+
+  function loadCandidatesFromBackend() {
+    // Handled dynamically inside loadCandidates()
+  }
+  // ── END loadCandidatesFromBackend ─────────────────────────────────────────
 
   function saveProjects() {
     if (window.storageUtils) {
@@ -5294,6 +5362,7 @@
     if (dashView) dashView.style.display="block";
 
     loadCandidates();
+    loadCandidatesFromBackend(); // fetch real invited candidates from MongoDB
     loadSimulations();
     loadProjects();
     initProjectFeatures();

@@ -84,7 +84,25 @@ bindLevelButtons();
 
 if (continueBtn) {
   continueBtn.addEventListener("click", () => {
+    let user = {};
+    try {
+      user = JSON.parse(localStorage.getItem("user")) || {};
+    } catch (e) {
+      console.warn("Could not parse user from localStorage", e);
+    }
+    
+    // Standardize user object matching requirements
+    user.selectedRole = profile.role;
+    user.experienceLevel = profile.level;
+    user.role = "demo user";
+    user.accountType = "demo_user";
+    
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("userRole", profile.role);
+    localStorage.setItem("userExperience", profile.level);
+    localStorage.setItem("role", "demo user");
     localStorage.setItem("candidateSetupComplete", "true");
+    
     clearCandidateSimulationState();
     window.location.href = "dashboard.html";
   });

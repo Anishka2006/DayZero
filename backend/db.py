@@ -68,3 +68,5 @@ recruiters_collection = db["recruiters"]
 invited_candidates_collection = db["invited_candidates"]
 invites_collection = db["invites"]
 projects_collection = db["projects"]
+candidates_collection = db["candidates"]
+

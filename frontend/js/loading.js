@@ -126,6 +126,16 @@ function showError(message) {
   }
 }
 
+function isInvitedCandidateSession() {
+  return localStorage.getItem("role") === "invited candidate";
+}
+
+function hideDemoLaunchControls() {
+  [document.getElementById("demoBtn"), document.getElementById("errorDemoBtn")].forEach((button) => {
+    if (button) button.style.display = "none";
+  });
+}
+
 function hideFallback() {
   if (fallbackSection) {
     fallbackSection.classList.remove("visible");
@@ -348,6 +358,15 @@ async function initializeSession() {
   try {
     await wakeBackendService();
 
+    const userStr = localStorage.getItem("user");
+    let candidateEmail = "";
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+        candidateEmail = userObj.email || "";
+      } catch (e) {}
+    }
+
     const response = await fetchWithTimeout(`${API_BASE_URL}/api/sessions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -356,6 +375,8 @@ async function initializeSession() {
         role: role || "Frontend",
         difficulty: difficulty || "Medium",
         participant_name: localStorage.getItem("userName") || "Candidate",
+        email: candidateEmail,
+        candidateEmail: candidateEmail,
         task_context: taskContext,
       }),
     }, 8000);
@@ -382,15 +403,23 @@ async function startLoadingSequence() {
   const runId = ++loadingRunId;
   startMessageRotation();
   startProgressAnimation();
+  const invitedCandidate = isInvitedCandidateSession();
+  if (invitedCandidate) {
+    hideDemoLaunchControls();
+  }
 
   // Show fallback options after 2.5 seconds
   fallbackTimer = setTimeout(() => {
-    showFallback("Connecting to live simulation server... Or launch in Demo Mode immediately.");
+    showFallback(invitedCandidate
+      ? "Connecting to your assigned recruiter workspace..."
+      : "Connecting to live simulation server... Or launch in Demo Mode immediately.");
   }, 2500);
 
   // Show error / demo mode option after 6 seconds
   errorTimer = setTimeout(() => {
-    showError("You can launch in Offline Demo Mode.");
+    showError(invitedCandidate
+      ? "Could not load the assigned workspace yet. Please retry once the backend is reachable."
+      : "You can launch in Offline Demo Mode.");
   }, 6000);
 
   try {
@@ -407,6 +436,13 @@ async function startLoadingSequence() {
     }
   } catch (error) {
     if (runId !== loadingRunId) return;
+    if (invitedCandidate) {
+      console.warn("Could not connect to live backend for invited candidate workspace.", error);
+      cleanup();
+      setStatus("Assigned workspace could not be loaded.");
+      showError("Could not load the assigned workspace. Please retry after backend verification succeeds.");
+      return;
+    }
     console.warn("Could not connect to live backend, falling back to local simulation mode.", error);
     cleanup();
     setStatus("Active backend not detected. Booting Offline Demo Workspace...");

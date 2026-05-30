@@ -1805,14 +1805,7 @@ function hydrateDynamicUser() {
   const sidebarBadge = document.getElementById("sidebarCompanyBadge");
   const studentAvatar = document.getElementById("studentAvatar");
   const roleBadge = document.getElementById("topbarRoleBadge");
-
-  if (sidebarName) sidebarName.innerText = user.name;
-  if (sidebarBadge) {
-    sidebarBadge.innerText = user.company;
-    sidebarBadge.className = `company-badge ${user.company.toLowerCase()}`;
-  }
-  if (studentAvatar) studentAvatar.innerText = initials;
-  if (roleBadge) roleBadge.innerText = `${user.role} (${localStorage.getItem("userExperience") || "Intermediate"})`;
+  const sidebarRoleEl = document.getElementById("sidebarUserSelectedRole");
 
   // drawer elements
   const dAvatar = document.getElementById("drawerAvatar");
@@ -1821,22 +1814,49 @@ function hydrateDynamicUser() {
   const dBadge = document.getElementById("drawerCompanyBadge");
   const dRole = document.getElementById("drawerRole");
   const dLevel = document.getElementById("drawerLevel");
-  
-  if (dAvatar) dAvatar.innerText = initials;
-  if (dName) dName.innerText = user.name;
-  if (dEmail) dEmail.innerText = user.email;
-  if (dBadge) dBadge.innerText = user.company;
-  if (dRole) dRole.innerText = user.role;
-  if (dLevel) dLevel.innerText = localStorage.getItem("userExperience") || "Intermediate";
 
   // skillrecord elements
   const cAvatar = document.getElementById("candidateAvatar");
   const cName = document.getElementById("candidateName");
   const cRole = document.getElementById("candidateRole");
 
+  const isDemo = (user.role === "demo user" || localStorage.getItem("role") === "demo user");
+  const userDispRole = isDemo ? (localStorage.getItem("userRole") || user.selectedRole || "Frontend Engineer") : user.role;
+  const userDispCompany = isDemo ? "DEMO WORKSPACE" : user.company;
+
+  if (sidebarName) sidebarName.innerText = user.name;
+  if (sidebarRoleEl) {
+    if (isDemo) {
+      sidebarRoleEl.innerText = userDispRole;
+      sidebarRoleEl.style.display = "block";
+    } else {
+      sidebarRoleEl.style.display = "none";
+    }
+  }
+  if (sidebarBadge) {
+    sidebarBadge.innerText = userDispCompany;
+    sidebarBadge.className = `company-badge ${userDispCompany.toLowerCase().replace(/\s+/g, "-")}`;
+  }
+  if (studentAvatar) studentAvatar.innerText = initials;
+  
+  if (roleBadge) {
+    if (isDemo) {
+      roleBadge.innerText = `${user.name} (${localStorage.getItem("userExperience") || "Intermediate"})`;
+    } else {
+      roleBadge.innerText = `${user.role} (${localStorage.getItem("userExperience") || "Intermediate"})`;
+    }
+  }
+
+  if (dAvatar) dAvatar.innerText = initials;
+  if (dName) dName.innerText = user.name;
+  if (dEmail) dEmail.innerText = user.email;
+  if (dBadge) dBadge.innerText = userDispCompany;
+  if (dRole) dRole.innerText = userDispRole;
+  if (dLevel) dLevel.innerText = localStorage.getItem("userExperience") || "Intermediate";
+
   if (cAvatar) cAvatar.innerText = initials;
   if (cName) cName.innerText = user.name;
-  if (cRole) cRole.innerText = user.role;
+  if (cRole) cRole.innerText = userDispRole;
 
   // Handle demo active badge display
   const demoBadge = document.getElementById("demoBadge");
