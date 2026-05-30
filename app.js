@@ -70,6 +70,20 @@ function parseRecruiterEmail(email) {
     const username = parts[0];
     const domain = parts[1];
     
+    const blockedPersonalProviders = [
+      "gmail.com",
+      "yahoo.com",
+      "outlook.com",
+      "hotmail.com",
+      "icloud.com",
+      "proton.me",
+      "live.com",
+      "aol.com"
+    ];
+    if (blockedPersonalProviders.includes(domain)) {
+      return null;
+    }
+    
     const domainParts = domain.split(".");
     if (domainParts.length >= 2) {
       companyName = domainParts[0];
@@ -603,6 +617,26 @@ function initAuthModal() {
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
 
+    // Recruiter email domain validation for personal providers
+    if (role === "recruiter") {
+      const emailVal = (email || "").trim().toLowerCase();
+      const domain = emailVal.split("@")[1] || "";
+      const blockedPersonalProviders = [
+        "gmail.com",
+        "yahoo.com",
+        "outlook.com",
+        "hotmail.com",
+        "icloud.com",
+        "proton.me",
+        "live.com",
+        "aol.com"
+      ];
+      if (blockedPersonalProviders.includes(domain)) {
+        showToast("Recruiters must sign in using their company email address.", "error");
+        return;
+      }
+    }
+
     // Intercept recruiter auth for dynamic, professional-only access control
     if (role === "recruiter") {
       const profile = parseRecruiterEmail(email);
@@ -669,7 +703,7 @@ function initAuthModal() {
       return;
     }
 
-    if (role === "user") {
+    if (role === "user" && isLogin) {
       submitBtn.disabled = true;
       submitBtn.innerText = "Please wait...";
 
@@ -821,6 +855,14 @@ function initAuthModal() {
       console.log("DATA:", data);
 
       if (res.ok) {
+        if (!isLogin) {
+          showToast("Account created successfully! Please log in to continue.", "success");
+          setAuthMode("login");
+          document.getElementById("auth-password").value = "";
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Log In";
+          return;
+        }
         showToast(data.message || "Success 🎉", "success");
 
         const profile = parseRecruiterEmail(email);
@@ -900,6 +942,14 @@ function initAuthModal() {
 
       } else {
         console.warn("API returned error, using dynamic client-side authentication fallback");
+        if (!isLogin) {
+          showToast("Account created successfully (Demo Mode)! Please log in to continue.", "success");
+          setAuthMode("login");
+          document.getElementById("auth-password").value = "";
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Log In";
+          return;
+        }
         const profile = parseRecruiterEmail(email);
         const userData = {
           name: name || profile.name,
@@ -925,6 +975,14 @@ function initAuthModal() {
 
     } catch (err) {
       console.warn("Network error, using dynamic client-side authentication fallback:", err);
+      if (!isLogin) {
+        showToast("Account created successfully (Demo Mode)! Please log in to continue.", "success");
+        setAuthMode("login");
+        document.getElementById("auth-password").value = "";
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Log In";
+        return;
+      }
       const profile = parseRecruiterEmail(email);
       const userData = {
         name: name || profile.name,
