@@ -196,7 +196,7 @@ def _get_valid_invite(email: str):
         
     if merged:
         status = str(merged.get("status") or merged.get("inviteStatus") or "").strip().lower()
-        if status in {"invited", "accepted", "active"}:
+        if status not in {"revoked", "cancelled", "expired"}:
             return merged
             
     return None
@@ -368,7 +368,7 @@ def create_invite():
         # 1. Search by project ID in db
         if project_id:
             try:
-                assigned_project = projects_collection.find_one({"id": project_id}) or projects_collection.find_one({"_id": project_id})
+                assigned_project = _find_project_by_id(project_id)
             except Exception as find_err:
                 app.logger.error(f"Failed to find project by ID: {find_err}")
                 raise find_err
@@ -579,7 +579,7 @@ def validate_invite():
     db_project = None
     
     if real_project_id:
-        db_project = projects_collection.find_one({"id": real_project_id}) or projects_collection.find_one({"_id": real_project_id})
+        db_project = _find_project_by_id(real_project_id)
     if not db_project and real_project_title:
         db_project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(real_project_title)}$", "$options": "i"}})
         
@@ -822,6 +822,36 @@ def _preview(value: object, limit: int = 140) -> str:
     return text[:limit] + ("..." if len(text) > limit else "")
 
 
+@app.route("/api/projects", methods=["GET"])
+def get_projects():
+    try:
+        company_id = request.args.get("companyId")
+        query = {}
+        if company_id:
+            query["companyId"] = company_id
+        projs = list(projects_collection.find(query))
+        for p in projs:
+            p["_id"] = str(p["_id"])
+        return jsonify({"success": True, "projects": projs}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching projects: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/projects/<project_id>", methods=["GET"])
+def get_project_by_id(project_id):
+    try:
+        project = _find_project_by_id(project_id)
+        if not project:
+            return jsonify({"success": False, "error": "Project not found"}), 404
+        if "_id" in project:
+            project["_id"] = str(project["_id"])
+        return jsonify({"success": True, "project": project}), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching project {project_id}: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"ok": True, "message": "DayZero backend running"}), 200
@@ -919,6 +949,40 @@ def chat():
     return jsonify(response), 200
 
 
+def _find_project_by_id(project_id_arg):
+    if not project_id_arg:
+        return None
+    # Try direct match (string or whatever type it is)
+    project = projects_collection.find_one({"id": project_id_arg}) or projects_collection.find_one({"_id": project_id_arg})
+    
+    # Try numeric conversion
+    if not project:
+        try:
+            int_id = int(project_id_arg)
+            project = projects_collection.find_one({"id": int_id}) or projects_collection.find_one({"_id": int_id})
+        except (ValueError, TypeError):
+            pass
+            
+    # Try string conversion
+    if not project:
+        try:
+            str_id = str(project_id_arg)
+            project = projects_collection.find_one({"id": str_id}) or projects_collection.find_one({"_id": str_id})
+        except Exception:
+            pass
+            
+    # Try MongoDB ObjectId conversion
+    if not project:
+        from bson import ObjectId
+        try:
+            obj_id = ObjectId(project_id_arg)
+            project = projects_collection.find_one({"_id": obj_id}) or projects_collection.find_one({"id": obj_id})
+        except Exception:
+            pass
+            
+    return project
+
+
 def _resolve_db_driven_simulation_args(payload: dict):
     import uuid
     task_id = request.args.get("task_id") or payload.get("task_id")
@@ -939,9 +1003,7 @@ def _resolve_db_driven_simulation_args(payload: dict):
             participant_name = invite.get("name") or invite.get("candidateName") or participant_name
             
     # 2. Look up project details in database
-    project = None
-    if project_id_arg:
-        project = projects_collection.find_one({"id": project_id_arg}) or projects_collection.find_one({"_id": project_id_arg})
+    project = _find_project_by_id(project_id_arg)
         
     if not project and invite and invite.get("projectTitle"):
         project = projects_collection.find_one({"title": {"$regex": f"^{re.escape(invite.get('projectTitle'))}$", "$options": "i"}})
@@ -969,7 +1031,7 @@ def _resolve_db_driven_simulation_args(payload: dict):
         if project and project.get("workspace_files"):
             db_context["workspace_files"] = project.get("workspace_files")
             
-        task_context = {**db_context, **task_context}
+        task_context = {**task_context, **db_context}
         
         # If the resolved role is generic, overwrite it with the actual task role
         role_val = db_context.get("role") or role

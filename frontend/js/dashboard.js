@@ -711,6 +711,17 @@ function setCandidateRole(role) {
 
 function clearCandidateSimulationState() {
   localStorage.removeItem(ORCHESTRATOR_STATE_KEY);
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.indexOf(ORCHESTRATOR_STATE_KEY) === 0) {
+        localStorage.removeItem(key);
+        i--; // index resets on removal
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to clear project-specific simulation states", e);
+  }
   localStorage.removeItem("dayzero_task_id");
   localStorage.removeItem("selectedTaskId");
   localStorage.removeItem("dayzero_selected_task_details");
@@ -1084,7 +1095,17 @@ function getTasksForCurrentProfile() {
         if (foundTemplate) break;
       }
       
-      const template = foundTemplate || {
+      let storedDetails = null;
+      try {
+        const rawDetails = localStorage.getItem("dayzero_selected_task_details");
+        if (rawDetails) {
+          storedDetails = JSON.parse(rawDetails);
+        }
+      } catch (e) {
+        console.warn("Failed to parse dayzero_selected_task_details in getTasksForCurrentProfile", e);
+      }
+
+      const template = storedDetails || foundTemplate || {
         id: assignedProjectId,
         label: "Corporate Task",
         title: localStorage.getItem("projectTitle") || "Assigned Simulation Sprint",
@@ -1333,6 +1354,46 @@ function bindCandidateProfileSelections() {
   });
 }
 
+async function fetchAssignedProjectDetails() {
+  const role = localStorage.getItem("role") || "candidate";
+  if (role !== "invited candidate") return;
+
+  const projectId = localStorage.getItem("projectId") || "";
+  if (!projectId) return;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.project) {
+        const proj = data.project;
+        const candRole = getCandidateRole();
+        const level = localStorage.getItem("userExperience") || "Intermediate";
+        // Map project properties to dayzero_selected_task_details format
+        const taskDetails = {
+          id: proj.id || proj._id,
+          company: localStorage.getItem("companyName") || proj.companyName || "Corporate Partner",
+          title: proj.title || "Assigned Simulation Sprint",
+          label: proj.title || "Assigned Simulation Sprint",
+          role: candRole,
+          difficulty: level,
+          description: proj.description || "Execute the assigned simulation room for your company hiring round.",
+          skills: Array.isArray(proj.techStack) ? proj.techStack : (proj.techStack ? proj.techStack.split(",").map(s => s.trim()) : ["Strategy", "Execution"]),
+          logo: localStorage.getItem("companyName") ? localStorage.getItem("companyName").charAt(0) : "🏢"
+        };
+        localStorage.setItem("dayzero_selected_task_details", JSON.stringify(taskDetails));
+        localStorage.setItem("projectTitle", taskDetails.title);
+        localStorage.setItem("projectName", taskDetails.title);
+        
+        // Re-render task grid to show the newly fetched dynamic details!
+        renderTaskGrid();
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch assigned project details dynamically", error);
+  }
+}
+
 function initializeCandidateProfile() {
   setCandidateRole(localStorage.getItem("userRole"));
   if (!localStorage.getItem("userExperience")) {
@@ -1347,6 +1408,7 @@ function initializeCandidateProfile() {
   bindCandidateProfileSelections();
   updateCandidateSummary();
   hydrateDashboardWorkspaceFiles();
+  fetchAssignedProjectDetails();
 
   if (window.location.search.includes("locked=true")) {
     setTimeout(() => {
@@ -4133,9 +4195,23 @@ const teamChatInput = document.getElementById("teamChatInput");
 const teamChatSend = document.getElementById("teamChatSend");
 const teamChatHistory = document.getElementById("teamChatHistory");
 
+function getOrchestratorStateKey() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const projectId = user.projectId || localStorage.getItem("projectId") || "";
+    if (projectId) {
+      return `${ORCHESTRATOR_STATE_KEY}_${projectId}`;
+    }
+  } catch (e) {
+    console.warn("Error resolving orchestrator state key", e);
+  }
+  return ORCHESTRATOR_STATE_KEY;
+}
+
 function loadOrchestratorState() {
   try {
-    return JSON.parse(localStorage.getItem(ORCHESTRATOR_STATE_KEY) || "{}");
+    const key = getOrchestratorStateKey();
+    return JSON.parse(localStorage.getItem(key) || "{}");
   } catch (error) {
     return {};
   }
@@ -4146,7 +4222,8 @@ function saveOrchestratorState(nextState) {
     ...loadOrchestratorState(),
     ...nextState
   };
-  localStorage.setItem(ORCHESTRATOR_STATE_KEY, JSON.stringify(merged));
+  const key = getOrchestratorStateKey();
+  localStorage.setItem(key, JSON.stringify(merged));
   return merged;
 }
 
@@ -4249,11 +4326,22 @@ async function initializeLiveSimulation(forceRefresh = false) {
     return cached;
   }
 
+  let taskContext = {};
+  try {
+    const rawDetails = localStorage.getItem("dayzero_selected_task_details") || sessionStorage.getItem("dayzero_selected_task_details");
+    if (rawDetails) {
+      taskContext = JSON.parse(rawDetails);
+    }
+  } catch (e) {
+    console.warn("Could not load dayzero_selected_task_details", e);
+  }
+
   const payload = {
     role: role,
     email: user.email || "",
     projectId: user.projectId || localStorage.getItem("projectId") || "",
-    participant_name: user.name || localStorage.getItem("userName") || "You"
+    participant_name: user.name || localStorage.getItem("userName") || "You",
+    task_context: taskContext
   };
 
   const response = await fetch(`${API_BASE_URL}/api/simulation/start`, {

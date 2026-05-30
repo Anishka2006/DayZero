@@ -824,24 +824,78 @@ function initAuthModal() {
         showToast(data.message || "Success 🎉", "success");
 
         const profile = parseRecruiterEmail(email);
-        const userData = {
-          name: data.user?.name || name || profile.name,
-          email: data.user?.email || email,
-          role: data.user?.role || role || "candidate",
-          company: profile.companyName,
-          initials: profile.initials
-        };
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("role", userData.role);
+        const userRole = data.user?.role || role || "candidate";
+        
+        let userData;
+        if (userRole === "invited candidate" && data.user) {
+          const u = data.user;
+          const projectName = u.projectTitle || u.projectName || "Assigned Simulation Sprint";
+          const assignedRole = u.assignedRole || u.roleAssigned || u.role || "Frontend Engineer";
+          const initials = (u.name || "Invited Candidate").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+          userData = {
+            name: u.name,
+            email: u.email,
+            role: "invited candidate",
+            companyId: u.companyId,
+            companyName: u.companyName,
+            company: u.companyName,
+            projectId: u.projectId,
+            projectTitle: projectName,
+            projectName: projectName,
+            experienceLevel: u.experienceLevel || "Intermediate",
+            assignedRole: assignedRole,
+            initials: initials
+          };
+          
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("role", "invited candidate");
+          localStorage.setItem("companyId", u.companyId || "");
+          localStorage.setItem("companyName", u.companyName || "");
+          localStorage.setItem("userName", u.name || "Invited Candidate");
+          localStorage.setItem("userExperience", u.experienceLevel || "Intermediate");
+          localStorage.setItem("dayzero_task_id", u.projectId);
+          localStorage.setItem("projectId", u.projectId);
+          localStorage.setItem("projectTitle", projectName || "");
+          localStorage.setItem("projectName", projectName || "");
+          localStorage.setItem("userRole", assignedRole);
+          localStorage.setItem("candidateSetupComplete", "true");
+          
+          localStorage.setItem("dayzero_selected_task_details", JSON.stringify({
+            id: u.projectId,
+            company: u.companyName,
+            title: projectName,
+            label: projectName,
+            role: assignedRole,
+            difficulty: u.experienceLevel || "Intermediate",
+            description: "Execute the assigned simulation room for your company hiring round.",
+            skills: ["Strategy", "Execution"]
+          }));
+          
+          localStorage.removeItem("dayzero_orchestrator_state");
+          sessionStorage.removeItem("dayzero_session_data");
+        } else {
+          userData = {
+            name: data.user?.name || name || profile.name,
+            email: data.user?.email || email,
+            role: userRole,
+            company: profile.companyName,
+            initials: profile.initials
+          };
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("role", userData.role);
+        }
 
         authForm.reset();
         closeAuth();
 
         setTimeout(() => {
-          window.location.href =
-            userData.role === "recruiter"
-              ? "frontend/pages/recruiter_dashboard.html"
-              : "frontend/pages/roles.html";
+          if (userData.role === "recruiter") {
+            window.location.href = "frontend/pages/recruiter_dashboard.html";
+          } else if (userData.role === "invited candidate") {
+            window.location.href = "frontend/pages/dashboard.html";
+          } else {
+            window.location.href = "frontend/pages/roles.html";
+          }
         }, 1000);
 
       } else {

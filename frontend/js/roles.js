@@ -1,3 +1,7 @@
+if (localStorage.getItem("role") === "invited candidate") {
+  window.location.href = "dashboard.html";
+}
+
 const ROLE_ALIASES = {
   frontend: "Frontend Engineer",
   "frontend developer": "Frontend Engineer",
