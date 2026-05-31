@@ -371,7 +371,7 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ## 📞 Contact
 
-**Project Creator:** Anishka, Saavi, Richa, Neha, Akshaya
+**Contributors:** Anishka, Saavi, Richa, Neha, Akshaya
 **Email:** [info@dayzero.ai](mailto:info@dayzero.ai)  
 **Project Link:** [https://github.com/Anishka2006/DayZero](https://github.com/Anishka2006/DayZero)  
 **Demo Video Link:** [[https://github.com/Anishka2006/DayZero](https://github.com/Anishka2006/DayZero](https://drive.google.com/file/d/1uaeXJTsX1YiQnDN5_-6x9MYpOOLvvur5/view?usp=sharing))  
