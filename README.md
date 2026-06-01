@@ -372,7 +372,7 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 ## 📞 Contact
 
 **Contributors:** Anishka, Saavi, Richa, Neha, Akshaya       
-**Project Link:** [LINK](https://github.com/Anishka2006/DayZero)  
+**Project Link:** [LINK](https://anishka2006.github.io/DayZero/)  
 **Demo Video Link:** [LINK](https://drive.google.com/file/d/1uaeXJTsX1YiQnDN5_-6x9MYpOOLvvur5/view?usp=sharing)
 
 ---
