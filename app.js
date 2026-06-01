@@ -14,8 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initSprintLinks();
 });
 
-const AUTH_BASE_URL = window.AUTH_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
-const PLATFORM_API_BASE_URL = window.API_BASE_URL || "https://dayzero-backend-0n1y.onrender.com";
+const DAYZERO_RENDER_BACKEND_URL = "https://dayzero-backend-0n1y.onrender.com";
+const AUTH_BASE_URL = window.AUTH_BASE_URL || window.API_BASE_URL || DAYZERO_RENDER_BACKEND_URL;
+const PLATFORM_API_BASE_URL = window.API_BASE_URL || DAYZERO_RENDER_BACKEND_URL;
 
 
 // Hardcoded approved recruiter domains
@@ -68,6 +69,20 @@ function parseRecruiterEmail(email) {
     const parts = email.split("@");
     const username = parts[0];
     const domain = parts[1];
+    
+    const blockedPersonalProviders = [
+      "gmail.com",
+      "yahoo.com",
+      "outlook.com",
+      "hotmail.com",
+      "icloud.com",
+      "proton.me",
+      "live.com",
+      "aol.com"
+    ];
+    if (blockedPersonalProviders.includes(domain)) {
+      return null;
+    }
     
     const domainParts = domain.split(".");
     if (domainParts.length >= 2) {
@@ -602,6 +617,26 @@ function initAuthModal() {
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
 
+    // Recruiter email domain validation for personal providers
+    if (role === "recruiter") {
+      const emailVal = (email || "").trim().toLowerCase();
+      const domain = emailVal.split("@")[1] || "";
+      const blockedPersonalProviders = [
+        "gmail.com",
+        "yahoo.com",
+        "outlook.com",
+        "hotmail.com",
+        "icloud.com",
+        "proton.me",
+        "live.com",
+        "aol.com"
+      ];
+      if (blockedPersonalProviders.includes(domain)) {
+        showToast("Recruiters must sign in using their company email address.", "error");
+        return;
+      }
+    }
+
     // Intercept recruiter auth for dynamic, professional-only access control
     if (role === "recruiter") {
       const profile = parseRecruiterEmail(email);
@@ -668,7 +703,7 @@ function initAuthModal() {
       return;
     }
 
-    if (role === "user") {
+    if (role === "user" && isLogin) {
       submitBtn.disabled = true;
       submitBtn.innerText = "Please wait...";
 
@@ -679,30 +714,50 @@ function initAuthModal() {
         if (valData.success && valData.invited) {
           // Success! User is invited!
           const invite = valData.invite;
+          const projectName = invite.projectName || invite.projectTitle;
+          const assignedRole = invite.assignedRole || invite.roleAssigned || invite.role || "Frontend Engineer";
+          const initials = (invite.name || "Invited Candidate").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
           const userData = {
             name: invite.name,
             email: invite.email,
             role: "invited candidate",
             companyId: invite.companyId,
             companyName: invite.companyName,
+            company: invite.companyName,
             projectId: invite.projectId,
-            projectTitle: invite.projectTitle,
-            experienceLevel: invite.experienceLevel,
-            assignedRole: invite.role,
-            initials: invite.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+            projectTitle: projectName,
+            projectName: projectName,
+            experienceLevel: invite.experienceLevel || "Intermediate",
+            assignedRole: assignedRole,
+            initials: initials
           };
           
           showToast(`Welcome! Invitation active for ${invite.companyName} 🎉`, "success");
           localStorage.setItem("user", JSON.stringify(userData));
           localStorage.setItem("role", "invited candidate");
-          localStorage.setItem("companyId", invite.companyId);
-          localStorage.setItem("companyName", invite.companyName);
-          localStorage.setItem("userName", invite.name);
-          localStorage.setItem("userExperience", invite.experienceLevel);
+          localStorage.setItem("companyId", invite.companyId || "");
+          localStorage.setItem("companyName", invite.companyName || "");
+          localStorage.setItem("userName", invite.name || "Invited Candidate");
+          localStorage.setItem("userExperience", invite.experienceLevel || "Intermediate");
           localStorage.setItem("dayzero_task_id", invite.projectId);
           localStorage.setItem("projectId", invite.projectId);
-          localStorage.setItem("projectTitle", invite.projectTitle);
+          localStorage.setItem("projectTitle", projectName || "");
+          localStorage.setItem("projectName", projectName || "");
+          localStorage.setItem("userRole", assignedRole);
           localStorage.setItem("candidateSetupComplete", "true");
+          localStorage.setItem("dayzero_selected_task_details", JSON.stringify({
+            id: invite.projectId,
+            company: invite.companyName,
+            title: projectName,
+            label: projectName,
+            role: assignedRole,
+            difficulty: invite.experienceLevel || "Intermediate",
+            description: invite.description || invite.message || "Execute the assigned simulation room for your company hiring round.",
+            skills: Array.isArray(invite.skills) ? invite.skills : String(invite.skills || "").split(",").map(s => s.trim()).filter(Boolean)
+          }));
+
+          localStorage.removeItem("dayzero_orchestrator_state");
+          sessionStorage.removeItem("dayzero_session_data");
 
           authForm.reset();
           closeAuth();
@@ -712,53 +767,52 @@ function initAuthModal() {
           }, 1000);
           return;
         } else {
-          // Not invited! Intercept and redirect to Demo Mode gracefully!
-          showToast("Access restricted: Email not invited. Redirecting to Demo Mode 🌐", "error");
-          
-          const demoUser = {
-            name: name || "Demo Guest",
+          // Not invited: initialize public demo user flow
+          const profile = parseRecruiterEmail(email);
+          const initials = (name || profile.name || "Demo Guest").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+          const userData = {
+            name: name || profile.name || "Demo Guest",
             email: email,
             role: "demo user",
-            company: "Demo Workspace",
             companyId: "demo",
-            initials: "DG"
+            company: "Demo Workspace",
+            companyName: "Demo Workspace",
+            projectId: "demo-task",
+            projectTitle: "Demo Project",
+            projectName: "Demo Project",
+            experienceLevel: "Intermediate",
+            assignedRole: "Frontend Engineer",
+            initials: initials,
+            accountType: "demo_user"
           };
-          localStorage.setItem("user", JSON.stringify(demoUser));
+          
+          showToast(`Welcome! Initializing public demo workspace 🎉`, "success");
+          localStorage.setItem("user", JSON.stringify(userData));
           localStorage.setItem("role", "demo user");
           localStorage.setItem("companyId", "demo");
-          localStorage.setItem("userName", name || "Demo Guest");
+          localStorage.setItem("companyName", "Demo Workspace");
+          localStorage.setItem("userName", userData.name);
+          localStorage.setItem("userExperience", "Intermediate");
+          localStorage.setItem("userRole", "Frontend Engineer");
+          localStorage.setItem("candidateSetupComplete", "false");
+          
+          localStorage.removeItem("dayzero_orchestrator_state");
+          sessionStorage.removeItem("dayzero_session_data");
 
           authForm.reset();
           closeAuth();
 
           setTimeout(() => {
-            window.location.href = "frontend/pages/dashboard.html?demo=true";
-          }, 1200);
+            window.location.href = "frontend/pages/roles.html";
+          }, 1000);
           return;
         }
       } catch (err) {
-        console.warn("Could not validate invitation via backend, falling back to Demo Mode:", err);
-        // On error, let's also gracefully fallback to Demo Mode!
-        showToast("Welcome to DayZero Demo Mode! 🌐", "success");
-        const demoUser = {
-          name: name || "Demo Guest",
-          email: email,
-          role: "demo user",
-          company: "Demo Workspace",
-          companyId: "demo",
-          initials: "DG"
-        };
-        localStorage.setItem("user", JSON.stringify(demoUser));
-        localStorage.setItem("role", "demo user");
-        localStorage.setItem("companyId", "demo");
-        localStorage.setItem("userName", name || "Demo Guest");
-
-        authForm.reset();
-        closeAuth();
-
-        setTimeout(() => {
-          window.location.href = "frontend/pages/dashboard.html?demo=true";
-        }, 1000);
+        console.warn("Could not validate invitation via backend:", err);
+        // Backend validation is required for candidate workspace access.
+        showToast("Could not verify invitation. Please try again when the backend is reachable.", "error");
+        submitBtn.disabled = false;
+        submitBtn.innerText = isLogin ? "Login" : "Sign Up";
         return;
       }
     }
@@ -801,31 +855,101 @@ function initAuthModal() {
       console.log("DATA:", data);
 
       if (res.ok) {
+        if (!isLogin) {
+          showToast("Account created successfully! Please log in to continue.", "success");
+          setAuthMode("login");
+          document.getElementById("auth-password").value = "";
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Log In";
+          return;
+        }
         showToast(data.message || "Success 🎉", "success");
 
         const profile = parseRecruiterEmail(email);
-        const userData = {
-          name: data.user?.name || name || profile.name,
-          email: data.user?.email || email,
-          role: data.user?.role || role || "candidate",
-          company: profile.companyName,
-          initials: profile.initials
-        };
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("role", userData.role);
+        const userRole = data.user?.role || role || "candidate";
+        
+        let userData;
+        if (userRole === "invited candidate" && data.user) {
+          const u = data.user;
+          const projectName = u.projectTitle || u.projectName || "Assigned Simulation Sprint";
+          const assignedRole = u.assignedRole || u.roleAssigned || u.role || "Frontend Engineer";
+          const initials = (u.name || "Invited Candidate").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+          userData = {
+            name: u.name,
+            email: u.email,
+            role: "invited candidate",
+            companyId: u.companyId,
+            companyName: u.companyName,
+            company: u.companyName,
+            projectId: u.projectId,
+            projectTitle: projectName,
+            projectName: projectName,
+            experienceLevel: u.experienceLevel || "Intermediate",
+            assignedRole: assignedRole,
+            initials: initials
+          };
+          
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("role", "invited candidate");
+          localStorage.setItem("companyId", u.companyId || "");
+          localStorage.setItem("companyName", u.companyName || "");
+          localStorage.setItem("userName", u.name || "Invited Candidate");
+          localStorage.setItem("userExperience", u.experienceLevel || "Intermediate");
+          localStorage.setItem("dayzero_task_id", u.projectId);
+          localStorage.setItem("projectId", u.projectId);
+          localStorage.setItem("projectTitle", projectName || "");
+          localStorage.setItem("projectName", projectName || "");
+          localStorage.setItem("userRole", assignedRole);
+          localStorage.setItem("candidateSetupComplete", "true");
+          
+          localStorage.setItem("dayzero_selected_task_details", JSON.stringify({
+            id: u.projectId,
+            company: u.companyName,
+            title: projectName,
+            label: projectName,
+            role: assignedRole,
+            difficulty: u.experienceLevel || "Intermediate",
+            description: "Execute the assigned simulation room for your company hiring round.",
+            skills: ["Strategy", "Execution"]
+          }));
+          
+          localStorage.removeItem("dayzero_orchestrator_state");
+          sessionStorage.removeItem("dayzero_session_data");
+        } else {
+          userData = {
+            name: data.user?.name || name || profile.name,
+            email: data.user?.email || email,
+            role: userRole,
+            company: profile.companyName,
+            initials: profile.initials
+          };
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("role", userData.role);
+        }
 
         authForm.reset();
         closeAuth();
 
         setTimeout(() => {
-          window.location.href =
-            userData.role === "recruiter"
-              ? "frontend/pages/recruiter_dashboard.html"
-              : "frontend/pages/roles.html";
+          if (userData.role === "recruiter") {
+            window.location.href = "frontend/pages/recruiter_dashboard.html";
+          } else if (userData.role === "invited candidate") {
+            window.location.href = "frontend/pages/dashboard.html";
+          } else {
+            window.location.href = "frontend/pages/roles.html";
+          }
         }, 1000);
 
       } else {
         console.warn("API returned error, using dynamic client-side authentication fallback");
+        if (!isLogin) {
+          showToast("Account created successfully (Demo Mode)! Please log in to continue.", "success");
+          setAuthMode("login");
+          document.getElementById("auth-password").value = "";
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Log In";
+          return;
+        }
         const profile = parseRecruiterEmail(email);
         const userData = {
           name: name || profile.name,
@@ -851,6 +975,14 @@ function initAuthModal() {
 
     } catch (err) {
       console.warn("Network error, using dynamic client-side authentication fallback:", err);
+      if (!isLogin) {
+        showToast("Account created successfully (Demo Mode)! Please log in to continue.", "success");
+        setAuthMode("login");
+        document.getElementById("auth-password").value = "";
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Log In";
+        return;
+      }
       const profile = parseRecruiterEmail(email);
       const userData = {
         name: name || profile.name,
@@ -875,3 +1007,4 @@ function initAuthModal() {
     }
   });
 }
+

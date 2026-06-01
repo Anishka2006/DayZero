@@ -77,14 +77,27 @@ class BaseAgent(ABC):
             system_prompt=self._build_system_prompt(event),
             temperature=0.85,
             max_tokens=320,
+            agent=self.name,
+            route=self._llm_route(event),
         )
         return self._clean_response(response)
+
+    def _llm_route(self, event: dict[str, Any]) -> str:
+        event_type = self._event_type(event)
+        if self.id == "observer":
+            return "observer"
+        if event_type == "simulation_start":
+            return "initial_room"
+        if event.get("speaker_position", 1) and int(event.get("speaker_position") or 1) > 1:
+            return "reasoning"
+        return "agent_chat"
 
     def _build_system_prompt(self, event: dict[str, Any] | None = None) -> str:
         constraints = "\n".join(f"- {item}" for item in self.constraints)
         task = (event or {}).get("task") or {}
         room = task.get("room") or {}
         question_allowed = bool((event or {}).get("question_allowed"))
+        speaker_position = int((event or {}).get("speaker_position") or 1)
         allowed_topics = ", ".join(self.allowed_topics)
         avoid_topics = ", ".join(self.avoid_topics)
         room_line = ""
@@ -117,6 +130,8 @@ class BaseAgent(ABC):
             "- Reference concrete files, logs, metrics, or active workspace context when available.\n"
             "- Do not invent file names; use only the active file or listed workspace files.\n"
             "- React to the previous teammate if useful: agree, disagree, or add the missing risk in one line.\n"
+            f"- Your speaker position this turn is {speaker_position}; if you are not first, briefly react to the teammate before you.\n"
+            "- Disagreement is allowed when it is useful, but keep it specific and respectful.\n"
             "- Reply in 1 or 2 complete short sentences. Never stop mid-thought.\n"
             "- Use casual teammate English, like quick Slack messages.\n"
             "- Use contractions naturally, but do not overdo slang.\n"
@@ -148,6 +163,7 @@ class BaseAgent(ABC):
         workspace_snapshot = str(event.get("workspace_snapshot") or "").strip()
         room = task.get("room") or {}
         workspace_files = task.get("workspace_files") or []
+        workspace_file_context = self._workspace_file_context(workspace_files or task.get("files") or [])
         channel_id = str(event.get("channel_id") or "team")
         target_agent_id = str(event.get("target_agent_id") or "")
         current_task = event.get("current_task") or event.get("currentTask") or {}
@@ -159,6 +175,9 @@ class BaseAgent(ABC):
         referenced_files = memory.get("referenced_files") or []
         crisis_events = memory.get("crisis_events") or []
         crisis_event = event.get("crisis_event") or memory.get("current_crisis") or {}
+        previous_agent_reply = str(event.get("previous_agent_reply") or "").strip()
+        observer_notes_summary = str(event.get("observer_notes_summary") or "").strip()
+        room_pressure = str(event.get("room_pressure") or "").strip()
 
         return (
             "Current simulation context:\n"
@@ -183,6 +202,7 @@ class BaseAgent(ABC):
             f"- Current crisis: {crisis_event or '(none)'}\n"
             f"- Candidate message: {candidate_message}\n"
             f"- Current phase: {memory.get('phase', 'planning')}\n"
+            f"- Current room pressure: {room_pressure or room.get('severity') or '(unknown)'}\n"
             f"- Current skill focus: {event.get('skill_focus') or memory.get('skill_focus') or 'communication'}\n"
             f"- Candidate introduced: {memory.get('candidate_introduced', False)}\n"
             f"- Candidate name: {memory.get('candidate_name') or event.get('candidate_name') or '(unknown)'}\n"
@@ -199,13 +219,34 @@ class BaseAgent(ABC):
             f"- Scores: {scores}\n"
             f"- Recent timeline: {recent_timeline}\n"
             f"- Room context: {room_context[-3:]}\n"
+            f"- Previous agent reply this turn: {previous_agent_reply or '(none)'}\n"
+            f"- Hidden observer notes summary: {observer_notes_summary or '(none yet)'}\n"
             f"- Active file: {active_file or '(none)'}\n"
-            f"- Workspace files: {workspace_files or task.get('files') or []}\n"
+            f"- Workspace file names and short contents:\n{workspace_file_context}\n"
             f"- Test results: {test_results}\n"
             f"- Workspace snapshot: {workspace_snapshot[:900] if workspace_snapshot else '(no workspace snapshot shared)'}\n"
             f"- Code excerpt: {code[:700] if code else '(no code shared)'}\n\n"
             "Reply as this coworker inside the room. If this is a DM channel, answer only as the targeted teammate and keep it private to that thread. Push the work forward. Do not ask a question unless question_allowed is yes."
         )
+
+    def _workspace_file_context(self, files: Any, limit: int = 5) -> str:
+        if not files:
+            return "- (no workspace files shared)"
+
+        lines: list[str] = []
+        for item in list(files)[:limit]:
+            if isinstance(item, dict):
+                name = str(item.get("path") or item.get("name") or "workspace file").strip()
+                kind = str(item.get("kind") or item.get("type") or "workspace").strip()
+                content = " ".join(str(item.get("content") or item.get("signal") or "").split())
+            else:
+                name = str(item).strip() or "workspace file"
+                kind = "workspace"
+                content = ""
+            if len(content) > 360:
+                content = content[:357].rstrip() + "..."
+            lines.append(f"- {name} ({kind}): {content or 'listed, no content excerpt'}")
+        return "\n".join(lines)
 
     def _message(self, event: dict[str, Any]) -> str:
         return str(event.get("candidate_message") or "").strip()

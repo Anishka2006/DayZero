@@ -534,7 +534,7 @@ textarea:focus-visible {
 
 .topic-copy h2 {
   margin: 0;
-  color: #0f172a;
+  color: var(--text);
   font-size: 1rem;
   font-weight: 800;
   line-height: 1.15;
@@ -699,7 +699,7 @@ textarea:focus-visible {
 
 .mission-ribbon-main p {
   margin: 0;
-  color: #334155;
+  color: var(--muted);
   font-size: 0.8rem;
   line-height: 1.35;
 }
@@ -724,7 +724,7 @@ textarea:focus-visible {
 .mission-output strong {
   display: block;
   margin-top: 5px;
-  color: #0f172a;
+  color: var(--text);
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.2;
@@ -835,7 +835,7 @@ textarea:focus-visible {
 }
 
 .chat-meta strong {
-  color: #0f172a;
+  color: var(--text);
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.15;
@@ -843,6 +843,7 @@ textarea:focus-visible {
 
 .chat-meta span {
   color: var(--muted);
+  opacity: 0.85;
   font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.15;
@@ -850,7 +851,7 @@ textarea:focus-visible {
 
 .chat-body {
   margin: 5px 0 0;
-  color: var(--text-color);
+  color: var(--text);
   font-size: 0.9rem;
   line-height: 1.48;
   white-space: pre-wrap;
@@ -962,8 +963,8 @@ kbd {
   padding: 1px 5px;
   border: 1px solid var(--line);
   border-radius: 5px;
-  background: #f8fafc;
-  color: #334155;
+  background: var(--surface-soft);
+  color: var(--text);
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.68rem;
 }
@@ -1001,7 +1002,7 @@ kbd {
 
 .workspace-heading h2 {
   margin: 0;
-  color: #0f172a;
+  color: var(--text);
   font-size: 0.95rem;
   font-weight: 800;
   line-height: 1.2;
@@ -1230,7 +1231,7 @@ kbd {
 }
 
 #activeFileName {
-  color: #0f172a;
+  color: var(--text);
   font-family: "IBM Plex Mono", monospace;
 }
 
@@ -1330,13 +1331,13 @@ kbd {
 
 .modal-head h3 {
   margin: 4px 0 0;
-  color: #0f172a;
+  color: var(--text);
   font-size: 1.1rem;
 }
 
 .modal-card > p {
   margin: 14px 0 0;
-  color: #334155;
+  color: var(--muted);
   font-size: 0.9rem;
   line-height: 1.48;
 }
@@ -1744,4 +1745,44 @@ html.dark .modal-card {
   background: var(--surface-strong) !important;
   border-color: var(--line-strong) !important;
   box-shadow: var(--shadow) !important;
+}
+
+/* Premium Dark Mode Overrides for Simulation Console and Workspace Components */
+html.dark .reference-composer {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+html.dark .reference-tabs {
+  background: var(--surface-soft) !important;
+  border-bottom-color: var(--line) !important;
+}
+
+html.dark .reference-tabs button {
+  background: var(--surface-strong) !important;
+  border-color: var(--line) !important;
+  color: var(--muted) !important;
+}
+
+html.dark .reference-tabs button.active {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #c7d2fe !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+html.dark .workspace-tip-row {
+  background: var(--surface-soft) !important;
+  border-top-color: var(--line) !important;
+}
+
+html.dark .workspace-footer-meta span {
+  background: var(--surface-strong) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+
+html.dark .workspace-brief {
+  background: var(--surface-soft) !important;
+  border-bottom-color: var(--line) !important;
 }

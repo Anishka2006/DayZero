@@ -43,20 +43,20 @@ def test_invitation_db_flow():
     print(f"Inserting mock invitation for: {test_email}")
     res = invited_candidates.insert_one(invite_data)
     assert res.inserted_id == invite_data["_id"], "Insertion ID mismatch!"
-    print("✔ Mock invitation successfully inserted in MongoDB!")
+    print("[OK] Mock invitation successfully inserted in MongoDB!")
     
     # 3. Query/Validate Invitation
     print("Querying the inserted invitation...")
     record = invited_candidates.find_one({"email": test_email, "status": "active"})
     assert record is not None, "Failed to retrieve the inserted active invitation!"
     assert record["companyId"] == "test-corp", "Company ID mismatch!"
-    print("✔ Active invitation successfully verified via Mongo query!")
+    print("[OK] Active invitation successfully verified via Mongo query!")
     
     # 4. Clean Up Test Data
     print("Cleaning up mock test invitation...")
     del_res = invited_candidates.delete_one({"email": test_email})
     assert del_res.deleted_count == 1, "Failed to clean up test invite document!"
-    print("✔ Database successfully cleaned up and test invitation removed!")
+    print("[OK] Database successfully cleaned up and test invitation removed!")
     print("=== DB Flow Test Passed Successfully! ===\n")
 
 if __name__ == "__main__":
